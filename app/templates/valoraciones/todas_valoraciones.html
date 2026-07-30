@@ -1,0 +1,38 @@
+{% extends "base/base.html" %}
+
+{% block title %}Todas las Valoraciones Antropométricas{% endblock %}
+
+{% block content %}
+<div class="valoracion-container">
+    <h2>Todas las Valoraciones Antropométricas</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="table__header">Paciente</th>
+                <th class="table__header">Fecha</th>
+                <th class="table__header">Número de Cita</th>
+                <th class="table__header">Peso (kg)</th>
+                <th class="table__header">IMC</th>
+                <th class="table__header">% Grasa</th>
+                <th class="table__header">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for valoracion in valoraciones %}
+            <tr>
+                <td class="table__cell">{{ valoracion['nombre'] }} {{ valoracion['apellido_paterno'] }} {{ valoracion['apellido_materno'] }}</td>
+                <td class="table__cell">{{ valoracion['fecha'] }}</td>
+                <td class="table__cell">{{ valoracion['numero_cita'] }}</td>
+                <td class="table__cell">{{ valoracion['peso'] }}</td>
+                <td class="table__cell">{{ valoracion['imc'] }}</td>
+                <td class="table__cell">{{ valoracion['porcentaje_grasa'] }}%</td>
+                <td class="table__cell">
+                    <a href="{{ url_for('valoracion.lista_valoraciones', paciente_id=valoracion['paciente_id']) }}" class="action-button">Ver Detalles</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

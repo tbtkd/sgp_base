@@ -1,0 +1,15 @@
+<!-- Buscador -->
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+    <form action="{{ url_for('pacientes.lista_pacientes_' + tipo_lista) }}" method="get" class="flex gap-4">
+        <input type="text" name="busqueda" placeholder="Buscar pacientes..." value="{{ busqueda }}" class="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+        <button type="submit" class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-medium transition">
+            <i class="fas fa-search mr-2"></i> Buscar
+        </button>
+    </form>
+</div>
+
+<!-- Pestañas de Filtro -->
+<div class="flex gap-2 mb-6">
+    <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="px-4 py-2 rounded-lg text-sm font-medium transition {{ 'bg-teal-600 text-white' if tipo_lista == 'activos' else 'bg-white text-gray-600 hover:bg-gray-50' }}">Activos</a>
+    <a href="{{ url_for('pacientes.lista_pacientes_inactivos') }}" class="px-4 py-2 rounded-lg text-sm font-medium transition {{ 'bg-teal-600 text-white' if tipo_lista == 'inactivos' else 'bg-white text-gray-600 hover:bg-gray-50' }}">Inactivos</a>
+</div>

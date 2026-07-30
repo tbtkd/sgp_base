@@ -1,0 +1,661 @@
+/* Estilos generales */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #2c3e50;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  min-height: 100vh;
+}
+
+/* Estilos para el sidebar */
+.sidebar {
+  width: 250px;
+  background-color: #f8f9fe;
+  padding: 20px;
+  transition: all 0.3s ease;
+  border-right: 1px solid #e5e7eb;
+}
+
+.sidebar__title {
+  margin-bottom: 20px;
+}
+
+.sidebar__list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 2rem;
+}
+
+.sidebar__item {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar__link {
+  text-decoration: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+}
+
+.sidebar__link:hover {
+  background-color: #e6efff;
+  color: #3b82f6;
+}
+
+.sidebar__link.active {
+  background-color: #e6efff;
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.sidebar__icon {
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__header {
+  padding: 1rem;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar__logo {
+  max-width: 150px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Estilos para el contenido principal */
+.content {
+  flex: 1;
+  padding: 20px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+}
+
+.content > div {
+  width: 100%;
+  max-width: 1200px;
+}
+
+/* Estilos para formularios */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.form-button:hover {
+  background-color: #0056b3;
+}
+
+/* Estilos para tablas */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 16px;
+  text-align: left;
+}
+
+.table__header,
+.table__cell {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.table__header {
+  background-color: #f2f2f2;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin: 0 auto;
+  /*box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);*/
+  border-radius: 4px;
+  max-width: 1600px;
+  padding: 20px;
+}
+
+.table {
+  max-width: 90%;
+  background-color: white;
+  margin: 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.table__header {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: #119b6e5e;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.table__cell {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Estilos para alertas */
+.alert {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.alert--success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert--danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Estilos para el formulario de historial clínico */
+.historial-clinico__fieldset {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.historial-clinico__legend {
+  font-weight: bold;
+  padding: 0 5px;
+}
+
+.historial-clinico__select {
+  width: 100%;
+  height: 100px;
+}
+
+/* Estilos para botones de acción */
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  background-color: #3b82f6;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: #2563eb;
+}
+
+/* Estilos para las pestañas */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tabs__button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #119b6e5e;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.tabs__button--active {
+  background-color: #007bff;
+  color: white;
+}
+
+.tabs__button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Estilos para el grupo de checkboxes */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.checkbox-group__label {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group__input {
+  margin-right: 5px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .sidebar__toggle {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar__list {
+    display: none;
+  }
+
+  .sidebar__list--show {
+    display: block;
+  }
+
+  .sidebar__submenu {
+    display: none;
+  }
+
+  .sidebar__submenu--show {
+    display: block;
+  }
+}
+
+/* Estilos para la vista de detalle de valoración */
+.valoracion-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.valoracion-header {
+  margin-bottom: 2rem;
+}
+
+.valoracion-header h2 {
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.valoracion-header h3 {
+  color: #4b5563;
+  font-weight: normal;
+}
+
+.valoracion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.valoracion-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.valoracion-card__title {
+  background-color: #f9fafb;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem;
+  margin: 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.valoracion-card__content {
+  padding: 1rem;
+}
+
+.data-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 1rem;
+}
+
+.data-item:last-child {
+  border-bottom: none;
+}
+
+.data-label {
+  color: #6b7280;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.data-value {
+  font-weight: 500;
+  color: #111827;
+  flex: 1;
+  text-align: right;
+  word-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.valoracion-history {
+  margin-top: 2rem;
+}
+
+.valoracion-history h3 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.current-row {
+  background-color: #f0f9ff !important;
+}
+
+.valoracion-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: flex-start;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: #2563eb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .valoracion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .valoracion-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.search-form {
+  margin-bottom: 50px;
+}
+
+.search-form input[type="text"] {
+  padding: 8px;
+  width: 300px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.search-form button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-form button:hover {
+  background-color: #0056b3;
+}
+
+.detail-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.detail-container p {
+  margin-bottom: 10px;
+}
+
+.action-buttons {
+  margin-top: 20px;
+}
+
+.action-buttons .modern-action-button {
+  margin-right: 10px;
+}
+
+/* Estilos para el modal de carga de Excel */
+.modal-upload {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+}
+
+.modal-upload__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-upload__title {
+  font-size: 1.25rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.modal-upload__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.modal-upload__content {
+  margin-bottom: 1.5rem;
+}
+
+.file-upload {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.file-upload__input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.upload-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.upload-button:hover {
+  background-color: #2563eb;
+}
+
+.upload-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Estilos base para el modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Estilos para mensajes de carga */
+.upload-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.upload-message.success {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.upload-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.upload-message.warning {
+  background-color: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.sidebar__dropdown {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar__icon-arrow {
+  transition: transform 0.3s ease;
+}
+
+.sidebar__icon-arrow.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.sidebar__submenu {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 1px solid #e5e7eb;
+  margin-top: 0.5rem;
+}
+
+/* Estilos para el select de estado */
+select.form-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+select.form-input option {
+  padding: 0.5rem;
+}
+
+/* Estilos para campos de solo lectura */
+.form-input[readonly] {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  color: #374151;
+}
+
+.form-input[readonly]:focus {
+  border-color: #ddd;
+  box-shadow: none;
+}
+

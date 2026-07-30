@@ -1,0 +1,66 @@
+<!-- Información Principal -->
+<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Nombre</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['nombre'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Apellido Paterno</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['apellido_paterno'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Apellido Materno</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['apellido_materno'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Fecha de Nacimiento</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['fecha_nacimiento']|format_date }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Teléfono</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['telefono'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Correo</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['correo'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Ciudad</p>
+            <p class="text-lg font-semibold text-gray-900">{{ paciente['ciudad'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Estatus</p>
+            <p class="text-lg font-semibold text-teal-600">{{ paciente['status'] }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Última Dieta</p>
+            <p class="text-lg font-semibold text-gray-900">{{ ultima_valoracion['ultima_dieta']|default('No registrada') if ultima_valoracion else 'No registrada' }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Último pago</p>
+            <p class="text-lg font-semibold text-gray-900">{{ ultimo_pago['fecha_pago']|format_date if ultimo_pago else 'No registrado' }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Fecha de Siguiente Cita</p>
+            <p class="text-lg font-semibold text-gray-900">
+                {% if siguiente_cita and siguiente_cita > today %}
+                    {{ siguiente_cita.strftime('%Y-%m-%d')|format_date }}
+                {% else %}
+                    ----
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <p class="text-sm text-gray-500 font-medium">Hora de Siguiente Cita</p>
+            <p class="text-lg font-semibold text-gray-900">
+                {% if siguiente_cita and siguiente_cita > today %}
+                    {% set hora = siguiente_cita.strftime('%H:%M').split(':') %}
+                    {{ '%02d:%02d %s' % (hora[0]|int % 12 or 12, hora[1]|int, 'AM' if hora[0]|int < 12 else 'PM') }}
+                {% else %}
+                    ----
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,45 @@
+{% extends "base/base.html" %}
+
+{% block title %}Historial Clínico - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Encabezado -->
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-900">Historial Clínico</h1>
+        <p class="text-gray-600 mt-2">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <!-- Banner de Notificación de Validación -->
+        <div id="validation-alert" style="display: none; background-color: rgba(220, 53, 69, 0.85); color: #ffffff; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-weight: bold; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.1); backdrop-filter: blur(2px);">
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 10px; font-size: 1.1em;"></i>
+                <span id="validation-alert-text"></span>
+            </div>
+            <button type="button" onclick="document.getElementById('validation-alert').style.display = 'none'" style="background: none; border: none; color: #ffffff; cursor: pointer; font-size: 1.3em; font-weight: bold; margin-left: 15px; padding: 0; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">&times;</button>
+        </div>
+
+        {% include 'historiales/partials/_formulario_historial.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="module">
+    import { validarFormularioHistorialClinico } from "{{ url_for('static', filename='js/validaciones/historialClinicoValidacion.js') }}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById("formHistorialClinico");
+        if (form) {
+            form.addEventListener("submit", (event) => {
+                if (!validarFormularioHistorialClinico()) {
+                    event.preventDefault();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

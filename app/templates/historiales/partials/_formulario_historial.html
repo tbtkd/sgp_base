@@ -1,0 +1,87 @@
+<form id="formHistorialClinico" method="POST" class="space-y-6" x-data="{ activeTab: 'actividad-fisica' }">
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button type="button" @click="activeTab = 'actividad-fisica'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'actividad-fisica' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Actividad Física</button>
+        <button type="button" @click="activeTab = 'alimentacion'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'alimentacion' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Alimentación</button>
+        <button type="button" @click="activeTab = 'historial-medico'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'historial-medico' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Historial Médico</button>
+    </div>
+
+    <!-- Contenido de Tabs -->
+    <div x-show="activeTab === 'actividad-fisica'" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 form-group">
+                <label for="tipo_actividad_fisica" class="block text-sm font-medium text-gray-700">Tipo:</label>
+                <input type="text" id="tipo_actividad_fisica" name="tipo_actividad_fisica" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" value="{{ historial['tipo_actividad_fisica'] if historial else '' }}">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="frecuencia_actividad_fisica" class="block text-sm font-medium text-gray-700">Frecuencia:</label>
+                <input type="text" id="frecuencia_actividad_fisica" name="frecuencia_actividad_fisica" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" value="{{ historial['frecuencia_actividad_fisica'] if historial else '' }}">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+            <div class="space-y-2 md:col-span-2 form-group">
+                <label for="tiempo_actividad_fisica" class="block text-sm font-medium text-gray-700">Tiempo:</label>
+                <input type="text" id="tiempo_actividad_fisica" name="tiempo_actividad_fisica" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" value="{{ historial['tiempo_actividad_fisica'] if historial else '' }}">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'alimentacion'" class="space-y-4">
+        <div class="space-y-2 form-group">
+            <label for="numero_comidas_diarias" class="block text-sm font-medium text-gray-700">Número de veces que come al día:</label>
+            <input type="number" id="numero_comidas_diarias" name="numero_comidas_diarias" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" value="{{ historial['numero_comidas_diarias'] if historial else '' }}">
+            <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+        </div>
+        <div class="space-y-2">
+            <label for="alimentos_normales" class="block text-sm font-medium text-gray-700">Alimentos que consume normalmente:</label>
+            <textarea id="alimentos_normales" name="alimentos_normales" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="3">{{ historial['alimentos_normales'] if historial else '' }}</textarea>
+        </div>
+        <div class="space-y-2">
+            <label for="alimentos_no_gustados" class="block text-sm font-medium text-gray-700">Alimentos que no le gustan:</label>
+            <textarea id="alimentos_no_gustados" name="alimentos_no_gustados" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="3">{{ historial['alimentos_no_gustados'] if historial else '' }}</textarea>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'historial-medico'" class="space-y-4">
+        <div class="space-y-2">
+            <label for="cirugias" class="block text-sm font-medium text-gray-700">Cirugías:</label>
+            <textarea id="cirugias" name="cirugias" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="2">{{ historial['cirugias'] if historial else '' }}</textarea>
+        </div>
+        <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Padecimientos:</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {% for opcion in padecimientos_opciones %}
+                    <label class="flex items-center space-x-2 text-sm text-gray-700">
+                        <input type="checkbox" name="padecimientos" value="{{ opcion }}" class="rounded text-teal-600 focus:ring-teal-500" {% if historial and opcion in historial['padecimientos'].split(',') %}checked{% endif %}>
+                        <span>{{ opcion }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label for="medicamentos" class="block text-sm font-medium text-gray-700">Medicamentos:</label>
+                <textarea id="medicamentos" name="medicamentos" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="2">{{ historial['medicamentos'] if historial else '' }}</textarea>
+            </div>
+            <div class="space-y-2">
+                <label for="suplementos" class="block text-sm font-medium text-gray-700">Suplementos:</label>
+                <textarea id="suplementos" name="suplementos" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="2">{{ historial['suplementos'] if historial else '' }}</textarea>
+            </div>
+        </div>
+        <div class="space-y-2">
+            <label for="enfermedades_previas" class="block text-sm font-medium text-gray-700">Enfermedades previas:</label>
+            <textarea id="enfermedades_previas" name="enfermedades_previas" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="2">{{ historial['enfermedades_previas'] if historial else '' }}</textarea>
+        </div>
+        <div class="space-y-2">
+            <label for="enfermedades_actuales" class="block text-sm font-medium text-gray-700">Enfermedades actuales:</label>
+            <textarea id="enfermedades_actuales" name="enfermedades_actuales" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" rows="2">{{ historial['enfermedades_actuales'] if historial else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition">Volver</a>
+        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition">Guardar Historial</button>
+    </div>
+</form>

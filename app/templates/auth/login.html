@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="h-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Tarjeta -->
+        <div class="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+            <!-- Logo -->
+            <div class="flex justify-center mb-8">
+                <div class="bg-teal-50 p-4 rounded-2xl">
+                    {% if has_custom_logo() %}
+                        <img src="{{ url_for('static', filename='img/logos/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain">
+                    {% else %}
+                        <i class="fas fa-shield-alt text-3xl text-teal-600"></i>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-center text-slate-900 mb-8">Iniciar Sesión</h2>
+
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="p-4 rounded-xl text-sm font-medium {% if category == 'error' %}bg-red-50 text-red-700 border border-red-100{% else %}bg-teal-50 text-teal-700 border border-teal-100{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('auth.login') }}" method="POST" class="space-y-6">
+                <!-- CSRF Token si se usa Flask-WTF, de lo contrario omitir -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                    <input id="username" name="username" type="text" required 
+                           class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-teal-600 transition">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                    <input id="password" name="password" type="password" required 
+                           class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-teal-600 transition">
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center text-slate-600">
+                        <input type="checkbox" name="remember" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500 mr-2">
+                        Recordar mi sesión
+                    </label>
+                    <a href="#" class="text-teal-600 hover:text-teal-700 font-medium">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" 
+                        class="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-md shadow-teal-600/20 transition">
+                    Ingresar al Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

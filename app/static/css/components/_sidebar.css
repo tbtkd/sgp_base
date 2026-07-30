@@ -1,0 +1,31 @@
+.sidebar-footer {
+    position: fixed;
+    bottom: 0;
+    width: 250px;
+    padding: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #fff;
+    z-index: 100;
+}
+
+.footer-content {
+    text-align: center;
+    color: #666;
+    font-size: 0.75rem;
+    padding: 5px 0;
+}
+
+.footer-content p {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.footer-content p:first-child {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #333;
+}
+
+.sidebar__list {
+    margin-bottom: 60px;
+}

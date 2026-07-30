@@ -1,0 +1,75 @@
+<!-- Tabla -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
+        <table class="w-full text-left relative">
+             <thead class="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+                <tr>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600">
+                        {% set nuevo_orden = 'asc' if ordenar_por == 'nombre' and orden == 'desc' else 'desc' %}
+                        {% set endpoint = 'pacientes.lista_pacientes_inactivos' if tipo_lista == 'inactivos' else 'pacientes.lista_pacientes_activos' %}
+                        <a href="{{ url_for(endpoint, busqueda=busqueda, ordenar_por='nombre', orden=nuevo_orden) }}" class="flex items-center gap-1.5 hover:text-teal-600 transition">
+                            Nombre
+                            {% if ordenar_por == 'nombre' %}
+                                <i class="fas fa-sort-{{ 'up' if orden == 'asc' else 'down' }} text-teal-600"></i>
+                            {% else %}
+                                <i class="fas fa-sort text-gray-300 text-xs"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600">
+                        {% set nuevo_orden = 'asc' if ordenar_por == 'apellidos' and orden == 'desc' else 'desc' %}
+                        <a href="{{ url_for(endpoint, busqueda=busqueda, ordenar_por='apellidos', orden=nuevo_orden) }}" class="flex items-center gap-1.5 hover:text-teal-600 transition">
+                            Apellidos
+                            {% if ordenar_por == 'apellidos' %}
+                                <i class="fas fa-sort-{{ 'up' if orden == 'asc' else 'down' }} text-teal-600"></i>
+                            {% else %}
+                                <i class="fas fa-sort text-gray-300 text-xs"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600">Correo</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600">
+                        {% set nuevo_orden = 'asc' if ordenar_por == 'ultima_consulta' and orden == 'desc' else 'desc' %}
+                        <a href="{{ url_for(endpoint, busqueda=busqueda, ordenar_por='ultima_consulta', orden=nuevo_orden) }}" class="flex items-center gap-1.5 hover:text-teal-600 transition">
+                            Última Consulta
+                            {% if ordenar_por == 'ultima_consulta' %}
+                                <i class="fas fa-sort-{{ 'up' if orden == 'asc' else 'down' }} text-teal-600"></i>
+                            {% else %}
+                                <i class="fas fa-sort text-gray-300 text-xs"></i>
+                            {% endif %}
+                        </a>
+                    </th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600">Estatus</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for paciente in pacientes %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ paciente['nombre'] }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ paciente['correo'] }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">{{ paciente['ultima_consulta']|format_date if paciente['ultima_consulta'] else 'Sin registro' }}</td>
+                    <td class="px-6 py-4 text-sm">
+                        {% if paciente['status']|lower == 'activo' %}
+                            <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium px-2.5 py-0.5 rounded-full capitalize text-xs">Activo</span>
+                        {% else %}
+                            <span class="bg-slate-100 text-slate-600 border border-slate-200 font-medium px-2.5 py-0.5 rounded-full capitalize text-xs">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right">
+                        <div class="flex items-center justify-end gap-3">
+                            <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-medium transition">
+                                <i class="fas fa-eye"></i> Ver Expediente
+                            </a>
+                            <a href="{{ url_for('pacientes.editar_paciente', id=paciente['id']) }}" class="text-gray-400 hover:text-teal-600 transition" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

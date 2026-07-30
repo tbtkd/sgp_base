@@ -1,0 +1,110 @@
+{% extends "base/base.html" %}
+
+{% block title %}Editar Usuario | SGPN{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Encabezado -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Editar Usuario</h1>
+            <p class="text-gray-500 mt-1">Actualiza la información del usuario @{{ usuario.username }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('auth.lista_usuarios') }}" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl shadow-sm transition">
+                Volver a la Lista
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="space-y-2">
+                {% for category, message in messages %}
+                    <div class="p-4 rounded-xl {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-teal-50 text-teal-700 border border-teal-200{% endif %} flex items-center justify-between">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulario -->
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <form method="POST" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre -->
+                <div class="space-y-2">
+                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" required minlength="2" maxlength="30" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                           value="{{ usuario.nombre or '' }}">
+                </div>
+
+                <!-- Apellido Paterno -->
+                <div class="space-y-2">
+                    <label for="apellido_paterno" class="block text-sm font-medium text-gray-700">Apellido Paterno</label>
+                    <input type="text" id="apellido_paterno" name="apellido_paterno" required minlength="2" maxlength="30" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                           value="{{ usuario.apellido_paterno or '' }}">
+                </div>
+
+                <!-- Apellido Materno -->
+                <div class="space-y-2">
+                    <label for="apellido_materno" class="block text-sm font-medium text-gray-700">Apellido Materno</label>
+                    <input type="text" id="apellido_materno" name="apellido_materno" required minlength="2" maxlength="30" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                           value="{{ usuario.apellido_materno or '' }}">
+                </div>
+
+                <!-- Correo -->
+                <div class="space-y-2">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required maxlength="40"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                           value="{{ usuario.email or '' }}">
+                </div>
+
+                <!-- Rol -->
+                <div class="space-y-2">
+                    <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
+                    <select id="rol" name="rol" required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                        <option value="Admin" {% if usuario.rol == 'Admin' %}selected{% endif %}>Admin</option>
+                        <option value="Nutricionista" {% if usuario.rol == 'Nutricionista' %}selected{% endif %}>Nutricionista</option>
+                        <option value="Asistente" {% if usuario.rol == 'Asistente' %}selected{% endif %}>Asistente</option>
+                    </select>
+                </div>
+
+                <!-- Cédula Profesional (Opcional) -->
+                <div class="space-y-2">
+                    <label for="cedula_profesional" class="block text-sm font-medium text-gray-700">Cédula Profesional <span class="text-gray-400 text-xs">(Opcional)</span></label>
+                    <input type="text" id="cedula_profesional" name="cedula_profesional" maxlength="30"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                           value="{{ usuario.cedula_profesional or '' }}">
+                </div>
+
+                <!-- Estatus -->
+                <div class="space-y-2 md:col-span-2">
+                    <label for="status" class="block text-sm font-medium text-gray-700">Estatus</label>
+                    <select id="status" name="status" required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                        <option value="activo" {% if usuario.status == 'activo' %}selected{% endif %}>Activo</option>
+                        <option value="inactivo" {% if usuario.status == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+                <a href="{{ url_for('auth.lista_usuarios') }}" class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition">Cancelar</a>
+                <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

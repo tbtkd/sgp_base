@@ -1,0 +1,215 @@
+{% extends "base/base.html" %}
+
+{% block title %}Detalle del Paciente - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Encabezado -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Detalle del Paciente</h1>
+            <p class="text-gray-600 mt-1">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
+        </div>
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition">Volver a la lista</a>
+    </div>
+
+    {% include 'pacientes/partials/_info_principal.html' %}
+    {% include 'pacientes/partials/_acciones_y_formularios.html' %}
+    {% include 'pacientes/partials/_historial_clinico.html' %}
+</div>
+
+<!-- Modales (Excel, Cita, Advertencia Cita) -->
+<div x-data="{ 
+        modalExcelOpen: false, 
+        modalCitaOpen: false, 
+        modalAdvertenciaOpen: false,
+        tieneCita: {{ 'true' if siguiente_cita else 'false' }},
+        fechaCita: '{{ siguiente_cita.strftime('%Y-%m-%d') if siguiente_cita else '' }}',
+        horaCita: '{{ siguiente_cita.strftime('%H:%M') if siguiente_cita else '' }}',
+        verificarCita() {
+            if (this.tieneCita) {
+                this.modalAdvertenciaOpen = true;
+            } else {
+                this.modalCitaOpen = true;
+            }
+        },
+        reagendarCita() {
+            this.modalAdvertenciaOpen = false;
+            this.modalCitaOpen = true;
+        }
+    }" 
+    @open-excel-modal.window="modalExcelOpen = true" 
+    @open-cita-modal.window="verificarCita()">
+
+    <!-- Modal Excel -->
+    <div x-show="modalExcelOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" style="display: none;" x-cloak>
+        <div @click.away="modalExcelOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Importar desde Excel</h3>
+            <form id="formCargarExcel" action="{{ url_for('pacientes.cargar_excel', id=paciente['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4" x-data="{ error: '' }" @submit.prevent="enviarExcel(event)">
+                <input type="file" name="file" accept=".xlsx, .xls" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" @change="error = ''">
+                <p x-show="error" class="text-sm text-red-600 bg-red-50 p-2 rounded-lg" x-text="error" x-cloak></p>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" @click="modalExcelOpen = false; error = ''" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                    <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 flex items-center justify-center gap-2">
+                        <span>Cargar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Resumen de Carga de Excel -->
+    <div id="modalResultadoCarga" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300" x-cloak>
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+        
+        <!-- Encabezado Dinámico -->
+        <div id="modalResultadoHeader" class="px-6 py-4 flex justify-between items-center bg-emerald-600 text-white">
+          <h3 id="modalResultadoTitulo" class="text-lg font-bold flex items-center gap-2">
+            <i id="modalResultadoIcono" class="fas fa-check-circle"></i>
+            <span>Resultado del Procesamiento</span>
+          </h3>
+          <button type="button" onclick="cerrarModalResultadoCarga()" class="text-white hover:text-gray-200 text-2xl font-bold leading-none focus:outline-none">&times;</button>
+        </div>
+
+        <!-- Cuerpo del Modal -->
+        <div class="p-6 space-y-5">
+          
+          <!-- Mensaje General de la API -->
+          <p id="modalResultadoMensaje" class="text-gray-700 text-sm font-medium leading-relaxed"></p>
+
+          <!-- Tarjetas Indicadoras / Estadísticas -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+              <span id="statProcesados" class="block text-3xl font-black text-emerald-600">0</span>
+              <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Nuevos Registrados</span>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+              <span id="statDuplicados" class="block text-3xl font-black text-amber-600">0</span>
+              <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Duplicados Omitidos</span>
+            </div>
+          </div>
+
+          <!-- Detalle de Errores u Observaciones (Condicional) -->
+          <div id="contenedorErroresModal" class="hidden">
+            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Detalle de observaciones:</h4>
+            <div id="listaErroresModal" class="bg-rose-50 border border-rose-200 rounded-lg p-3 max-h-36 overflow-y-auto text-xs text-rose-700 space-y-1">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Pie del Modal -->
+        <div class="bg-gray-50 px-6 py-3 flex justify-end">
+          <button type="button" onclick="cerrarModalResultadoCarga()" class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg shadow transition-colors focus:outline-none">
+            Aceptar
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Modal Advertencia Cita Existente -->
+    <div x-show="modalAdvertenciaOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 " x-cloak>
+        <div @click.away="modalAdvertenciaOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Cita Ya Registrada</h3>
+            <p class="text-sm text-gray-600 mb-6">
+                El paciente <span class="font-semibold text-gray-900">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}</span> ya tiene una cita agendada para el día <span class="font-semibold text-teal-600" x-text="fechaCita"></span> a las <span class="font-semibold text-teal-600" x-text="horaCita"></span>. ¿Deseas modificar o reagendar esta cita?
+            </p>
+            <div class="flex gap-4 mt-6">
+                <button type="button" @click="modalAdvertenciaOpen = false" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                <button type="button" @click="reagendarCita()" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Reagendar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cita -->
+    <div x-show="modalCitaOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" x-cloak>
+        <div @click.away="modalCitaOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all">
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Agendar Próxima Cita</h3>
+            <form action="{{ url_for('pacientes.registrar_proxima_cita', id=paciente['id']) }}" method="POST" class="space-y-4" x-data="citaForm('{{ siguiente_cita.strftime('%Y-%m-%d') if siguiente_cita else '' }}')">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Fecha:</label>
+                    <input type="date" name="proxima_cita_fecha" x-model="fecha" @change="actualizarDisponibilidad()" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Hora:</label>
+                    <select name="proxima_cita_hora" x-model="hora" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                        <option value="">Seleccionar hora</option>
+                        {% for h in range(9, 20) %}
+                            {% set hora_str = '%02d:00' % h %}
+                            <option value="{{ hora_str }}" 
+                                    :disabled="horasOcupadas.includes('{{ hora_str }}')"
+                                    :class="horasOcupadas.includes('{{ hora_str }}') ? 'bg-gray-100 text-gray-400' : ''"
+                                    x-text="'{{ hora_str }}' + (horasOcupadas.includes('{{ hora_str }}') ? ' (Ocupada)' : '')">
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex gap-4 mt-6">
+                    <button type="button" @click="modalCitaOpen = false" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                    <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Bitácora WhatsApp -->
+    <div id="modal-bitacora-whatsapp" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 w-full max-w-2xl p-6 space-y-5 transform transition-all max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">Bitácora de Acompañamiento (WhatsApp)</h3>
+                        <p class="text-xs text-gray-500">Paciente: {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
+                    </div>
+                </div>
+                <button onclick="cerrarBitacoraWhatsApp()" class="text-gray-400 hover:text-gray-600 transition p-1">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Contenido / Línea de tiempo -->
+            <div class="overflow-y-auto flex-grow space-y-4 pr-2">
+                {% if paciente.bitacoras|length > 0 %}
+                    <div class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-emerald-100">
+                        {% for b in paciente.bitacoras|sort(attribute='fecha_envio', reverse=True) %}
+                        <div class="relative">
+                            <span class="absolute -left-6 top-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white ring-4 ring-emerald-50"></span>
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2">
+                                <div class="flex items-center justify-between text-xs text-gray-400">
+                                    <span class="font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                        <i class="fas fa-user-md mr-1"></i> {{ b.usuario.nombre_completo if b.usuario and b.usuario.nombre_completo else (b.usuario.username if b.usuario else 'Sistema') }}
+                                    </span>
+                                    <span><i class="far fa-calendar-alt mr-1"></i> {{ b.fecha_envio.strftime('%d %b %Y') if b.fecha_envio else '' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-700 whitespace-pre-line">{{ b.mensaje }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="py-12 text-center text-gray-400 text-sm">
+                        <i class="fab fa-whatsapp text-4xl text-gray-300 mb-3 block"></i>
+                        No hay registros en la bitácora de WhatsApp para este paciente.
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
+                <a href="https://wa.me/{{ paciente['telefono']|replace(' ', '')|replace('-', '') }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 flex items-center gap-2 transition">
+                    <i class="fab fa-whatsapp text-sm"></i> Abrir Chat WhatsApp
+                </a>
+                <button type="button" onclick="cerrarBitacoraWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/detalle_paciente.js') }}"></script>
+<script src="{{ url_for('static', filename='js/detalle_paciente_extra.js') }}"></script>
+{% endblock %}

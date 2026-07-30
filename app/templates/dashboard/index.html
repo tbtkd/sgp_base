@@ -1,0 +1,184 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dashboard - {{ current_user.nombre_completo if current_user.is_authenticated else '' }} Nutrición{% endblock %}
+
+{% block content %}
+<!-- 1. ENCABEZADO SUPERIOR -->
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Bienvenido, <span class="text-teal-700">{{ current_user.nombre_completo if current_user.is_authenticated else 'Invitado' }}</span></h1>
+    <p class="text-gray-600 mt-1">Panel de control clínico - Resumen del sistema</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- COLUMNA IZQUIERDA: AGENDA Y VALORACIONES -->
+    <div class="lg:col-span-8 space-y-6" x-data="{ tab: 'valoraciones' }">
+        <div class="bg-white p-7 rounded-2xl shadow-sm border border-gray-100">
+            <!-- Pestañas -->
+            <div class="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                <div class="flex gap-6">
+                    <button @click="tab = 'valoraciones'" :class="tab === 'valoraciones' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition">
+                        📅 Pacientes del Día
+                    </button>
+                    <button @click="tab = 'reagendamiento'" :class="tab === 'reagendamiento' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition flex items-center gap-2">
+                        ⏳ Pendiente de Agendar
+                        {% if pendientes_por_agendar|length > 0 %}
+                        <span class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pendientes_por_agendar|length }}</span>
+                        {% endif %}
+                    </button>
+                    <button @click="tab = 'seguimiento'" :class="tab === 'seguimiento' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition flex items-center gap-2">
+                        ⚠️ Sin Valoración (>30 días)
+                        {% if pacientes_sin_valoracion|length > 0 %}
+                        <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pacientes_sin_valoracion|length }}</span>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido de Pestañas -->
+            <div class="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
+                <div x-show="tab === 'valoraciones'">{% include 'dashboard/tabs/_tab_pacientes_dia.html' %}</div>
+                <div x-show="tab === 'reagendamiento'" style="display: none;" x-cloak>{% include 'dashboard/tabs/_tab_reagendamiento.html' %}</div>
+                <div x-show="tab === 'seguimiento'" style="display: none;" x-cloak>{% include 'dashboard/tabs/_tab_sin_valoracion.html' %}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA / LATERAL -->
+    {% include 'dashboard/partials/_resumen_lateral.html' %}
+</div>
+
+<!-- 2. MÓDULO DE SEGUIMIENTO INTERMEDIO (14-15 DÍAS) -->
+<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4 mt-6">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div class="flex items-center gap-3">
+            <h3 class="text-lg font-bold text-gray-900">💬 Acompañamiento Intermedio (14-15 Días)</h3>
+            {% if seguimiento_14_15|length > 0 %}
+            <span class="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-semibold">{{ seguimiento_14_15|length }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if seguimiento_14_15|length > 0 %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-xs uppercase text-gray-400 border-b border-gray-100 tracking-wider">
+                    <th class="py-3 px-4 font-semibold">Paciente</th>
+                    <th class="py-3 px-4 font-semibold">Última Valoración</th>
+                    <th class="py-3 px-4 font-semibold">Tiempo</th>
+                    <th class="py-3 px-4 font-semibold text-right">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50 text-sm">
+                {% for val in seguimiento_14_15 %}
+                {% set dias = (datetime.now().date() - val.fecha).days %}
+                <tr id="row-val-{{ val.id }}" class="hover:bg-gray-50/50 transition">
+                    <td class="py-3.5 px-4 font-medium text-gray-900">
+                        {{ val.paciente.nombre_completo if val.paciente else 'Paciente Desconocido' }}
+                    </td>
+                    <td class="py-3.5 px-4 text-gray-600">
+                        {{ val.fecha.strftime('%d %b, %Y') }}
+                    </td>
+                    <td class="py-3.5 px-4">
+                        {% if dias >= 15 %}
+                        <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-medium">15 días</span>
+                        {% else %}
+                        <span class="bg-teal-100 text-teal-800 text-xs px-2.5 py-1 rounded-full font-medium">14 días</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                        {% set tel = val.paciente.telefono if val.paciente and val.paciente.telefono else '' %}
+                        {% set nombre = val.paciente.nombre if val.paciente else 'Paciente' %}
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="omitirSeguimiento('{{ val.id }}')"
+                                    title="Omitir o posponer seguimiento"
+                                    class="text-gray-400 hover:text-amber-600 bg-gray-50 hover:bg-amber-50 p-2 rounded-xl transition border border-gray-200 hover:border-amber-200">
+                                <i class="fas fa-clock text-xs"></i>
+                            </button>
+                            <button onclick="abrirModalWhatsApp('{{ val.id }}', '{{ tel }}', '{{ nombre }}', '{{ dias }}')"
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 transition">
+                                <i class="fab fa-whatsapp text-sm"></i> Enviar WhatsApp
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="py-8 text-center text-gray-400 text-sm">
+        No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.
+    </div>
+    {% endif %}
+</div>
+
+<!-- MODAL UIX DE CONFIRMACIÓN OMITIR SEGUIMIENTO -->
+<div id="modalOmitirSeguimiento" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 space-y-5 transform transition-all">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0 border border-amber-100 shadow-inner">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Omitir o Posponer Seguimiento</h3>
+                <p class="text-xs text-gray-500">¿Estás seguro de omitir o posponer este seguimiento?</p>
+            </div>
+        </div>
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+            <button type="button" onclick="cerrarModalOmitir()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs transition">
+                Cancelar
+            </button>
+            <button type="button" onclick="confirmarOmitirSeguimiento()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs shadow-md shadow-teal-600/20 transition flex items-center gap-1.5">
+                <i class="fas fa-check"></i> Aceptar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EDICIÓN DE MENSAJE DE WHATSAPP -->
+<div id="modalWhatsApp" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-5 transform transition-all">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Enviar Seguimiento por WhatsApp</h3>
+                    <p class="text-xs text-gray-500" id="modalPacienteSub">Paciente: --</p>
+                </div>
+            </div>
+            <button onclick="cerrarModalWhatsApp()" class="text-gray-400 hover:text-gray-600 transition p-1">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <div class="space-y-3">
+            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Mensaje Personalizado</label>
+            <textarea id="modalMensajeTexto" rows="5" class="w-full rounded-2xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition resize-none"></textarea>
+            <p class="text-[11px] text-gray-400">Puedes editar el texto antes de enviarlo. Al confirmar se abrirá WhatsApp Web/App y se marcará como contactado.</p>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+            <button type="button" onclick="copiarTextoModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 flex items-center gap-1.5 transition">
+                <i class="fas fa-copy text-gray-500 text-sm"></i> Copiar texto
+            </button>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="cerrarModalWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmarEnviarWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 flex items-center gap-2 transition">
+                    <i class="fab fa-whatsapp text-sm"></i> Enviar por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.dashboardPlantillaActiva = {{ contenido_plantilla | tojson | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

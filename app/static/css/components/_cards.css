@@ -1,0 +1,33 @@
+.valoracion-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.valoracion-card__title {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+}
+
+.valoracion-card__content {
+    padding: 1rem;
+}
+
+.data-item {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.data-label {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.data-value {
+    color: #666;
+} 

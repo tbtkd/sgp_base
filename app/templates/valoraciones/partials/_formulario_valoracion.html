@@ -1,0 +1,140 @@
+<form id="formValoracion" method="POST" class="space-y-6" x-data="{ activeTab: 'antropometrica' }">
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button type="button" @click="activeTab = 'antropometrica'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'antropometrica' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Antropométrica</button>
+        <button type="button" @click="activeTab = 'plicometria'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'plicometria' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Plicometría</button>
+        <button type="button" @click="activeTab = 'bioimpedancia'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'bioimpedancia' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Bioimpedancia</button>
+    </div>
+
+    <!-- Contenido de Tabs -->
+    <div x-show="activeTab === 'antropometrica'" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 form-group">
+                <label for="numero_cita" class="block text-sm font-medium text-gray-700">Número de cita:</label>
+                <input type="number" id="numero_cita" name="numero_cita" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ingrese el número de cita">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="estatura" class="block text-sm font-medium text-gray-700">Estatura (cm):</label>
+                <input type="number" id="estatura" name="estatura" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" oninput="calcularIMC()" placeholder="Ej: 170.0">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="peso" class="block text-sm font-medium text-gray-700">Peso (kg):</label>
+                <input type="number" id="peso" name="peso" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" oninput="calcularIMC()" placeholder="Ej: 70.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="cintura" class="block text-sm font-medium text-gray-700">Cintura (cm):</label>
+                <input type="number" id="cintura" name="cintura" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="torax" class="block text-sm font-medium text-gray-700">Tórax (cm):</label>
+                <input type="number" id="torax" name="torax" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="brazo" class="block text-sm font-medium text-gray-700">Brazo (cm):</label>
+                <input type="number" id="brazo" name="brazo" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="cadera" class="block text-sm font-medium text-gray-700">Cadera (cm):</label>
+                <input type="number" id="cadera" name="cadera" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="pierna" class="block text-sm font-medium text-gray-700">Pierna (cm):</label>
+                <input type="number" id="pierna" name="pierna" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="pantorrilla" class="block text-sm font-medium text-gray-700">Pantorrilla (cm):</label>
+                <input type="number" id="pantorrilla" name="pantorrilla" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="tension_arterial" class="block text-sm font-medium text-gray-700">Tensión arterial:</label>
+                <input type="text" id="tension_arterial" name="tension_arterial" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 120/80">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="frecuencia_cardiaca" class="block text-sm font-medium text-gray-700">Frecuencia cardíaca (lpm):</label>
+                <input type="number" id="frecuencia_cardiaca" name="frecuencia_cardiaca" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'plicometria'" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 form-group">
+                <label for="bicep" class="block text-sm font-medium text-gray-700">Bícep (mm):</label>
+                <input type="number" id="bicep" name="bicep" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="tricep" class="block text-sm font-medium text-gray-700">Trícep (mm):</label>
+                <input type="number" id="tricep" name="tricep" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="suprailiaco" class="block text-sm font-medium text-gray-700">Suprailiaco (mm):</label>
+                <input type="number" id="suprailiaco" name="suprailiaco" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="subescapular" class="block text-sm font-medium text-gray-700">Subescapular (mm):</label>
+                <input type="number" id="subescapular" name="subescapular" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="femoral" class="block text-sm font-medium text-gray-700">Femoral (mm) (solo para mujeres):</label>
+                <input type="number" id="femoral" name="femoral" step="0.1" 
+                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                       placeholder="Ej: 30.5"
+                       {% if paciente['genero'] != 'mujer' %}disabled{% endif %}>
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo si aplica.</span>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'bioimpedancia'" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 form-group">
+                <label for="grasa" class="block text-sm font-medium text-gray-700">Grasa (%):</label>
+                <input type="number" id="grasa" name="grasa" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 20.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="imc" class="block text-sm font-medium text-gray-700">IMC:</label>
+                <input type="number" id="imc" name="imc" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" readonly placeholder="Calculado automáticamente">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo se calcula automáticamente.</span>
+            </div>
+            <div class="space-y-2 form-group">
+                <label for="porcentaje_grasa" class="block text-sm font-medium text-gray-700">Grasa Total (%):</label>
+                <input type="number" id="porcentaje_grasa" name="porcentaje_grasa" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 20.5">
+                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition">Volver</a>
+        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition">Guardar Valoración</button>
+    </div>
+</form>
+
+
+
+
+
+

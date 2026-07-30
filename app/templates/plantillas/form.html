@@ -1,0 +1,39 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ 'Editar Plantilla' if plantilla else 'Nueva Plantilla' }} - WhatsApp{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="bg-white p-7 rounded-3xl border border-gray-100 shadow-sm">
+        <h1 class="text-2xl font-bold text-gray-900 mb-1">
+            {{ 'Editar Plantilla de WhatsApp' if plantilla else 'Nueva Plantilla de WhatsApp' }}
+        </h1>
+        <p class="text-sm text-gray-500 mb-6">Configura el título y el mensaje. Utiliza las variables <code class="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">{nombre}</code> y <code class="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-mono">{dias}</code>.</p>
+
+        <form action="{{ url_for('plantillas.editar', id=plantilla.id) if plantilla else url_for('plantillas.nueva') }}" method="POST" class="space-y-5">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Título de la Plantilla:</label>
+                <input type="text" name="titulo" value="{{ plantilla.titulo if plantilla else '' }}" required class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Ej. Recordatorio de Cita o Seguimiento Nutricional">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Contenido del Mensaje:</label>
+                <textarea name="contenido" rows="6" required class="w-full border border-gray-200 rounded-xl p-4 text-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Hola {nombre}, han pasado {dias} días desde tu última cita...">{{ plantilla.contenido if plantilla else '' }}</textarea>
+                <p class="text-xs text-gray-400 mt-1">Variables soportadas: <code class="text-emerald-700">{nombre}</code> (nombre del paciente), <code class="text-emerald-700">{dias}</code> (días transcurridos).</p>
+            </div>
+
+            <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <input type="checkbox" name="esta_activa" id="esta_activa" value="1" {% if plantilla and plantilla.esta_activa %}checked{% endif %} class="h-5 w-5 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                <label for="esta_activa" class="text-sm font-semibold text-gray-700 cursor-pointer">Definir como plantilla activa predeterminada</label>
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-4">
+                <a href="{{ url_for('plantillas.index') }}" class="px-6 py-3 rounded-xl text-gray-500 hover:text-gray-700 font-medium text-sm transition">Cancelar</a>
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl px-6 py-3 text-sm font-semibold shadow-sm shadow-emerald-600/20 transition">
+                    {{ 'Guardar Cambios' if plantilla else 'Crear Plantilla' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

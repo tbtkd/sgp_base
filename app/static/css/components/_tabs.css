@@ -1,0 +1,45 @@
+.form-tabs {
+    display: flex;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 1;
+    gap: 0.5rem;
+    padding: 1rem 1rem 0;
+}
+
+.form-tab {
+    padding: 1rem 2.5rem;
+    background: none;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    color: #64748b;
+    background-color: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-bottom: none;
+}
+
+.form-tab.active {
+    color: #1a56db;
+    background-color: #fff;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.form-section {
+    display: none;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    top: -1px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.form-section.active {
+    display: block;
+} 

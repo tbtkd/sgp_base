@@ -1,0 +1,175 @@
+{% extends "base/base.html" %}
+
+{% block title %}Gestión de Usuarios | SGPN{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Encabezado Principal -->
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+        <p class="text-sm text-gray-500 mt-1">Panel de control y administración de usuarios del sistema.</p>
+    </div>
+
+    <!-- Layout Grid de 2 Columnas (Estilo Dashboard de Inicio) -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        
+        <!-- COLUMNA IZQUIERDA (Span 3): Tabla de Usuarios -->
+        <div class="lg:col-span-3 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Listado de Usuarios</h3>
+                    <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Total: {{ usuarios|length }}</span>
+                </div>
+                <div class="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-left relative">
+                        <thead class="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Nombre Completo</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Usuario</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Rol</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Cédula</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Estatus</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for u in usuarios %}
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    {{ u.nombre or '' }} {{ u.apellido_paterno or '' }} {{ u.apellido_materno or '' }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">@{{ u.username }}</td>
+                                <td class="px-6 py-4 text-sm">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if u.rol == 'nutriologa' %}bg-teal-50 text-teal-700 border border-teal-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %} capitalize">
+                                        {{ u.rol }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ u.cedula_profesional or 'N/A' }}</td>
+                                <td class="px-6 py-4 text-sm">
+                                    {% set estatus_actual = u.status if u.status else 'activo' %}
+                                    <span id="status-badge-{{ u.id }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if estatus_actual == 'activo' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %} capitalize">
+                                        {{ estatus_actual }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{{ url_for('auth.editar_usuario', id=u.id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium transition" title="Editar">
+                                            <i class="fas fa-pencil-alt"></i> Editar
+                                        </a>
+                                        {% if u.id != current_user.id %}
+                                        <button onclick="cambiarEstatus('{{ u.id }}')" id="btn-status-{{ u.id }}" class="inline-flex items-center px-3 py-1.5 {% if estatus_actual == 'activo' %}bg-red-50 hover:bg-red-100 text-red-700{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-700{% endif %} rounded-lg text-xs font-medium transition">
+                                            {% if estatus_actual == 'activo' %}Inhabilitar{% else %}Habilitar{% endif %}
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm">No hay usuarios registrados en el sistema.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA (Span 1): Panel de Control Lateral -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Tarjeta 1: Resumen -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-800">Resumen</h2>
+                
+                <!-- Métrica Total -->
+                <div class="bg-teal-50/60 border border-teal-100 p-4 rounded-xl">
+                    <span class="text-xs font-medium text-teal-800 uppercase tracking-wider block">Total Usuarios</span>
+                    <span class="text-2xl font-bold text-teal-900 mt-1 block">{{ usuarios|length }}</span>
+                </div>
+
+                <!-- Métrica Activos -->
+                {% set total_activos = namespace(count=0) %}
+                {% for u in usuarios %}
+                    {% if not u.status or u.status == 'activo' %}
+                        {% set total_activos.count = total_activos.count + 1 %}
+                    {% endif %}
+                {% endfor %}
+                <div class="bg-blue-50/60 border border-blue-100 p-4 rounded-xl">
+                    <span class="text-xs font-medium text-blue-800 uppercase tracking-wider block">Usuarios Activos</span>
+                    <span id="contadorUsuariosActivos" class="text-2xl font-bold text-blue-900 mt-1 block">{{ total_activos.count }}</span>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Acciones Rápidas -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-800">Acciones Rápidas</h2>
+                
+                <a href="{{ url_for('auth.registrar_usuario') }}" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 transition-colors">
+                    <i class="fas fa-user-plus"></i>
+                    <span>+ Registrar Usuario</span>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+function cambiarEstatus(id) {
+    confirmarAccion({
+        titulo: '¿Cambiar estatus de usuario?',
+        mensaje: '¿Estás seguro de que deseas modificar el estatus de este usuario en el sistema?',
+        textoConfirmar: 'Sí, cambiar',
+        textoCancelar: 'Cancelar',
+        icono: 'question'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        
+        fetch(`/usuarios/${id}/cambiar-estatus`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const badge = document.getElementById(`status-badge-${id}`);
+                const btn = document.getElementById(`btn-status-${id}`);
+                
+                if (data.nuevo_estado === 'activo') {
+                    badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 capitalize';
+                    badge.textContent = 'activo';
+                    if (btn) {
+                        btn.className = 'inline-flex items-center px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-medium transition';
+                        btn.textContent = 'Inhabilitar';
+                    }
+                } else {
+                    badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200 capitalize';
+                    badge.textContent = 'inactivo';
+                    if (btn) {
+                        btn.className = 'inline-flex items-center px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium transition';
+                        btn.textContent = 'Habilitar';
+                    }
+                }
+
+                if (data.usuarios_activos !== undefined) {
+                    const contadorActivosEl = document.getElementById('contadorUsuariosActivos');
+                    if (contadorActivosEl) {
+                        contadorActivosEl.textContent = data.usuarios_activos;
+                    }
+                }
+            } else {
+                alert(data.error || 'Error al cambiar el estatus');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de conexión al cambiar el estatus.');
+        });
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base/base.html" %}
+
+{% block title %}Detalle de Valoración - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
+
+{% block content %}
+<div class="max-w-8xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/" class="hover:text-teal-600">Inicio</a> / 
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="hover:text-teal-600">Pacientes</a> / 
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="hover:text-teal-600">{{ paciente['nombre'] }}</a> / 
+        <span class="text-gray-900 font-medium">Cita #{{ valoracion['numero_cita'] }}</span>
+    </nav>
+
+    <!-- Encabezado -->
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Detalle de Valoración</h1>
+            <p class="text-gray-600 mt-1">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
+        </div>
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition-colors">
+            ← Volver al Detalle del Paciente
+        </a>
+    </div>
+
+    <!-- Barra Compacta de Información -->
+    {% include 'valoraciones/partials/_info_general.html' %}
+
+    <!-- Mapa Antropométrico -->
+    {% include 'valoraciones/partials/_mapa_antropometrico.html' %}
+
+    <!-- Historial -->
+    {% include 'valoraciones/partials/_historial_valoraciones.html' %}
+</div>
+{% endblock %}

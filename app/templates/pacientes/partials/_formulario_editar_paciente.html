@@ -1,0 +1,100 @@
+<form id="form-editar-paciente" action="{{ url_for('pacientes.editar_paciente', id=paciente['id']) }}" method="POST" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Nombre -->
+        <div class="space-y-2">
+            <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required
+                   pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                   onkeypress="return (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122) || event.charCode == 32 || event.charCode == 225 || event.charCode == 233 || event.charCode == 237 || event.charCode == 243 || event.charCode == 250 || event.charCode == 193 || event.charCode == 201 || event.charCode == 205 || event.charCode == 211 || event.charCode == 218 || event.charCode == 241 || event.charCode == 209"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="Nombre(s)"
+                   value="{{ paciente['nombre'] }}">
+        </div>
+
+        <!-- Apellido Paterno -->
+        <div class="space-y-2">
+            <label for="apellido_paterno" class="block text-sm font-medium text-gray-700">Apellido Paterno</label>
+            <input type="text" id="apellido_paterno" name="apellido_paterno" required
+                   pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                   onkeypress="return (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122) || event.charCode == 32 || event.charCode == 225 || event.charCode == 233 || event.charCode == 237 || event.charCode == 243 || event.charCode == 250 || event.charCode == 193 || event.charCode == 201 || event.charCode == 205 || event.charCode == 211 || event.charCode == 218 || event.charCode == 241 || event.charCode == 209"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="Apellido paterno"
+                   value="{{ paciente['apellido_paterno'] }}">
+        </div>
+
+        <!-- Apellido Materno -->
+        <div class="space-y-2">
+            <label for="apellido_materno" class="block text-sm font-medium text-gray-700">Apellido Materno</label>
+            <input type="text" id="apellido_materno" name="apellido_materno" required
+                   pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                   onkeypress="return (event.charCode >= 65 && event.charCode <= 90) || (event.charCode >= 97 && event.charCode <= 122) || event.charCode == 32 || event.charCode == 225 || event.charCode == 233 || event.charCode == 237 || event.charCode == 243 || event.charCode == 250 || event.charCode == 193 || event.charCode == 201 || event.charCode == 205 || event.charCode == 211 || event.charCode == 218 || event.charCode == 241 || event.charCode == 209"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="Apellido materno"
+                   value="{{ paciente['apellido_materno'] }}">
+        </div>
+
+        <!-- Género -->
+        <div class="space-y-2">
+            <label for="genero" class="block text-sm font-medium text-gray-700">Género</label>
+            <select id="genero" name="genero" required
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                <option value="hombre" {% if paciente['genero'] == 'hombre' %}selected{% endif %}>Hombre</option>
+                <option value="mujer" {% if paciente['genero'] == 'mujer' %}selected{% endif %}>Mujer</option>
+            </select>
+        </div>
+
+        <!-- Fecha de Nacimiento -->
+        <div class="space-y-2">
+            <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" required
+                   min="1900-01-01"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   value="{{ paciente['fecha_nacimiento'] }}">
+        </div>
+
+        <!-- Teléfono -->
+        <div class="space-y-2">
+            <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+            <input type="tel" id="telefono" name="telefono" required maxlength="10" pattern="[0-9]{10}"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="10 dígitos"
+                   value="{{ paciente['telefono'] }}">
+        </div>
+
+        <!-- Correo -->
+        <div class="space-y-2">
+            <label for="correo" class="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+            <input type="email" id="correo" name="correo" required
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="ejemplo@correo.com"
+                   value="{{ paciente['correo'] }}">
+        </div>
+
+        <!-- Ciudad -->
+        <div class="space-y-2">
+            <label for="ciudad" class="block text-sm font-medium text-gray-700">Ciudad</label>
+            <input type="text" id="ciudad" name="ciudad" required
+                   class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
+                   placeholder="Ciudad de residencia"
+                   value="{{ paciente['ciudad'] }}">
+        </div>
+
+        <!-- Estatus -->
+        <div class="space-y-2">
+            <label for="status" class="block text-sm font-medium text-gray-700">Estado</label>
+            <select id="status" name="status" required
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
+                <option value="activo" {% if paciente['status'] == 'activo' %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if paciente['status'] == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition">Cancelar</a>
+        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition">
+            Guardar Cambios
+        </button>
+    </div>
+</form>

@@ -1,0 +1,32 @@
+<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6" 
+     x-data="{ 
+        ultima_valoracion: {{ valoracion.to_dict()|tojson }}, 
+        valoracion_anterior: {{ valoracion_anterior.to_dict()|tojson if valoracion_anterior else 'null' }} 
+     }">
+    
+    <!-- Encabezado -->
+    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+        👤 Mapa Antropométrico
+    </h3>
+
+    <!-- Barra de Comparativa vs Consulta Anterior -->
+    {% if valoracion_anterior %}
+    <div class="bg-teal-50/60 p-3 rounded-xl border border-teal-100 flex items-center justify-between text-xs text-teal-800 font-medium">
+        <span>📊 Comparativa vs Consulta Anterior ({{ valoracion_anterior.fecha|format_date }})</span>
+        <div class="flex gap-4">
+            <span>Peso: {{ (valoracion.peso|float - valoracion_anterior.peso|float)|round(1) }} kg</span>
+            <span>% Grasa: {{ (valoracion.porcentaje_grasa|float - valoracion_anterior.porcentaje_grasa|float)|round(1) }}%</span>
+            <span>Cintura: {{ (valoracion.cintura|float - valoracion_anterior.cintura|float)|round(1) }} cm</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ÁREA DEL MAPA EXPANDIDO -->
+    <div class="w-full flex justify-center items-center py-4">
+        <div class="relative w-full max-w-auto">
+            {% with ultima_valoracion=valoracion, valoracion_anterior=valoracion_anterior %}
+                {% include 'components/body_map.html' %}
+            {% endwith %}
+        </div>
+    </div>
+</div>

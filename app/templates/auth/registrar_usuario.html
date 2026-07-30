@@ -1,0 +1,17 @@
+{% extends "base/base.html" %}
+
+{% block title %}Registrar Usuario | SGPN{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900" align="center">Registrar Nuevo Usuario</h1>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        {% include 'auth/partials/_formulario_usuario.html' %}
+    </div>
+</div>
+{% endblock %}

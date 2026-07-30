@@ -1,0 +1,54 @@
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shadow-sm">
+    <!-- Left: Hamburger & Page Title -->
+    <div class="flex items-center gap-4">
+        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-500 hover:text-slate-700 focus:outline-none">
+            <i class="fas fa-bars text-xl"></i>
+        </button>
+        <div>
+            <h1 class="text-lg font-bold text-slate-800">{% block header_title %}Panel Principal{% endblock %}</h1>
+            <p class="text-xs text-slate-500 hidden sm:block">{% block header_subtitle %}Gestión y seguimiento clínico nutricional{% endblock %}</p>
+        </div>
+    </div>
+
+    <!-- Right: Quick Actions & User Dropdown -->
+    <div class="flex items-center gap-4">
+        <!-- Quick Action Button -->
+        <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium shadow-md shadow-teal-600/20 transition-all">
+            <i class="fas fa-user-plus"></i>
+            <span>Nuevo Paciente</span>
+        </a>
+
+        <!-- User Profile Dropdown (Alpine.js) -->
+        <div class="relative" x-data="{ open: false }">
+            <button @click="open = !open" class="flex items-center gap-3 focus:outline-none p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+                <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center border border-teal-200">
+                    {{ current_user.username[0]|upper if current_user.is_authenticated else 'U' }}
+                </div>
+                <div class="text-left hidden md:block">
+                    <span class="block text-sm font-semibold text-slate-700 leading-tight">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</span>
+                    <span class="block text-xs text-slate-500">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</span>
+                </div>
+                <i class="fas fa-chevron-down text-xs text-slate-400 ml-1"></i>
+            </button>
+
+            <!-- Dropdown Menu -->
+            <div x-show="open" @click.away="open = false" 
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                <div class="px-4 py-2 border-b border-slate-100 md:hidden">
+                    <p class="text-sm font-semibold text-slate-800">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</p>
+                    <p class="text-xs text-teal-600 font-medium">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</p>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
+                    <i class="fas fa-sign-out-alt w-4"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>

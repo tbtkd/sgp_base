@@ -1,0 +1,38 @@
+/* Tokens de Diseño y Marca Blanca */
+:root {
+  --color-primary: 13 148 136;       /* Teal-600 */
+  --color-primary-hover: 15 118 110; /* Teal-700 */
+  --color-secondary: 71 85 105;      /* Slate-600 */
+  --color-accent: 16 185 129;        /* Emerald-500 */
+  --color-warning: 245 158 11;       /* Amber-500 */
+  --color-danger: 239 68 68;         /* Red-500 */
+  --color-bg-app: 248 250 252;       /* Slate-50 */
+  --color-surface: 255 255 255;      /* White */
+}
+
+body {
+  background-color: rgb(var(--color-bg-app));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+/* Transiciones suaves */
+.transition-base {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

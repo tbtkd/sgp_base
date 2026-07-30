@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema de Pacientes{% endblock %}</title>
+    <title>{% block title %}Sistema de Gestión Nutricional{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='img/icons/logo.ico') }}" type="image/x-icon">
+    <!-- Component CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_forms.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tables.css') }}">
@@ -12,91 +13,106 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_cards.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tabs.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_modal.css') }}">
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- SweetAlert2 CDN y Helper Global -->
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- SweetAlert2 CDN & Helper -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ url_for('static', filename='js/alertas.js') }}"></script>
-
+    <!-- Custom Theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    {% block extra_css %}{% endblock %}
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex" x-data="{ sidebarOpen: true }">
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: false }">
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        {% include 'components/_sidebar.html' %}
 
-    <!-- 2. ESTRUCTURA DEL SIDEBAR FIJO -->
-    <aside :class="sidebarOpen ? 'w-64' : 'w-20'" class="h-screen sticky top-0 bg-white border-r border-gray-100 flex flex-col justify-between flex-shrink-0 transition-all duration-300 z-30">
+        <!-- Main Wrapper -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shadow-sm">
+                <!-- Left: Hamburger & Page Title -->
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-500 hover:text-slate-700 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-800">{% block page_title %}Panel Principal{% endblock %}</h1>
+                        <p class="text-xs text-slate-500 hidden sm:block">{% block page_subtitle %}Gestión y seguimiento clínico nutricional{% endblock %}</p>
+                    </div>
+                </div>
 
-        <!-- A. CABECERA DEL SIDEBAR -->
-        <div class="p-4 flex items-center justify-between border-b border-gray-50">
-            <div class="flex items-center gap-3 overflow-hidden">
-                <img src="{{ url_for('static', filename='img/logos/logo.png') }}" alt="Logo" class="h-8 w-auto" x-show="sidebarOpen">
-                <img src="{{ url_for('static', filename='img/icons/logo.ico') }}" alt="Logo" class="h-8 w-auto" x-show="!sidebarOpen">
-            </div>
-            <!-- Botón Toggle -->
-            <button @click="sidebarOpen = !sidebarOpen" title="Alternar menú" class="p-2 text-gray-500 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-all duration-200 flex items-center justify-center">
-                <svg class="w-5 h-5 transition-transform duration-300" :class="{ 'rotate-180': !sidebarOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16M15 9l-3 3 3 3"></path>
-                </svg>
-            </button>
-        </div>
+                <!-- Right: User Dropdown -->
+                <div class="flex items-center gap-4">
+                    <!-- User Profile Dropdown (Alpine.js) -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center gap-3 focus:outline-none p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+                            <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center border border-teal-200">
+                                {{ current_user.username[0]|upper if current_user.is_authenticated else 'U' }}
+                            </div>
+                            <div class="text-left hidden md:block">
+                                <span class="block text-sm font-semibold text-slate-700 leading-tight">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</span>
+                                <span class="block text-xs text-slate-500">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs text-slate-400 ml-1"></i>
+                        </button>
 
-        <!-- B. MENÚ DE NAVEGACIÓN -->
-        <nav class="flex-1 overflow-y-auto p-3 space-y-1">
-            <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fas fa-th-large text-lg"></i>
-                <span x-show="sidebarOpen" class="font-medium text-sm">Inicio</span>
-            </a>
-            {% if current_user.is_authenticated and current_user.rol in ['Admin', 'Nutricionista'] %}
-            <a href="{{ url_for('plantillas.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fas fa-comment-dots text-lg"></i>
-                <span x-show="sidebarOpen" class="font-medium text-sm">Plantillas de Mensajes</span>
-            </a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.rol in ['Admin', 'Nutricionista'] %}
-            <a href="{{ url_for('auth.lista_usuarios') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-teal-50 hover:text-teal-700 transition-colors">
-                <i class="fas fa-users text-lg"></i>
-                <span x-show="sidebarOpen" class="font-medium text-sm">Gestión de Usuarios</span>
-            </a>
-            {% endif %}
-        </nav>
-
-        <!-- C. FOOTER DEL SIDEBAR -->
-        <div class="p-3 border-t border-gray-100 bg-white">
-            <a href="{{ url_for('auth.logout') }}" class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 font-medium text-sm transition-all duration-200">
-                <svg class="w-5 h-5 text-red-500 group-hover:text-red-700 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                <span x-show="sidebarOpen" class="truncate">Salir</span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- 3. CONTENIDO PRINCIPAL DERECHO -->
-    <div class="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
-<main class="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div x-data="{ show: true }" 
-                             x-show="show" 
-                             x-init="setTimeout(() => show = false, 5000)" 
-                             x-transition:leave="transition ease-in duration-300"
-                             x-transition:leave-start="opacity-100 scale-100"
-                             x-transition:leave-end="opacity-0 scale-95"
-                             class="mb-6 p-4 rounded-xl {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}" 
-                             x-cloak>
-                            {{ message }}
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false" 
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                            <div class="px-4 py-2 border-b border-slate-100 md:hidden">
+                                <p class="text-sm font-semibold text-slate-800">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</p>
+                                <p class="text-xs text-teal-600 font-medium">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</p>
+                            </div>
+                            <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
+                                <i class="fas fa-sign-out-alt w-4"></i>
+                                <span>Cerrar Sesión</span>
+                            </a>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            {% block content %}{% endblock %}
-        </main>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-6 space-y-2">
+                            {% for category, message in messages %}
+                                <div class="flash-alert p-4 rounded-xl text-sm font-medium shadow-sm border {% if category == 'error' %}bg-red-50 text-red-700 border-red-200{% elif category == 'success' %}bg-teal-50 text-teal-700 border-teal-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %} flex items-center justify-between">
+                                    <span>{{ message }}</span>
+                                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
     </div>
 
+    <!-- App JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

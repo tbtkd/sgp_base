@@ -5,19 +5,13 @@
             <i class="fas fa-bars text-xl"></i>
         </button>
         <div>
-            <h1 class="text-lg font-bold text-slate-800">{% block header_title %}Panel Principal{% endblock %}</h1>
-            <p class="text-xs text-slate-500 hidden sm:block">{% block header_subtitle %}Gestión y seguimiento clínico nutricional{% endblock %}</p>
+            <h1 class="text-lg font-bold text-slate-800">{% block page_title %}Panel Principal{% endblock %}</h1>
+            <p class="text-xs text-slate-500 hidden sm:block">{% block page_subtitle %}Gestión y seguimiento clínico nutricional{% endblock %}</p>
         </div>
     </div>
 
-    <!-- Right: Quick Actions & User Dropdown -->
+    <!-- Right: User Dropdown -->
     <div class="flex items-center gap-4">
-        <!-- Quick Action Button -->
-        <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium shadow-md shadow-teal-600/20 transition-all">
-            <i class="fas fa-user-plus"></i>
-            <span>Nuevo Paciente</span>
-        </a>
-
         <!-- User Profile Dropdown (Alpine.js) -->
         <div class="relative" x-data="{ open: false }">
             <button @click="open = !open" class="flex items-center gap-3 focus:outline-none p-1.5 rounded-xl hover:bg-slate-100 transition-colors">

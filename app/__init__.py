@@ -132,6 +132,10 @@ def create_app(config_name=None):
         
         db_orm.create_all()
 
+        # Ejecutar seed de administrador
+        from seed_admin import seed_admin
+        seed_admin()
+
         # 2. Inspección y migración automática de columnas faltantes en tablas existentes
         try:
             inspector = db_orm.inspect(db_orm.engine)

@@ -3,12 +3,6 @@
 {% block title %}Dashboard - {{ current_user.nombre_completo if current_user.is_authenticated else '' }} Nutrición{% endblock %}
 
 {% block content %}
-<!-- 1. ENCABEZADO SUPERIOR -->
-<header class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Bienvenido, <span class="text-teal-700">{{ current_user.nombre_completo if current_user.is_authenticated else 'Invitado' }}</span></h1>
-    <p class="text-gray-600 mt-1">Panel de control clínico - Resumen del sistema</p>
-</header>
-
 <!-- 1. SECCIÓN SUPERIOR: TARJETAS KPI -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <!-- Card 1: Total Pacientes -->

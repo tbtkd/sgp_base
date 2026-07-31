@@ -9,7 +9,7 @@ plantillas_bp = Blueprint('plantillas', __name__, url_prefix='/plantillas-mensaj
 @login_required
 def index():
     plantillas = PlantillaMensaje.query.all()
-    return render_template('plantillas/index.html', plantillas=plantillas)
+    return render_template('plantillas/whatsapp.html', plantillas=plantillas)
 
 @plantillas_bp.route('/nueva', methods=['GET', 'POST'])
 @login_required

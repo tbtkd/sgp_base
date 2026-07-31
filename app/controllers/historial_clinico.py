@@ -58,5 +58,5 @@ def ver_crear_historial(paciente_id):
 
 @historial_clinico.route('/')
 def lista_historiales():
-    historiales = HistorialClinico.obtener_todos()
+    historiales = HistorialClinico.query.all()
     return render_template('historiales/lista_historiales.html', historiales=historiales)

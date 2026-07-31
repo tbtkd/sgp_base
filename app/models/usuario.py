@@ -11,7 +11,7 @@ class Usuario(db_orm.Model, UserMixin):
     nombre = db_orm.Column(db_orm.String(50), nullable=True)
     email = db_orm.Column(db_orm.String(120), nullable=True)
     cedula_profesional = db_orm.Column(db_orm.String(30), nullable=True)
-    rol = db_orm.Column(db_orm.String(20), default='nutriologa')
+    rol = db_orm.Column(db_orm.String(20), default='Nutricionista')
     apellido_paterno = db_orm.Column(db_orm.String(50), nullable=True)
     apellido_materno = db_orm.Column(db_orm.String(50), nullable=True)
     status = db_orm.Column(db_orm.String(20), default='activo')

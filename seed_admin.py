@@ -12,7 +12,7 @@ def seed_admin():
             
             # Verificar si ya existe un usuario con email 'admin@sistema.local' o username 'admin'
             admin_existente = Usuario.query.filter(
-                (Usuario.email == 'admin@sistema.local') | (Usuario.username == 'admin')
+                (Usuario.email == 'sadmin@sistema.local') | (Usuario.username == 'sadmin')
             ).first()
 
             if admin_existente:
@@ -21,7 +21,7 @@ def seed_admin():
                 return
 
             nuevo_admin = Usuario(
-                username="admin",
+                username="sadmin",
                 email="admin@sistema.local",
                 nombre="Administrador Sistema",
                 apellido_paterno="",
@@ -33,7 +33,7 @@ def seed_admin():
             db_orm.session.add(nuevo_admin)
             db_orm.session.commit()
             print("[EXITO] ¡Usuario Administrador creado correctamente mediante seed_admin.py!")
-            print("        Email / Usuario: admin / admin@sistema.local")
+            print("        Email / Usuario: sadmin / admin@sistema.local")
             print("        Password:        Admin123*")
             print("        Rol:             Admin")
         except Exception as e:

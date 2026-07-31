@@ -8,7 +8,7 @@ El sistema sigue un patrón modular basado en **MVC (Modelo-Vista-Controlador)**
 - **Vistas (`app/templates/`):** Plantillas Jinja2 organizadas por dominios (`pacientes/`, `valoraciones/`, `citas/`, `auth/`, `base/`, `dashboard/`), utilizando subcarpetas `partials/` y `tabs/` para componentes reutilizables.
 
 ## 2. Esquema de Base de Datos y ORM
-- **Base de datos:** SQLite (`instance/sgpn_nutricion.db`).
+- **Base de datos:** SQLite (`instance/sgpca.db`).
 - **ORM:** Flask-SQLAlchemy con gestión explícita de sesiones (`db.session.add`, `commit`, `rollback` en bloques `try/except`).
 - **Relaciones principales:**
   - `Paciente` (1) -> (N) `ValoracionAntropometrica`

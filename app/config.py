@@ -20,7 +20,7 @@ class DevelopmentConfig(Config):
     """Configuración de desarrollo"""
     DEBUG = True
     SESSION_COOKIE_SECURE = False  # Permitir HTTP en desarrollo
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///sgpn_nutricion.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///sgpca_dev.db'
     # LOG_LEVEL = 'DEBUG' 
     # TODO: Descomentar para habilitar logging en desarrollo
     

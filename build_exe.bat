@@ -40,9 +40,9 @@ if not exist "app\static\img\icons\logo.ico" (
 
 :: Validar si la base de datos existe en instance; si no, crear la carpeta vacía o advertir/crearla
 if not exist "instance" mkdir instance
-if not exist "instance\sgpn_nutricion.db" (
-    echo [ADVERTENCIA] No se encontro 'instance\sgpn_nutricion.db'. Se creara un archivo base vacio para empaquetar.
-    type nul > "instance\sgpn_nutricion.db"
+if not exist "instance\sgpca.db" (
+    echo [ADVERTENCIA] No se encontro 'instance\sgpca.db'. Se creara un archivo base vacio para empaquetar.
+    type nul > "instance\sgpca.db"
 )
 
 :: 3. Limpieza de carpetas y archivos temporales previos
@@ -67,7 +67,7 @@ echo.
 pyinstaller --noconfirm --onefile --console ^
   --add-data "app/templates;app/templates" ^
   --add-data "app/static;app/static" ^
-  --add-data "instance/sgpn_nutricion.db;instance" ^
+  --add-data "instance/sgpca.db;instance" ^
   --icon="app/static/img/icons/logo.ico" ^
   --name "SistemaPacientes" run.py
 

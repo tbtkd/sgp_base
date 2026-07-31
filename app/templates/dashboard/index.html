@@ -1,155 +1,154 @@
-{% extends 'base.html' %}
+{% extends "base/base.html" %}
 
-{% block title %}Dashboard | NutriClinica{% endblock %}
-{% block header_title %}Panel Principal{% endblock %}
-{% block header_subtitle %}Resumen general de pacientes y actividad clínica{% endblock %}
+{% block title %}Dashboard - {{ current_user.nombre_completo if current_user.is_authenticated else '' }} Nutrición{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Tarjetas de Estadísticas Principales -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Total Pacientes -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Total Pacientes</p>
-                <h3 class="text-3xl font-bold text-slate-900">{{ total_pacientes | default(0) }}</h3>
-                <span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full mt-2 inline-block">Registrados</span>
-            </div>
-            <div class="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fas fa-users"></i>
-            </div>
-        </div>
+<!-- 1. ENCABEZADO SUPERIOR -->
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Bienvenido, <span class="text-teal-700">{{ current_user.nombre_completo if current_user.is_authenticated else 'Invitado' }}</span></h1>
+    <p class="text-gray-600 mt-1">Panel de control clínico - Resumen del sistema</p>
+</header>
 
-        <!-- Valoraciones Antropométricas -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Valoraciones</p>
-                <h3 class="text-3xl font-bold text-slate-900">{{ total_valoraciones | default(0) }}</h3>
-                <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Historial</span>
-            </div>
-            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fas fa-weight"></i>
-            </div>
+<!-- 1. SECCIÓN SUPERIOR: TARJETAS KPI -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <!-- Card 1: Total Pacientes -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-slate-500 mb-1">Total Pacientes</p>
+            <h3 class="text-2xl font-bold text-slate-900">{{ total_pacientes | default(0) }}</h3>
+            <span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full mt-2 inline-block">Registrados</span>
         </div>
-
-        <!-- Historiales Clínicos -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Expedientes</p>
-                <h3 class="text-3xl font-bold text-slate-900">{{ total_historiales | default(0) }}</h3>
-                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mt-2 inline-block">Clínicos</span>
-            </div>
-            <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fas fa-file-medical"></i>
-            </div>
-        </div>
-
-        <!-- Plantillas de Mensajes -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Plantillas</p>
-                <h3 class="text-3xl font-bold text-slate-900">{{ total_plantillas | default(0) }}</h3>
-                <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-2 inline-block">WhatsApp / SMS</span>
-            </div>
-            <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fas fa-envelope-open-text"></i>
-            </div>
+        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
+            <i class="fas fa-users"></i>
         </div>
     </div>
-
-    <!-- Sección de Accesos Rápidos y Actividad Reciente -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Accesos Rápidos -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1">
-            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <i class="fas fa-bolt text-teal-600"></i>
-                <span>Accesos Rápidos</span>
-            </h2>
-            <div class="space-y-3">
-                <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-teal-50 hover:text-teal-700 text-slate-700 font-medium transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <span>Registrar Nuevo Paciente</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-xs text-slate-400"></i>
-                </a>
-
-                <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-medium transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                            <i class="fas fa-weight"></i>
-                        </div>
-                        <span>Ver Valoraciones Antropométricas</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-xs text-slate-400"></i>
-                </a>
-
-                <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-medium transition-colors group">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <i class="fas fa-file-medical"></i>
-                        </div>
-                        <span>Gestionar Historiales Clínicos</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-xs text-slate-400"></i>
-                </a>
-            </div>
+    <!-- Card 2: Valoraciones -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-slate-500 mb-1">Valoraciones</p>
+            <h3 class="text-2xl font-bold text-slate-900">{{ total_valoraciones | default(0) }}</h3>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Historial</span>
         </div>
-
-        <!-- Pacientes Recientes -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-user-clock text-teal-600"></i>
-                    <span>Pacientes Recientes</span>
-                </h2>
-                <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="text-sm font-medium text-teal-600 hover:text-teal-700">Ver todos</a>
-            </div>
-
-            {% if pacientes_recientes %}
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-slate-700 uppercase text-xs font-semibold">
-                            <tr>
-                                <th class="px-4 py-3 rounded-l-xl">Nombre</th>
-                                <th class="px-4 py-3">Teléfono</th>
-                                <th class="px-4 py-3">Email</th>
-                                <th class="px-4 py-3 rounded-r-xl text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            {% for p in pacientes_recientes %}
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="px-4 py-3 font-medium text-slate-900">{{ p.nombre }} {{ p.apellido }}</td>
-                                <td class="px-4 py-3">{{ p.telefono or 'N/D' }}</td>
-                                <td class="px-4 py-3">{{ p.email or 'N/D' }}</td>
-                                <td class="px-4 py-3 text-right">
-                                    <a href="{{ url_for('pacientes.detalle_paciente', id=p.id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-lg text-xs font-medium transition-colors">
-                                        <i class="fas fa-eye"></i>
-                                        <span>Expediente</span>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl">
-                        <i class="fas fa-users-slash"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-600 mb-1">No hay pacientes registrados aún</p>
-                    <p class="text-xs text-slate-400 mb-4">Comienza agregando tu primer paciente al sistema.</p>
-                    <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-medium shadow-md shadow-teal-600/20 transition-all">
-                        <i class="fas fa-user-plus"></i>
-                        <span>Registrar Paciente</span>
-                    </a>
-                </div>
-            {% endif %}
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+            <i class="fas fa-weight"></i>
+        </div>
+    </div>
+    <!-- Card 3: Expedientes -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-slate-500 mb-1">Expedientes</p>
+            <h3 class="text-2xl font-bold text-slate-900">{{ total_historiales | default(0) }}</h3>
+            <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mt-2 inline-block">Clínicos</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+            <i class="fas fa-file-medical"></i>
+        </div>
+    </div>
+    <!-- Card 4: Plantillas -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-slate-500 mb-1">Plantillas</p>
+            <h3 class="text-2xl font-bold text-slate-900">{{ total_plantillas | default(0) }}</h3>
+            <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-2 inline-block">WhatsApp / SMS</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+            <i class="fas fa-envelope-open-text"></i>
         </div>
     </div>
 </div>
+
+<!-- 2. SECCIÓN INTERMEDIA: REORGANIZADA -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- COLUMNA IZQUIERDA: Accesos Rápidos -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-bolt text-teal-600"></i> Accesos Rápidos</h2>
+            <div class="space-y-3">
+                <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-700 transition-colors"><i class="fas fa-user-plus"></i> Registrar Nuevo Paciente</a>
+                <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 transition-colors"><i class="fas fa-weight"></i> Ver Valoraciones</a>
+                <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-colors"><i class="fas fa-file-medical"></i> Gestionar Historiales</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: Panel de pestañas -->
+    <div class="lg:col-span-2 space-y-6" x-data="{ tab: 'valoraciones' }">
+        <div class="bg-white p-7 rounded-2xl shadow-sm border border-gray-100">
+            <div class="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+                <div class="flex gap-6">
+                    <button @click="tab = 'valoraciones'" :class="tab === 'valoraciones' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition">📅 Pacientes del Día</button>
+                    <button @click="tab = 'reagendamiento'" :class="tab === 'reagendamiento' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition flex items-center gap-2">⏳ Pendiente de Agendar {% if pendientes_por_agendar|length > 0 %}<span class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pendientes_por_agendar|length }}</span>{% endif %}</button>
+                    <button @click="tab = 'seguimiento'" :class="tab === 'seguimiento' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'" class="pb-2 font-semibold transition flex items-center gap-2">⚠️ Sin Valoración (>30 días) {% if pacientes_sin_valoracion|length > 0 %}<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pacientes_sin_valoracion|length }}</span>{% endif %}</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
+                <div x-show="tab === 'valoraciones'">{% include 'dashboard/tabs/_tab_pacientes_dia.html' %}</div>
+                <div x-show="tab === 'reagendamiento'" style="display: none;" x-cloak>{% include 'dashboard/tabs/_tab_reagendamiento.html' %}</div>
+                <div x-show="tab === 'seguimiento'" style="display: none;" x-cloak>{% include 'dashboard/tabs/_tab_sin_valoracion.html' %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. SECCIÓN INFERIOR: SEGUIMIENTO Y ACOMPAÑAMIENTO INTERMEDIO (14-15 DÍAS) -->
+<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+        <h3 class="text-lg font-bold text-gray-900">💬 Acompañamiento Intermedio (14-15 Días) {% if seguimiento_14_15|length > 0 %}<span class="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-semibold">{{ seguimiento_14_15|length }}</span>{% endif %}</h3>
+    </div>
+    {% if seguimiento_14_15|length > 0 %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead><tr class="text-xs uppercase text-gray-400 border-b border-gray-100 tracking-wider"><th class="py-3 px-4 font-semibold">Paciente</th><th class="py-3 px-4 font-semibold">Última Valoración</th><th class="py-3 px-4 font-semibold">Tiempo</th><th class="py-3 px-4 font-semibold text-right">Acción</th></tr></thead>
+            <tbody class="divide-y divide-gray-50 text-sm">
+                {% for val in seguimiento_14_15 %}
+                {% set dias = (datetime.now().date() - val.fecha).days %}
+                <tr id="row-val-{{ val.id }}" class="hover:bg-gray-50/50 transition">
+                    <td class="py-3.5 px-4 font-medium text-gray-900">{{ val.paciente.nombre_completo if val.paciente else 'Paciente Desconocido' }}</td>
+                    <td class="py-3.5 px-4 text-gray-600">{{ val.fecha.strftime('%d %b, %Y') }}</td>
+                    <td class="py-3.5 px-4"><span class="bg-{{ 'amber' if dias >= 15 else 'teal' }}-100 text-{{ 'amber' if dias >= 15 else 'teal' }}-800 text-xs px-2.5 py-1 rounded-full font-medium">{{ dias }} días</span></td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="omitirSeguimiento('{{ val.id }}')" class="text-gray-400 hover:text-amber-600 bg-gray-50 hover:bg-amber-50 p-2 rounded-xl transition border border-gray-200"><i class="fas fa-clock text-xs"></i></button>
+                            <button onclick="abrirModalWhatsApp('{{ val.id }}', '{{ val.paciente.telefono if val.paciente else '' }}', '{{ val.paciente.nombre if val.paciente else 'Paciente' }}', '{{ dias }}')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm transition"><i class="fab fa-whatsapp text-sm"></i> Enviar WhatsApp</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="py-8 text-center text-gray-400 text-sm">No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.</div>
+    {% endif %}
+</div>
+
+<!-- MODALES (Omitir y WhatsApp) -->
+<div id="modalOmitirSeguimiento" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 space-y-5">
+        <h3 class="text-lg font-bold text-gray-900">Omitir o Posponer Seguimiento</h3>
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+            <button type="button" onclick="cerrarModalOmitir()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs">Cancelar</button>
+            <button type="button" onclick="confirmarOmitirSeguimiento()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs">Aceptar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalWhatsApp" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-5">
+        <h3 class="text-base font-bold text-gray-900">Enviar Seguimiento por WhatsApp</h3>
+        <textarea id="modalMensajeTexto" rows="5" class="w-full rounded-2xl bg-gray-50 border border-gray-200 p-4 text-sm"></textarea>
+        <div class="flex items-center justify-between pt-2">
+            <button type="button" onclick="copiarTextoModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100">Copiar texto</button>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="cerrarModalWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600">Cancelar</button>
+                <button type="button" onclick="confirmarEnviarWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold">Enviar por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.dashboardPlantillaActiva = {{ contenido_plantilla | tojson | safe if contenido_plantilla else 'null' }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

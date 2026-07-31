@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Gestión Nutricional{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='img/icons/logo.ico') }}" type="image/x-icon">
+    
     <!-- Component CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_forms.css') }}">
@@ -13,26 +14,33 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_cards.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tabs.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_modal.css') }}">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <!-- SweetAlert2 CDN & Helper -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ url_for('static', filename='js/alertas.js') }}"></script>
+    
     <!-- Custom Theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    
     {% block extra_css %}{% endblock %}
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: false }">
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: true }">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
         {% include 'components/_sidebar.html' %}
@@ -40,54 +48,7 @@
         <!-- Main Wrapper -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Header -->
-            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shadow-sm">
-                <!-- Left: Hamburger & Page Title -->
-                <div class="flex items-center gap-4">
-                    <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-500 hover:text-slate-700 focus:outline-none">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                    <div>
-                        <h1 class="text-lg font-bold text-slate-800">{% block page_title %}Panel Principal{% endblock %}</h1>
-                        <p class="text-xs text-slate-500 hidden sm:block">{% block page_subtitle %}Gestión y seguimiento clínico nutricional{% endblock %}</p>
-                    </div>
-                </div>
-
-                <!-- Right: User Dropdown -->
-                <div class="flex items-center gap-4">
-                    <!-- User Profile Dropdown (Alpine.js) -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="flex items-center gap-3 focus:outline-none p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
-                            <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center border border-teal-200">
-                                {{ current_user.username[0]|upper if current_user.is_authenticated else 'U' }}
-                            </div>
-                            <div class="text-left hidden md:block">
-                                <span class="block text-sm font-semibold text-slate-700 leading-tight">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</span>
-                                <span class="block text-xs text-slate-500">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</span>
-                            </div>
-                            <i class="fas fa-chevron-down text-xs text-slate-400 ml-1"></i>
-                        </button>
-
-                        <!-- Dropdown Menu -->
-                        <div x-show="open" @click.away="open = false" 
-                             x-transition:enter="transition ease-out duration-100"
-                             x-transition:enter-start="transform opacity-0 scale-95"
-                             x-transition:enter-end="transform opacity-100 scale-100"
-                             x-transition:leave="transition ease-in duration-75"
-                             x-transition:leave-start="transform opacity-100 scale-100"
-                             x-transition:leave-end="transform opacity-0 scale-95"
-                             class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
-                            <div class="px-4 py-2 border-b border-slate-100 md:hidden">
-                                <p class="text-sm font-semibold text-slate-800">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</p>
-                                <p class="text-xs text-teal-600 font-medium">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</p>
-                            </div>
-                            <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
-                                <i class="fas fa-sign-out-alt w-4"></i>
-                                <span>Cerrar Sesión</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {% include 'components/_header.html' %}
 
             <!-- Main Content -->
             <main class="flex-1 overflow-y-auto p-4 lg:p-8">
@@ -112,6 +73,7 @@
 
     <!-- App JS -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/modal.js') }}"></script>
     {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>

@@ -72,9 +72,8 @@
                     <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
                     <select id="rol" name="rol" required
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
-                        <option value="Admin" {% if usuario.rol == 'Admin' %}selected{% endif %}>Admin</option>
-                        <option value="Nutricionista" {% if usuario.rol == 'Nutricionista' %}selected{% endif %}>Nutricionista</option>
-                        <option value="Asistente" {% if usuario.rol == 'Asistente' %}selected{% endif %}>Asistente</option>
+                        <option value="nutriologa" {% if usuario.rol == 'nutriologa' %}selected{% endif %}>Nutrióloga</option>
+                        <option value="asistente" {% if usuario.rol == 'asistente' %}selected{% endif %}>Asistente</option>
                     </select>
                 </div>
 

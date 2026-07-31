@@ -11,13 +11,7 @@
     <!-- Lado Izquierdo: Banner -->
     <div class="hidden lg:flex lg:w-1/2 bg-teal-700 items-center justify-center p-12">
         <div class="text-white text-center max-w-lg">
-            {% if has_custom_logo() %}
-                <img src="{{ url_for('static', filename='img/logos/logo.png') }}" alt="Logo" class="w-32 h-32 mx-auto mb-8 object-contain">
-            {% else %}
-                <div class="w-32 h-32 mx-auto mb-8 flex items-center justify-center bg-teal-800 rounded-full shadow-inner">
-                    <i class="fas fa-shield-alt text-6xl text-teal-200"></i>
-                </div>
-            {% endif %}
+            <img src="{{ url_for('static', filename='img/logos/logo.png') }}" alt="Logo" class="w-32 h-32 mx-auto mb-8 object-contain">
             <h1 class="text-3xl font-bold mb-4">Sistema Integral de Pacientes Clínicos</h1>
             <p class="text-lg text-teal-100">Plataforma centralizada para la gestión, seguimiento y expediente clínico de tus pacientes.</p>
         </div>

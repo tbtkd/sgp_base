@@ -2,12 +2,24 @@
 
 {% block title %}Lista de Pacientes{% endblock %}
 
-{% block page_title %}{% if tipo_lista == 'inactivos' %}Pacientes Inactivos{% else %}Pacientes Activos{% endif %}{% endblock %}
-
-{% block page_subtitle %}{% if tipo_lista == 'inactivos' %}Gestión y consulta de pacientes dados de baja o inactivados{% else %}Gestión y seguimiento clínico de pacientes activos{% endif %}{% endblock %}
-
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="flex text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2">
+            <li><a href="{{ url_for('main.index') }}" class="hover:text-teal-600">Inicio</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="hover:text-teal-600">Pacientes</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-900 font-medium">Lista</li>
+        </ol>
+    </nav>
+
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Lista de Pacientes {{ "Activos" if tipo_lista == "activos" else "Inactivos" }}</h1>
+    </div>
+
     {% include 'pacientes/partials/_buscador_y_filtros.html' %}
     {% include 'pacientes/partials/_tabla_pacientes.html' %}
 </div>

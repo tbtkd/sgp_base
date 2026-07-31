@@ -25,14 +25,6 @@ class HistorialClinico(db.Model):
         return HistorialClinico.query.filter_by(paciente_id=paciente_id).first()
 
     @staticmethod
-    def obtener_todos():
-        return HistorialClinico.query.all()
-
-    @staticmethod
-    def crear(paciente_id, datos):
-        return HistorialClinico.actualizar(paciente_id, datos)
-
-    @staticmethod
     def actualizar(paciente_id, datos):
         try:
             historial = HistorialClinico.query.filter_by(paciente_id=paciente_id).first()

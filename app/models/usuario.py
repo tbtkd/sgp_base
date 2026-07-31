@@ -11,7 +11,7 @@ class Usuario(db_orm.Model, UserMixin):
     nombre = db_orm.Column(db_orm.String(50), nullable=True)
     email = db_orm.Column(db_orm.String(120), nullable=True)
     cedula_profesional = db_orm.Column(db_orm.String(30), nullable=True)
-    rol = db_orm.Column(db_orm.String(20), default='Nutricionista')
+    rol = db_orm.Column(db_orm.String(20), default='nutriologa')
     apellido_paterno = db_orm.Column(db_orm.String(50), nullable=True)
     apellido_materno = db_orm.Column(db_orm.String(50), nullable=True)
     status = db_orm.Column(db_orm.String(20), default='activo')
@@ -26,8 +26,7 @@ class Usuario(db_orm.Model, UserMixin):
 
     @staticmethod
     def find_by_username(username):
-        # Permite buscar tanto por username como por email
-        return Usuario.query.filter((Usuario.username == username) | (Usuario.email == username)).first()
+        return Usuario.query.filter_by(username=username).first()
 
     def check_password(self, password):
         from werkzeug.security import check_password_hash

@@ -25,17 +25,17 @@ def get_database_path():
         # Ruta en la carpeta de datos de usuario de Windows (%LOCALAPPDATA%/SistemaPacientes)
         app_data_dir = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'SistemaPacientes')
         os.makedirs(app_data_dir, exist_ok=True)
-        db_path = os.path.join(app_data_dir, 'sgpca.db')
+        db_path = os.path.join(app_data_dir, 'sgpn_nutricion.db')
         
         # Si la base de datos no existe en AppData, la inicializamos copiando la plantilla base empaquetada
         if not os.path.exists(db_path):
             base_resource_dir = sys._MEIPASS
-            packed_db_path = os.path.join(base_resource_dir, 'instance', 'sgpca.db')
+            packed_db_path = os.path.join(base_resource_dir, 'instance', 'sgpn_nutricion.db')
             if os.path.exists(packed_db_path):
                 shutil.copy2(packed_db_path, db_path)
             else:
                 # Si por alguna razón no está en sys._MEIPASS, intentar ruta alternativa
-                alt_packed = os.path.join(os.path.dirname(sys.executable), 'instance', 'sgpca.db')
+                alt_packed = os.path.join(os.path.dirname(sys.executable), 'instance', 'sgpn_nutricion.db')
                 if os.path.exists(alt_packed):
                     shutil.copy2(alt_packed, db_path)
         return db_path
@@ -43,7 +43,7 @@ def get_database_path():
         # Entorno de desarrollo local
         instance_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'instance')
         os.makedirs(instance_dir, exist_ok=True)
-        return os.path.join(instance_dir, 'sgpca_dev.db')
+        return os.path.join(instance_dir, 'sgpn_nutricion.db')
 
 def create_app(config_name=None):
     """
@@ -170,18 +170,6 @@ def create_app(config_name=None):
             'logo.ico',
             mimetype='image/vnd.microsoft.icon'
         )
-
-    # CONTEXT PROCESSOR PARA LOGO DINÁMICO (FALLBACK)
-    @app.context_processor
-    def utility_processor():
-        def check_logo_exists():
-            if getattr(sys, 'frozen', False):
-                base_dir = sys._MEIPASS
-            else:
-                base_dir = app.root_path
-            logo_path = os.path.join(base_dir, 'static', 'img', 'logos', 'logo.png')
-            return os.path.exists(logo_path)
-        return dict(has_custom_logo=check_logo_exists)
 
     # FILTROS GLOBALES DE JINJA2
     @app.template_filter('format_date')

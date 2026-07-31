@@ -41,7 +41,7 @@ def logout():
 @auth.route('/registrar-usuario', methods=['GET', 'POST'])
 @login_required
 def registrar_usuario():
-    if current_user.rol not in ['Admin', 'Nutricionista']:
+    if current_user.rol not in ['nutriologa', 'Admin']:
         flash('No tienes permiso para realizar esta acción.', 'error')
         return redirect(url_for('main.index'))
 
@@ -66,7 +66,7 @@ def registrar_usuario():
 @auth.route('/usuarios')
 @login_required
 def lista_usuarios():
-    if current_user.rol not in ['Admin', 'Nutricionista']:
+    if current_user.rol not in ['nutriologa', 'Admin']:
         flash('No tienes permiso para realizar esta acción.', 'error')
         return redirect(url_for('main.index'))
     try:
@@ -79,7 +79,7 @@ def lista_usuarios():
 @auth.route('/usuarios/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_usuario(id):
-    if current_user.rol not in ['Admin', 'Nutricionista']:
+    if current_user.rol not in ['nutriologa', 'Admin']:
         flash('No tienes permiso para realizar esta acción.', 'error')
         return redirect(url_for('main.index'))
 
@@ -111,7 +111,7 @@ def editar_usuario(id):
 @auth.route('/usuarios/<int:id>/cambiar-estatus', methods=['POST'])
 @login_required
 def cambiar_estatus_usuario(id):
-    if current_user.rol not in ['Admin', 'Nutricionista']:
+    if current_user.rol not in ['nutriologa', 'Admin']:
         return {'success': False, 'error': 'No autorizado'}, 403
     try:
         exito, resultado = Usuario.cambiar_estatus(id)

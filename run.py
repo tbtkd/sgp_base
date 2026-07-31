@@ -76,40 +76,6 @@ if __name__ == '__main__':
 
         # 2. Inicializar la app de Flask
         app = create_app()
-
-        def crear_usuario_admin_defecto():
-            """Crea un usuario administrador por defecto si la tabla de usuarios está vacía."""
-            with app.app_context():
-                try:
-                    from app import db_orm
-                    from app.models.usuario import Usuario
-                    from werkzeug.security import generate_password_hash
-
-                    # Asegurar que las tablas existan (por si acaso la BD está totalmente nueva)
-                    db_orm.create_all()
-
-                    if Usuario.query.first() is None:
-                        admin_user = Usuario(
-                            username="admin",
-                            email="admin@sistema.local",
-                            nombre="Administrador Sistema",
-                            apellido_paterno="",
-                            apellido_materno="",
-                            password_hash=generate_password_hash("Admin123*"),
-                            rol="Admin",
-                            status="activo"
-                        )
-                        db_orm.session.add(admin_user)
-                        db_orm.session.commit()
-                        print("[INFO] ¡Usuario Administrador por defecto creado exitosamente!")
-                        print("       Email / Usuario: admin")
-                        print("       Password:        Admin123*")
-                        print("       Rol:             Admin")
-                except Exception as e:
-                    print(f"[ADVERTENCIA] No se pudo crear el usuario administrador por defecto: {e}")
-
-        # Ejecutar verificación y creación de admin por defecto
-        crear_usuario_admin_defecto()
         
         # 3. Programa la apertura del navegador (usando hilos daemon)
         timer = Timer(1.5, open_browser, args=[port])

@@ -7,7 +7,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from app.config import config
 from app.core.error_handlers import register_error_handlers
-from app.utils.helpers import inicializar_usuario_admin
 
 # Renombramos la instancia de SQLAlchemy para evitar conflicto con app.db
 db_orm = SQLAlchemy()
@@ -132,9 +131,6 @@ def create_app(config_name=None):
         from app.models.bitacora import BitacoraContacto
         
         db_orm.create_all()
-        
-        # Inicializar usuario administrador por defecto
-        inicializar_usuario_admin()
 
         # 2. Inspección y migración automática de columnas faltantes en tablas existentes
         try:

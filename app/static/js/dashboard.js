@@ -16,6 +16,14 @@ function formatearTelefonoMexico(telefono) {
     return telClean;
 }
 
+function abrirModalWhatsAppDesdeBoton(btn) {
+    const valId = btn.getAttribute('data-val-id');
+    const telefono = btn.getAttribute('data-telefono');
+    const nombrePaciente = btn.getAttribute('data-nombre');
+    const diasTranscurridos = btn.getAttribute('data-dias');
+    abrirModalWhatsApp(valId, telefono, nombrePaciente, diasTranscurridos);
+}
+
 function abrirModalWhatsApp(valId, telefono, nombrePaciente, diasTranscurridos) {
     if (!telefono) {
         alert('El paciente no tiene un número de teléfono registrado.');
@@ -30,7 +38,11 @@ function abrirModalWhatsApp(valId, telefono, nombrePaciente, diasTranscurridos) 
         return;
     }
 
-    const plantillaTemplate = window.dashboardPlantillaActiva || "¡Hola, {nombre}! 👋 Te saluda la nutrióloga Aurora Ángeles. Han pasado {dias} días desde tu última consulta y quería saber cómo te has sentido con tu plan de alimentación y si te ha surgido alguna duda. ¡Sigo al pendiente de tus avances!";
+    const configElement = document.getElementById('data-config');
+    const plantillaRaw = configElement ? configElement.getAttribute('data-plantilla') : null;
+    const dashboardPlantillaActiva = plantillaRaw && plantillaRaw !== 'null' ? JSON.parse(plantillaRaw) : null;
+
+    const plantillaTemplate = dashboardPlantillaActiva || "¡Hola, {nombre}! 👋 Te saluda la nutrióloga Aurora Ángeles. Han pasado {dias} días desde tu última consulta y quería saber cómo te has sentido con tu plan de alimentación y si te ha surgido alguna duda. ¡Sigo al pendiente de tus avances!";
     
     const mensajeBase = plantillaTemplate
         .replace('{nombre}', nombrePaciente)

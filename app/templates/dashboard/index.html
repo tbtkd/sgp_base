@@ -102,8 +102,13 @@
                     <td class="py-3.5 px-4"><span class="bg-{{ 'amber' if dias >= 15 else 'teal' }}-100 text-{{ 'amber' if dias >= 15 else 'teal' }}-800 text-xs px-2.5 py-1 rounded-full font-medium">{{ dias }} días</span></td>
                     <td class="py-3.5 px-4 text-right">
                         <div class="flex items-center justify-end gap-2">
-                            <button onclick="omitirSeguimiento('{{ val.id }}')" class="text-gray-400 hover:text-amber-600 bg-gray-50 hover:bg-amber-50 p-2 rounded-xl transition border border-gray-200"><i class="fas fa-clock text-xs"></i></button>
-                            <button onclick="abrirModalWhatsApp('{{ val.id }}', '{{ val.paciente.telefono if val.paciente else '' }}', '{{ val.paciente.nombre if val.paciente else 'Paciente' }}', '{{ dias }}')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm transition"><i class="fab fa-whatsapp text-sm"></i> Enviar WhatsApp</button>
+                             <button onclick="omitirSeguimiento('{{ val.id }}')" class="text-gray-400 hover:text-amber-600 bg-gray-50 hover:bg-amber-50 p-2 rounded-xl transition border border-gray-200"><i class="fas fa-clock text-xs"></i></button>
+                             <button onclick="abrirModalWhatsAppDesdeBoton(this)" 
+                                     data-val-id="{{ val.id }}" 
+                                     data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" 
+                                     data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" 
+                                     data-dias="{{ dias }}"
+                                     class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm transition"><i class="fab fa-whatsapp text-sm"></i> Enviar WhatsApp</button>
                         </div>
                     </td>
                 </tr>
@@ -141,8 +146,8 @@
     </div>
 </div>
 
-<script>
-    window.dashboardPlantillaActiva = {{ contenido_plantilla | tojson | safe if contenido_plantilla else 'null' }};
-</script>
+<div id="data-config" 
+     data-plantilla='{{ contenido_plantilla | tojson | safe if contenido_plantilla else "null" }}' 
+     class="hidden"></div>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

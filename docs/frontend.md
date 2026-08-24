@@ -14,7 +14,7 @@ La interfaz conserva Jinja2, Tailwind CSS y la paleta teal/esmeralda del proyect
 
 ## Consulta clínica
 
-La captura usa tres pestañas generales: consulta, signos vitales y evolución/indicaciones. El perfil Nutrición recibe una cuarta pestaña de antropometría. Esta regla se replica en el servidor.
+La captura usa tres pestañas generales: consulta, signos vitales y evolución/indicaciones. El perfil Nutrición recibe una cuarta pestaña de antropometría. Esta regla se replica en el servidor. En tema oscuro, cada pestaña tiene fondo, texto y borde explícitos; los botones secundarios y los divisores del formulario utilizan la misma paleta azul petróleo, sin heredar blancos del tema claro.
 
 La impresión genera una nota limpia que el navegador puede guardar como PDF. Muestra el profesional responsable y su perfil; la cédula sólo se presenta cuando fue registrada. Para Nutrición se usa “Indicaciones nutricionales / plan alimentario” y no “receta médica”.
 
@@ -30,7 +30,11 @@ La búsqueda global ejecuta la búsqueda existente de pacientes por nombre, tel�
 
 Los módulos sin backend aparecen como botones con `aria-disabled="true"`, distintivo **Próximamente** y mensaje contextual. No se crean enlaces falsos. Recetas es un enlace funcional **Desde consulta**: abre la lista existente con un contexto específico para localizar la consulta que contiene sus folios. Plantillas, Usuarios, Auditoría y Configuración se agrupan bajo el desplegable nativo **Administración**; Configuración continúa planificada. Esta agrupación evita convertir Configuración en un contenedor semánticamente incorrecto. `logo.png` es la marca sanitaria canónica usada en login, sidebar, impresión y favicon; `logo.ico`, derivado del mismo recurso, cubre navegadores legados y PyInstaller.
 
-En el dashboard sólo permanecen como acciones rápidas los flujos de captura inmediata: Nuevo paciente, Agendar cita y Nueva consulta. Los accesos a Recetas y Expedientes viven exclusivamente en el sidebar. Próximas citas y Acompañamiento Intermedio comparten una fila de dos columnas y se apilan en resoluciones menores. En tema oscuro, bordes y separadores usan la gama azul petróleo en lugar de conservar líneas claras del tema base.
+El dashboard no contiene una fila independiente de Acciones rápidas. Cada KPI dispone de un control informativo que abre la vista correspondiente y de una acción explícita para Nuevo paciente, Agendar cita o Nueva consulta. No se envuelve un botón dentro de otro enlace. Recepción mantiene el KPI clínico restringido y no recibe la acción Nueva consulta. Los accesos a Recetas y Expedientes viven exclusivamente en el sidebar. Próximas citas y Acompañamiento Intermedio comparten una fila de dos columnas y se apilan en resoluciones menores. En tema oscuro, bordes y separadores usan la gama azul petróleo en lugar de conservar líneas claras del tema base.
+
+El bloque de datos históricos del paciente prioriza **Historial Médico**, conserva **Alimentación** en el centro y deja **Actividad Física** al final. En Pendientes de atención, **Sin consulta reciente** se reserva a Nutrición; los demás perfiles clínicos mantienen pendientes de agenda y expedientes según sus permisos.
+
+El shell ocupa la altura visible del navegador y el área principal es el único contenedor vertical desplazable. Por ello el topbar se mantiene visible sin superponerse al contenido. Su altura mínima es 3.65 rem y los controles globales se reducen proporcionalmente; en móvil conserva el comportamiento adaptable previo.
 
 El foco visible se aplica a enlaces, botones, campos, selectores y `summary`. Sidebar, popovers, menú de cuenta y pestañas de gráfica responden a teclado y Escape. El cambio entre gráficas y los popovers no recarga la página; los cambios de módulo mantienen la navegación Flask tradicional para conservar seguridad y contratos existentes.
 

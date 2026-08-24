@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.6.8 — Contraste clínico y seguimiento por especialidad
+
+- Las pestañas inactivas, el botón Cancelar y el botón Guardar de la consulta usan estados propios y legibles en tema oscuro.
+- Los divisores superior e inferior del formulario clínico adoptan el borde azul petróleo de la interfaz en lugar de líneas claras.
+- El detalle del paciente ordena las tarjetas como Historial Médico, Alimentación y Actividad Física.
+- **Sin consulta reciente** se consulta y muestra exclusivamente a perfiles de Nutrición; Medicina general y Odontología conservan los demás pendientes autorizados.
+- Las reglas se verifican en interfaz y controlador, sin cambios de esquema, rutas, permisos base ni datos clínicos.
+- Verificación: 69 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
+## 1.6.7 — KPI accionables y topbar persistente
+
+- Eliminada la fila independiente de Acciones rápidas; sus tres operaciones se integran dentro de los KPI correspondientes.
+- Cada KPI separa correctamente el enlace informativo de la acción de captura para evitar controles anidados y conservar teclado/foco visible.
+- Los textos vacíos distinguen agenda disponible y atención clínica al día; recepción conserva el estado restringido sin recibir una acción clínica.
+- El shell se limita a la altura visible y delega el desplazamiento al área principal, por lo que el topbar permanece visible.
+- Topbar reducido de 4.4 a 3.65 rem, con controles y espaciado compactados sin retirar buscador, sede, notificaciones, tema o breadcrumb.
+- Los enlaces internos por ancla ya no activan el indicador de carga de una navegación inexistente.
+- Verificación: 68 pruebas `pytest`; no se introducen cambios de esquema, permisos ni lógica clínica.
+
 ## 1.6.6 — Densidad del dashboard y navegación administrativa
 
 - **Acompañamiento Intermedio (14-15 Días)** se coloca junto a **Próximas citas** en una cuadrícula de dos columnas que se apila en pantallas menores a 1100 px.

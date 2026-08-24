@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.6.6:
+Resultado esperado para la versión 1.6.8:
 
 ```text
-68 passed
+69 passed
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.

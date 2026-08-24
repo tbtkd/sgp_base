@@ -1,7 +1,7 @@
 {% set registro = valoracion if valoracion is defined else none %}
 {% set field_class = 'w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition' %}
 <form id="formValoracion" method="POST" class="space-y-6" data-tabs data-tab-variant="pill" data-default-tab="consulta">
-    <div class="flex flex-wrap gap-2 border-b pb-3 no-print" role="tablist" aria-label="Secciones de la consulta clínica">
+    <div class="clinical-tablist flex flex-wrap gap-2 border-b pb-3 no-print" role="tablist" aria-label="Secciones de la consulta clínica">
         {% set consultation_tabs = [('consulta','Consulta'),('vitales','Signos vitales'),('evolucion','Evolución e indicaciones')] %}
         {% if current_user.puede_capturar_antropometria %}
             {% set consultation_tabs = consultation_tabs + [('antropometria','Antropometría opcional')] %}
@@ -13,7 +13,7 @@
                 data-tab-target="{{ id }}"
                 aria-controls="panel-{{ id }}"
                 aria-selected="{{ 'true' if id == 'consulta' else 'false' }}"
-                class="px-4 py-2 rounded-xl text-sm font-semibold {{ 'bg-teal-600 text-white' if id == 'consulta' else 'bg-gray-100 text-gray-600' }}">{{ label }}</button>
+                class="clinical-tab px-4 py-2 rounded-xl text-sm font-semibold {{ 'bg-teal-600 text-white' if id == 'consulta' else 'bg-gray-100 text-gray-600' }}">{{ label }}</button>
         {% endfor %}
     </div>
 
@@ -64,8 +64,8 @@
     </section>
     {% endif %}
 
-    <div class="flex items-center justify-end gap-4 pt-6 border-t no-print">
-        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-6 py-3 text-gray-600">Cancelar</a>
-        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl">Guardar consulta</button>
+    <div class="clinical-form-footer flex items-center justify-end gap-4 pt-6 border-t no-print">
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="clinical-button-secondary px-6 py-3 rounded-xl font-semibold">Cancelar</a>
+        <button type="submit" class="clinical-button-primary px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl">Guardar consulta</button>
     </div>
 </form>

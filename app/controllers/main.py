@@ -117,6 +117,7 @@ def _activity_chart(moment, can_view_clinical):
 @login_required
 def index():
     can_view_clinical = current_user.rol_clinico in {"admin", "medico"}
+    can_view_nutrition_followup = can_view_clinical and current_user.puede_capturar_antropometria
     now = datetime.now()
     greeting, date_label = _dashboard_time_context(now)
     start_raw, end_raw = request.args.get("fecha_inicio"), request.args.get("fecha_fin")
@@ -140,7 +141,7 @@ def index():
     attended_today = sum(1 for appointment in today_appointments if appointment.estatus == "Atendida")
     appointment_progress = round((attended_today / len(today_appointments)) * 100) if today_appointments else 0
     pending_schedule = Paciente.obtener_pendientes_por_agendar()
-    without_assessment = Paciente.obtener_sin_valoracion_reciente(30) if can_view_clinical else []
+    without_assessment = Paciente.obtener_sin_valoracion_reciente(30) if can_view_nutrition_followup else []
     without_history = Paciente.obtener_sin_historial() if can_view_clinical else []
     monthly_patient_series = Paciente.resumen_altas_mensuales(6)
     template = PlantillaMensaje.obtener_activa()
@@ -152,6 +153,7 @@ def index():
     return render_template(
         "dashboard/index.html",
         can_view_clinical=can_view_clinical,
+        can_view_nutrition_followup=can_view_nutrition_followup,
         saludo=greeting,
         fecha_actual_etiqueta=date_label,
         total_pacientes=total_patients,

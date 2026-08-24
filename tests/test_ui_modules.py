@@ -76,6 +76,12 @@ def test_history_list_uses_current_model_fields(app, client, login):
     assert "tipo_actividad_fisica" not in page
     assert "Antecedentes y padecimientos" in page
 
+    history_partial = (
+        Path(__file__).parents[1] / "app" / "templates" / "pacientes" / "partials" / "_historial_clinico.html"
+    ).read_text(encoding="utf-8")
+    assert history_partial.index("Historial Médico") < history_partial.index("Alimentación")
+    assert history_partial.index("Alimentación") < history_partial.index("Actividad Física")
+
 
 def test_patient_history_and_consultation_empty_states(client, login):
     login()
@@ -124,10 +130,15 @@ def test_dashboard_kpis_match_persisted_records(app, client, login):
     assert "Citas y consultas" in page
     assert "Próximas citas" in page
     assert "Alertas clínicas y administrativas" not in page
-    assert "Acciones rápidas" in page
+    assert "Acciones rápidas" not in page
     assert "Pacientes recientes" in page
     assert "Pendientes de atención" in page
     assert page.count("Nuevo paciente") == 1
+    assert page.count('class="dashboard-kpi-action"') == 3
+    assert 'aria-label="Ver pacientes registrados"' in page
+    assert 'aria-label="Ver agenda de hoy"' in page
+    assert 'aria-label="Ver consultas clínicas"' in page
+    assert "Sin citas programadas para hoy" not in page
     assert "Crear receta" not in page
     assert "Ver expedientes" not in page
     assert "Actividad reciente" in page
@@ -177,6 +188,11 @@ def test_shell_navigation_theme_and_planned_modules_are_accessible(client, login
     assert ".shell-sidebar-account-panel" in shell_css
     assert ".shell-nav-group" in shell_css
     assert ".shell-nav-children" in shell_css
+    assert "height: 100dvh" in shell_css
+    assert "overflow: hidden" in shell_css
+    assert "min-height: 3.65rem" in shell_css
+    assert ".shell-main { min-height: 0" in shell_css
+    assert "sameDocumentAnchor" in app_script
 
 
 def test_recipe_sidebar_context_and_dashboard_layout(client, login):
@@ -218,18 +234,29 @@ def test_consultation_tabs_use_local_navigation(app, client, login):
         patient_id = _patient().id
 
     page = client.get(f"/valoraciones/paciente/{patient_id}/nueva").get_data(as_text=True)
-    script = (Path(__file__).parents[1] / "app" / "static" / "js" / "tabs.js").read_text(encoding="utf-8")
+    root = Path(__file__).parents[1]
+    script = (root / "app" / "static" / "js" / "tabs.js").read_text(encoding="utf-8")
+    shell_css = (root / "app" / "static" / "css" / "shell.css").read_text(encoding="utf-8")
 
     assert 'id="formValoracion"' in page
     assert "data-tabs" in page
     assert page.count('role="tab"') == 4
     assert 'data-tab-target="vitales"' in page
     assert 'data-tab-panel="vitales" class="space-y-5" hidden' in page
+    assert 'class="clinical-tablist ' in page
+    assert page.count('class="clinical-tab ') == 4
+    assert 'class="clinical-form-footer ' in page
+    assert 'class="clinical-button-secondary ' in page
     assert "activeTab" not in page
     assert '/static/js/tabs.js' in page
     assert "ArrowRight" in script
     assert "panel.hidden = !activo" in script
     assert "formulario.addEventListener('invalid'" in script
+    assert 'html[data-theme="dark"] .bg-gray-100' in shell_css
+    assert 'html[data-theme="dark"] .clinical-tab[aria-selected="false"]' in shell_css
+    assert 'html[data-theme="dark"] .clinical-tab[aria-selected="true"]' in shell_css
+    assert "html[data-theme=\"dark\"] .clinical-form-footer" in shell_css
+    assert "border-color: #29464d" in shell_css
 
 
 def test_print_view_is_standalone_and_contains_clinical_note(app, client, login):

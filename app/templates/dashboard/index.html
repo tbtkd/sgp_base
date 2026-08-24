@@ -16,47 +16,44 @@
         </div>
     </section>
 
-    <nav class="dashboard-quick-actions" aria-label="Acciones rápidas">
-        <a href="{{ url_for('pacientes.nuevo_paciente') }}"><span class="dashboard-quick-icon dashboard-task-icon--teal"><i class="fas fa-user-plus" aria-hidden="true"></i></span><span><strong>Nuevo paciente</strong><small>Registrar expediente</small></span></a>
-        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}"><span class="dashboard-quick-icon dashboard-task-icon--blue"><i class="fas fa-calendar-plus" aria-hidden="true"></i></span><span><strong>Agendar cita</strong><small>Seleccionar paciente</small></span></a>
-        {% if can_view_clinical %}
-        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}"><span class="dashboard-quick-icon dashboard-task-icon--emerald"><i class="fas fa-stethoscope" aria-hidden="true"></i></span><span><strong>Nueva consulta</strong><small>Seleccionar paciente</small></span></a>
-        {% endif %}
-    </nav>
-
     <section class="dashboard-kpi-grid" aria-label="Indicadores principales">
         <article class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon dashboard-kpi-icon--teal"><i class="fas fa-users" aria-hidden="true"></i></div>
-            <div class="dashboard-kpi-content">
-                <p>Pacientes registrados</p>
-                <div class="dashboard-kpi-value-row">
-                    <strong data-kpi="pacientes">{{ total_pacientes | default(0) }}</strong>
-                    {% if crecimiento_pacientes %}<span>+{{ crecimiento_pacientes }}</span>{% endif %}
-                </div>
-                <small>{{ crecimiento_pacientes|default(0) }} nuevos este mes</small>
-            </div>
+            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="dashboard-kpi-summary" aria-label="Ver pacientes registrados">
+                <span class="dashboard-kpi-icon dashboard-kpi-icon--teal"><i class="fas fa-users" aria-hidden="true"></i></span>
+                <span class="dashboard-kpi-content">
+                    <span class="dashboard-kpi-label">Pacientes registrados</span>
+                    <span class="dashboard-kpi-value-row">
+                        <strong data-kpi="pacientes">{{ total_pacientes | default(0) }}</strong>
+                        {% if crecimiento_pacientes %}<span>+{{ crecimiento_pacientes }}</span>{% endif %}
+                    </span>
+                    <small>{{ crecimiento_pacientes|default(0) }} {{ 'nuevo' if crecimiento_pacientes|default(0) == 1 else 'nuevos' }} este mes</small>
+                </span>
+            </a>
+            <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="dashboard-kpi-action" aria-label="Registrar un nuevo paciente"><i class="fas fa-plus" aria-hidden="true"></i><span>Nuevo paciente</span></a>
         </article>
 
         <article class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon dashboard-kpi-icon--blue"><i class="fas fa-file-medical" aria-hidden="true"></i></div>
-            <div class="dashboard-kpi-content">
-                <p>Citas de hoy</p>
-                <div class="dashboard-kpi-value-row">
-                    <strong data-kpi="citas-hoy">{{ citas_del_dia|length }}</strong>
-                </div>
-                <small>{{ citas_programadas_hoy }} programadas · {{ citas_atendidas_hoy }} atendidas</small>
-            </div>
+            <a href="#agenda-hoy" class="dashboard-kpi-summary" aria-label="Ver agenda de hoy">
+                <span class="dashboard-kpi-icon dashboard-kpi-icon--blue"><i class="fas fa-file-medical" aria-hidden="true"></i></span>
+                <span class="dashboard-kpi-content">
+                    <span class="dashboard-kpi-label">Citas de hoy</span>
+                    <span class="dashboard-kpi-value-row"><strong data-kpi="citas-hoy">{{ citas_del_dia|length }}</strong></span>
+                    <small>{% if citas_del_dia|length %}{{ citas_programadas_hoy }} programadas · {{ citas_atendidas_hoy }} atendidas{% else %}Sin citas programadas para hoy{% endif %}</small>
+                </span>
+            </a>
+            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="dashboard-kpi-action" aria-label="Agendar una cita"><i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Agendar cita</span></a>
         </article>
 
-        <article class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon dashboard-kpi-icon--emerald"><i class="fas fa-clipboard-list" aria-hidden="true"></i></div>
-            <div class="dashboard-kpi-content">
-                <p>Consultas pendientes</p>
-                <div class="dashboard-kpi-value-row">
-                    <strong data-kpi="consultas-pendientes">{{ consultas_pendientes_hoy if can_view_clinical else '—' }}</strong>
-                </div>
-                <small>{{ ('Programadas para hoy · ' ~ valoraciones_mes ~ ' realizadas este mes') if can_view_clinical else 'Acceso clínico restringido' }}</small>
-            </div>
+        <article class="dashboard-kpi-card{% if not can_view_clinical %} is-restricted{% endif %}">
+            {% if can_view_clinical %}<a href="{{ url_for('valoracion.todas_valoraciones') }}" class="dashboard-kpi-summary" aria-label="Ver consultas clínicas">{% else %}<div class="dashboard-kpi-summary" aria-label="Consultas clínicas con acceso restringido">{% endif %}
+                <span class="dashboard-kpi-icon dashboard-kpi-icon--emerald"><i class="fas fa-clipboard-list" aria-hidden="true"></i></span>
+                <span class="dashboard-kpi-content">
+                    <span class="dashboard-kpi-label">Consultas pendientes</span>
+                    <span class="dashboard-kpi-value-row"><strong data-kpi="consultas-pendientes">{{ consultas_pendientes_hoy if can_view_clinical else '—' }}</strong></span>
+                    <small>{% if can_view_clinical %}{% if consultas_pendientes_hoy %}{{ consultas_pendientes_hoy }} {{ 'programada' if consultas_pendientes_hoy == 1 else 'programadas' }} para hoy · {{ valoraciones_mes }} realizadas este mes{% else %}Atención clínica al día · {{ valoraciones_mes }} realizadas este mes{% endif %}{% else %}Acceso clínico restringido{% endif %}</small>
+                </span>
+            {% if can_view_clinical %}</a>{% else %}</div>{% endif %}
+            {% if can_view_clinical %}<a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="dashboard-kpi-action" aria-label="Registrar una nueva consulta"><i class="fas fa-stethoscope" aria-hidden="true"></i><span>Nueva consulta</span></a>{% endif %}
         </article>
     </section>
 
@@ -288,7 +285,7 @@
                     </div>
                 </details>
 
-                {% if can_view_clinical %}
+                {% if can_view_nutrition_followup %}
                 <details>
                     <summary>
                         <span class="dashboard-task-icon dashboard-task-icon--rose"><i class="fas fa-stethoscope" aria-hidden="true"></i></span>
@@ -302,7 +299,9 @@
                         {% else %}<p>No hay seguimientos vencidos.</p>{% endfor %}
                     </div>
                 </details>
+                {% endif %}
 
+                {% if can_view_clinical %}
                 <details>
                     <summary>
                         <span class="dashboard-task-icon dashboard-task-icon--blue"><i class="fas fa-file-medical" aria-hidden="true"></i></span>

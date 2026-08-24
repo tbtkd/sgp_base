@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.6.6
+# Matriz de pruebas — versión 1.6.8
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -64,20 +64,22 @@ python -m pytest -q
 
 | ID | Control | Cobertura |
 | --- | --- | --- |
-| UI-HIS-01 | Historial | Paciente y campos clínicos actuales visibles |
+| UI-HIS-01 | Historial | Paciente y campos clínicos visibles, ordenados como Historial Médico, Alimentación y Actividad Física |
 | UI-EMPTY-01 | Estados vacíos | Pacientes, historiales y consultas muestran explicación y acción |
 | UI-SEARCH-01 | Búsqueda | Teléfono y correo localizan pacientes |
 | UI-KPI-01 | Panel | Pacientes, citas de hoy y consultas pendientes coinciden con la base |
 | UI-DASH-01 | Dashboard | Los tres KPIs proceden de SQLite y el indicador de ingresos está ausente |
 | UI-DASH-02 | Composición | Agenda, gráfica, recientes, pendientes únicos, actividad y acompañamiento visibles |
 | UI-DASH-03 | Privacidad por rol | Recepción no recibe pendientes, acciones o actividad clínica |
-| UI-TAB-01 | Pestañas | Navegación local, teclado y activación ante campos inválidos |
+| UI-TAB-01 | Pestañas | Navegación local, teclado, activación ante campos inválidos y contraste oscuro de controles/divisores |
 | UI-PRINT-01 | Impresión | Vista autenticada, independiente, A4 y con nota completa |
 | UI-SHELL-01 | Navegación | Búsqueda, sede, notificaciones, breadcrumb, tema y controles ARIA visibles |
 | UI-SHELL-02 | Módulos planificados | Opciones sin backend quedan deshabilitadas y sin rutas ficticias |
 | UI-DASH-04 | Próximas citas | Consulta ordenada por fecha/hora y representación con datos persistidos |
 | UI-SHELL-03 | Recetas y administración | Recetas enlaza al contexto existente; Administración agrupa opciones sin cambiar permisos |
 | UI-DASH-05 | Densidad y tema | Acciones no duplicadas, seguimiento junto a próximas citas y separadores oscuros consistentes |
+| UI-DASH-06 | KPI accionables | Sin fila paralela; tres acciones separadas y enlaces informativos accesibles |
+| UI-SHELL-04 | Topbar persistente | Shell limitado al viewport, contenido desplazable y cabecera compacta visible |
 
 ## Perfiles profesionales (`tests/test_professional_profiles.py`)
 
@@ -90,6 +92,7 @@ python -m pytest -q
 | PRO-05 | Impresión | Cédula ausente omitida y snapshot histórico inmutable |
 | PRO-06 | Edición | Un profesional general no borra antropometría preexistente |
 | PRO-07 | Migración | Columnas de autoría se agregan sin perder consultas legadas |
+| PRO-08 | Seguimiento | Sin consulta reciente sólo se renderiza para Nutrición, no para Medicina general u Odontología |
 
 ## Receta e identidad (`tests/test_prescriptions.py`)
 
@@ -115,7 +118,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 68/68 (incluye 15 casos unittest)
+pytest: 69/69 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

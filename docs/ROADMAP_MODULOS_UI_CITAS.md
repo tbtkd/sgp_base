@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.6.6 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. Top bar y sidebar cuentan con shell responsive y tema persistente; la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.6.8 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
 
 Módulos evaluados:
 
@@ -181,6 +181,25 @@ Módulos evaluados:
 - Los separadores del dashboard usan bordes azul petróleo consistentes en tema oscuro.
 - Próximo: diseñar y aprobar funcionalmente Configuración, módulos planificados y pruebas de navegador antes de habilitar rutas nuevas.
 
+### Fase 1.10: KPI accionables y cabecera persistente — completada en 1.6.7
+
+- Eliminada la fila separada de Acciones rápidas.
+- Pacientes, Citas y Consultas combinan resumen navegable y acción explícita sin controles HTML anidados.
+- Los estados con cero registros utilizan mensajes informativos y la acción sigue disponible cuando el permiso lo permite.
+- Recepción conserva el KPI clínico restringido y no recibe Nueva consulta.
+- El shell se ajusta a `100dvh`; sólo el contenido principal se desplaza y el topbar permanece visible.
+- Altura, espaciado, buscador y controles del topbar se compactan sin retirar funcionalidad.
+- Los saltos por ancla dentro del dashboard no simulan una navegación completa.
+
+### Fase 1.11: contraste clínico y seguimiento especializado — completada en 1.6.8
+
+- Pestañas activas/inactivas y acciones del formulario clínico tienen estados explícitos en tema oscuro.
+- Divisores de pestañas y pie de formulario usan bordes azul petróleo consistentes.
+- El detalle del paciente presenta Historial Médico primero, Alimentación al centro y Actividad Física al final.
+- **Sin consulta reciente** se calcula y renderiza sólo cuando el perfil profesional efectivo es Nutrición.
+- Medicina general y Odontología mantienen pendientes de agenda/expediente sin recibir seguimiento nutricional irrelevante.
+- No se modifican esquema, rutas, datos clínicos ni permisos base.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -227,6 +246,10 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | UI-ID-02 | Identidad | Usuario, nombre, rol, área y cédula diferenciados |
 | UI-ID-03 | Cabecera | Título sin saludo duplicado, panel nativamente cerrado y control local accesible |
 | UI-NAV-04 | Densidad y navegación | Acciones no duplicadas, Recetas contextual y Administración desplegable |
+| UI-DASH-06 | KPI accionables | Información y captura unificadas en tarjetas con controles separados |
+| UI-SHELL-04 | Topbar persistente | Viewport estable, contenido desplazable y cabecera compacta visible |
+| UI-THEME-05 | Consulta oscura | Pestañas, botones secundarios y divisores sin fondos/líneas blancas |
+| PRO-08 | Seguimiento nutricional | Ausencia de consulta reciente visible sólo para Nutrición |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
 
 Suite oficial:
@@ -235,7 +258,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.6.6: **68 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, dashboard, shell, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.6.8: **69 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

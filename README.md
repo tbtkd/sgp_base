@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.6.6**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.6.8**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -22,7 +22,11 @@ Versión **1.6.6**. Aplicación local para consultorios médicos, dentales, nutr
 - Cambio propio de contraseña, restablecimiento administrativo y recuperación local para el administrador del equipo.
 - Pestañas clínicas locales, estados vacíos accionables y KPIs coherentes.
 - Dashboard operativo con agenda, gráfica local, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; Próximas citas y Acompañamiento Intermedio comparten una fila adaptable, sin duplicar alertas ni mostrar ingresos.
-- Acciones rápidas limitadas a Nuevo paciente, Agendar cita y Nueva consulta; Recetas y Expedientes se consultan desde el sidebar para evitar duplicidad.
+- KPI accionables: cada tarjeta conserva su resumen, enlaza al módulo relacionado y permite Nuevo paciente, Agendar cita o Nueva consulta sin una fila duplicada.
+- Topbar compacto que permanece visible mientras el área principal se desplaza, sin alterar el sidebar ni las vistas de impresión.
+- Formulario clínico con pestañas, botones secundarios y divisores adaptados a la paleta oscura, sin controles blancos de bajo contraste.
+- Resumen del historial ordenado por relevancia clínica: Historial médico, Alimentación y Actividad física.
+- El pendiente **Sin consulta reciente** se calcula y muestra sólo para perfiles de Nutrición.
 - Navegación que diferencia enlaces operativos, acceso contextual funcional a recetas, grupo desplegable de Administración y módulos planificados sin crear rutas ficticias.
 - Importación XLSX defensiva para expedientes antropométricos históricos.
 
@@ -129,7 +133,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 68 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), la base histórica del panel en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md), el shell base en [docs/SHELL_NAVEGACION_1_6_4.md](docs/SHELL_NAVEGACION_1_6_4.md) y el ajuste vigente en [docs/AJUSTE_DASHBOARD_NAVEGACION_1_6_6.md](docs/AJUSTE_DASHBOARD_NAVEGACION_1_6_6.md).
+La aceptación funcional incluye 69 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), la base histórica del panel en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md), el shell base en [docs/SHELL_NAVEGACION_1_6_4.md](docs/SHELL_NAVEGACION_1_6_4.md) y el ajuste vigente en [docs/CONTRASTE_SEGUIMIENTO_1_6_8.md](docs/CONTRASTE_SEGUIMIENTO_1_6_8.md).
 
 ## Compilación para Windows
 

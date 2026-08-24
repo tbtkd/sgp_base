@@ -190,6 +190,26 @@ def test_only_nutrition_can_capture_anthropometry_and_snapshot_author(app):
     assert "99990000" not in printable
 
 
+def test_only_nutrition_sees_followup_without_recent_consultation(app):
+    with app.app_context():
+        _user("general-dashboard", "medico_general")
+        _user("dentist-dashboard", "dentista")
+        _user("nutrition-dashboard", "nutricion")
+        _patient()
+
+    for username in ("general-dashboard", "dentist-dashboard"):
+        professional_client = app.test_client()
+        _login(professional_client, username)
+        dashboard = professional_client.get("/").get_data(as_text=True)
+        assert "Sin consulta reciente" not in dashboard
+
+    nutrition_client = app.test_client()
+    _login(nutrition_client, "nutrition-dashboard")
+    nutrition_dashboard = nutrition_client.get("/").get_data(as_text=True)
+    assert "Sin consulta reciente" in nutrition_dashboard
+    assert "Más de 30 días sin atención" in nutrition_dashboard
+
+
 def test_print_omits_professional_license_when_it_is_missing(app):
     with app.app_context():
         doctor = _user("doctor-no-license", "medico_general")

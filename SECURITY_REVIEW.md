@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.6.6 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.6.8 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -59,6 +59,7 @@ La versión 1.6.6 es adecuada para pruebas funcionales y para un piloto en una e
 - El tema se conserva sólo como preferencia visual en `localStorage`; no almacena identidad, datos clínicos ni credenciales.
 - El dashboard no calcula ni presenta ingresos; las métricas operativas proceden de consultas acotadas a SQLite y respetan permisos clínicos.
 - Recepción no recibe el contenido de pendientes clínicos, actividad de consultas ni acciones para iniciar atención.
+- El seguimiento **Sin consulta reciente** no se consulta ni se entrega a Medicina general u Odontología; sólo se incluye para el perfil profesional de Nutrición.
 - La vista de impresión es una ruta clínica autenticada, aislada del shell y sin recursos externos.
 - El perfil profesional se valida por separado del rol de acceso.
 - La antropometría se oculta y se rechaza en servidor salvo para perfiles de Nutrición.
@@ -101,7 +102,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 68 pruebas totales.
+- `python -m pytest -q`: 69 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

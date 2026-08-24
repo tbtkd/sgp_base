@@ -148,7 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = event.target.closest('a[href]');
         if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         const target = new URL(link.href, window.location.href);
-        if (target.origin === window.location.origin && target.href !== window.location.href && !link.hasAttribute('download')) showProgress();
+        const sameDocumentAnchor = target.pathname === window.location.pathname
+            && target.search === window.location.search
+            && Boolean(target.hash);
+        if (target.origin === window.location.origin && target.href !== window.location.href && !sameDocumentAnchor && !link.hasAttribute('download')) showProgress();
     });
     document.addEventListener('submit', (event) => {
         if (event.target instanceof HTMLFormElement) showProgress();

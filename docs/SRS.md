@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.6 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.8 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -36,10 +36,14 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 28. Búsqueda global conectada al buscador autorizado de pacientes, breadcrumb y selector informativo de sede local.
 29. Tema claro/oscuro persistente, foco visible y navegación de shell operable con teclado.
 30. Los módulos no implementados deben identificarse como planificados y no deben exponer rutas ficticias.
-31. Dashboard con acciones rápidas sin duplicados, tres KPIs reales, agenda, próximas citas, gráfica de citas/consultas, actividad, una sola vista de pendientes y Acompañamiento Intermedio.
+31. Dashboard con tres KPI informativos y accionables, agenda, próximas citas, gráfica de citas/consultas, actividad, una sola vista de pendientes y Acompañamiento Intermedio.
 32. Estados vacíos, indicador de carga de navegación y mensajes de confirmación sin inventar información clínica.
 33. Recetas y Expedientes deben permanecer en el sidebar y no duplicarse como acciones rápidas del dashboard.
 34. Plantillas, Usuarios, Auditoría y Configuración deben agruparse bajo Administración sin modificar la autorización de cada destino.
+35. El topbar debe permanecer visible mientras se desplaza el contenido y mantener comportamiento adaptable en resoluciones pequeñas.
+36. Pestañas, botones secundarios y divisores del formulario clínico deben conservar contraste suficiente en tema oscuro.
+37. El detalle debe presentar Historial médico antes de Alimentación y Actividad física.
+38. El pendiente de pacientes sin consulta reciente debe mostrarse sólo a perfiles de Nutrición.
 
 ## Requisitos de seguridad
 

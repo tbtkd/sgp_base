@@ -118,6 +118,8 @@ def test_assistant_role_cannot_access_clinical_or_user_admin(app, client, login)
     assert "Sin consulta reciente" not in dashboard
     assert "Expedientes pendientes" not in dashboard
     assert "Iniciar consulta" not in dashboard
+    assert 'aria-label="Registrar una nueva consulta"' not in dashboard
+    assert dashboard.count('class="dashboard-kpi-action"') == 2
     assert client.get("/valoraciones/").status_code == 403
     assert client.get("/historial-clinico/").status_code == 403
     assert client.get("/usuarios").status_code == 403

@@ -69,8 +69,8 @@ La base funcional está madura para pruebas y para un piloto de una sola estaci�
 
 ### Fase 3 — panel y navegación
 
-- Reducir espacio vacío mediante una cuadrícula adaptable y tarjetas con acciones relevantes.
-- Convertir indicadores del panel en enlaces con contexto y estados vacíos accionables.
+- **Dashboard completado en 1.6.3:** cuadrícula adaptable, tarjetas operativas, agenda, gráfica local, pacientes recientes, pendientes y actividad.
+- **Dashboard completado en 1.6.3:** tres indicadores reales y estados vacíos accionables, sin KPI de ingresos.
 - Revisar sidebar colapsable, navegación móvil y persistencia de la sección activa.
 - Mantener la identidad únicamente en el top bar y evitar cualquier dato de paciente en esa zona global.
 
@@ -109,4 +109,4 @@ La base funcional está madura para pruebas y para un piloto de una sola estaci�
 
 ## 5. Próximo lote recomendado
 
-El siguiente cambio debe comenzar por autocontener el frontend y migrar el sidebar móvil/menús secundarios a JavaScript local. Después conviene consolidar el sistema visual y ajustar el dashboard. Rediseñar primero las pantallas mientras subsisten dependencias CDN prolongaría la causa técnica que originó el problema de la cabecera.
+Después del dashboard 1.6.3, el siguiente cambio debe autocontener el frontend y migrar el sidebar móvil/menús secundarios a JavaScript local. El sidebar y el top bar se mantienen deliberadamente fuera de este ciclo y podrán rediseñarse una vez eliminada su dependencia externa.

@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.6.2 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. También corrige la ambigüedad visual de la cuenta, garantiza que su panel permanezca cerrado al cargar y hace segura la limpieza de archivos obsoletos al actualizar una carpeta existente. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.6.3 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central ahora presenta agenda, altas, pacientes recientes, pendientes y actividad con datos reales, sin incluir ingresos. Top bar, sidebar e iconos permanecen sin cambios. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
 
 Módulos evaluados:
 
@@ -145,6 +145,16 @@ Módulos evaluados:
 - La interacción usa JavaScript local con apertura explícita, cierre por clic exterior o Escape y estado accesible mediante `aria-expanded`.
 - El comportamiento seguro ante un fallo de JavaScript es mantener el detalle cerrado.
 
+### Fase 1.6: dashboard operativo — completada en 1.6.3
+
+- Encabezado de bienvenida dentro del contenido, fecha local y acceso directo a alta de paciente.
+- Tres KPIs reales: pacientes activos, citas del día y consultas del mes; ingresos omitidos.
+- Agenda compacta con estados y acciones limitadas por rol.
+- Gráfica SVG local de altas de seis meses, sin biblioteca o servicio externo.
+- Pacientes recientes, pendientes expandibles y actividad clínica derivados de SQLite.
+- Acompañamiento Intermedio de 14–15 días conservado con sus acciones.
+- Sidebar, top bar, PNG e ICO comprobados sin modificaciones.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -177,7 +187,9 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | UI-HIS-01 | Historial con paciente y datos actuales | Nombre, antecedentes, alergias y actividad visibles |
 | UI-EMPTY-01 | Módulos sin registros | Mensaje explicativo y acción disponible |
 | UI-SEARCH-01 | Buscar por teléfono/correo | Paciente localizado |
-| UI-KPI-01 | Panel con datos persistidos | Cuatro contadores coherentes |
+| UI-KPI-01 | Panel con datos persistidos | Tres contadores coherentes y ningún KPI de ingresos |
+| UI-DASH-01 | Composición del panel | Agenda, resumen, recientes, pendientes, actividad y acompañamiento |
+| UI-DASH-02 | Rol Recepción | Sin pendientes, actividad ni acciones clínicas |
 | UI-TAB-01 | Formulario de consulta | Tres pestañas generales y cuarta sólo para Nutrición |
 | UI-PRINT-01 | Vista de impresión | Nota completa, independiente y autenticada |
 | RX-CRUD-01 | Emitir receta | Datos obligatorios, snapshot, auditoría e inmutabilidad |
@@ -196,7 +208,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.6.2: **65 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, navegación, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.6.3: **65 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, dashboard, navegación, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

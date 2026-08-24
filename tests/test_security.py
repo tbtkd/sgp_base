@@ -112,6 +112,12 @@ def test_assistant_role_cannot_access_clinical_or_user_admin(app, client, login)
         db.session.commit()
     assert login("assistant", "AssistantPass!2026").status_code == 302
     assert client.get("/pacientes/activos").status_code == 200
+    dashboard = client.get("/").get_data(as_text=True)
+    assert 'data-kpi="consultas-mes">—</strong>' in dashboard
+    assert "Acceso clínico restringido" in dashboard
+    assert "Sin consulta reciente" not in dashboard
+    assert "Expedientes pendientes" not in dashboard
+    assert "Iniciar consulta" not in dashboard
     assert client.get("/valoraciones/").status_code == 403
     assert client.get("/historial-clinico/").status_code == 403
     assert client.get("/usuarios").status_code == 403

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 
 from app import db_orm as db
 
@@ -40,7 +41,7 @@ class Cita(db.Model):
     @staticmethod
     def obtener_citas_del_dia(fecha=None):
         target = fecha or datetime.now().date()
-        return Cita.query.filter_by(fecha=target).order_by(Cita.hora).all()
+        return Cita.query.options(joinedload(Cita.paciente)).filter_by(fecha=target).order_by(Cita.hora).all()
 
     @staticmethod
     def es_horario_disponible(fecha, hora, excluir_cita_id=None):

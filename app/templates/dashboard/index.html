@@ -2,131 +2,326 @@
 
 {% block title %}Panel clínico - {{ current_user.nombre_completo if current_user.is_authenticated else '' }}{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
-<!-- 1. SECCIÓN SUPERIOR: TARJETAS KPI -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <!-- Card 1: Total Pacientes -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+<div class="clinical-dashboard max-w-[1440px] mx-auto space-y-6">
+    <section class="dashboard-welcome" aria-labelledby="dashboard-welcome-title">
         <div>
-            <p class="text-sm font-medium text-slate-500 mb-1">Total Pacientes</p>
-            <h3 class="text-2xl font-bold text-slate-900" data-kpi="pacientes">{{ total_pacientes | default(0) }}</h3>
-            <span class="text-xs font-semibold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full mt-2 inline-block">{{ crecimiento_pacientes|default(0) }} este mes</span>
+            <p class="dashboard-date">{{ fecha_actual_etiqueta }}</p>
+            <h2 id="dashboard-welcome-title">{{ saludo }}, {{ current_user.nombre }}.</h2>
+            <p class="dashboard-welcome-copy">Aquí tienes el resumen de actividad de tu consultorio.</p>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl">
-            <i class="fas fa-users"></i>
-        </div>
-    </div>
-    <!-- Card 2: Valoraciones -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-        <div>
-            <p class="text-sm font-medium text-slate-500 mb-1">Consultas clínicas</p>
-            <h3 class="text-2xl font-bold text-slate-900" data-kpi="consultas">{{ total_valoraciones if can_view_clinical else '—' }}</h3>
-            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">{{ (valoraciones_mes ~ ' este mes') if can_view_clinical else 'Acceso clínico restringido' }}</span>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-            <i class="fas fa-weight"></i>
-        </div>
-    </div>
-    <!-- Card 3: Expedientes -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-        <div>
-            <p class="text-sm font-medium text-slate-500 mb-1">Expedientes</p>
-            <h3 class="text-2xl font-bold text-slate-900" data-kpi="expedientes">{{ total_historiales if can_view_clinical else '—' }}</h3>
-            <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mt-2 inline-block">{{ 'Clínicos' if can_view_clinical else 'Acceso restringido' }}</span>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
-            <i class="fas fa-file-medical"></i>
-        </div>
-    </div>
-    <!-- Card 4: Plantillas -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-        <div>
-            <p class="text-sm font-medium text-slate-500 mb-1">Plantillas</p>
-            <h3 class="text-2xl font-bold text-slate-900" data-kpi="plantillas">{{ total_plantillas if can_view_clinical else '—' }}</h3>
-            <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-2 inline-block">{{ 'WhatsApp' if can_view_clinical else 'Acceso restringido' }}</span>
-        </div>
-        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
-            <i class="fas fa-envelope-open-text"></i>
-        </div>
-    </div>
-</div>
+        <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="dashboard-primary-action">
+            <i class="fas fa-user-plus" aria-hidden="true"></i>
+            <span>Nuevo paciente</span>
+        </a>
+    </section>
 
-<!-- 2. SECCIÓN INTERMEDIA: REORGANIZADA -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- COLUMNA IZQUIERDA: Accesos Rápidos -->
-    <div class="lg:col-span-1 space-y-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-bolt text-teal-600"></i> Accesos Rápidos</h2>
-            <div class="space-y-3">
-                <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-700 transition-colors"><i class="fas fa-user-plus"></i> Registrar Nuevo Paciente</a>
-                {% if can_view_clinical %}
-                <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 transition-colors"><i class="fas fa-stethoscope"></i> Ver consultas</a>
-                <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition-colors"><i class="fas fa-file-medical"></i> Gestionar Historiales</a>
-                {% endif %}
+    <section class="dashboard-kpi-grid" aria-label="Indicadores principales">
+        <article class="dashboard-kpi-card">
+            <div class="dashboard-kpi-icon dashboard-kpi-icon--teal"><i class="fas fa-users" aria-hidden="true"></i></div>
+            <div class="dashboard-kpi-content">
+                <p>Pacientes activos</p>
+                <div class="dashboard-kpi-value-row">
+                    <strong data-kpi="pacientes">{{ total_pacientes | default(0) }}</strong>
+                    {% if crecimiento_pacientes %}<span>+{{ crecimiento_pacientes }}</span>{% endif %}
+                </div>
+                <small>{{ crecimiento_pacientes|default(0) }} nuevos este mes</small>
             </div>
-        </div>
-    </div>
+        </article>
 
-    <!-- COLUMNA DERECHA: Panel de pestañas -->
-    <div class="lg:col-span-2 space-y-6" data-tabs data-tab-variant="line" data-default-tab="citas-hoy">
-        <div class="bg-white p-7 rounded-2xl shadow-sm border border-gray-100">
-            <div class="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-                <div class="flex gap-6" role="tablist" aria-label="Seguimiento del panel clínico">
-                    <button type="button" id="tab-citas-hoy" role="tab" data-tab-target="citas-hoy" aria-controls="panel-citas-hoy" aria-selected="true" class="pb-2 font-semibold transition text-teal-600 border-b-2 border-teal-600">📅 Pacientes del Día</button>
-                    <button type="button" id="tab-reagendamiento" role="tab" data-tab-target="reagendamiento" aria-controls="panel-reagendamiento" aria-selected="false" class="pb-2 font-semibold transition flex items-center gap-2 text-gray-500 hover:text-gray-700">⏳ Pendiente de Agendar {% if pendientes_por_agendar|length > 0 %}<span class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pendientes_por_agendar|length }}</span>{% endif %}</button>
-                    <button type="button" id="tab-seguimiento" role="tab" data-tab-target="seguimiento" aria-controls="panel-seguimiento" aria-selected="false" class="pb-2 font-semibold transition flex items-center gap-2 text-gray-500 hover:text-gray-700">⚠️ Sin consulta (>30 días) {% if pacientes_sin_valoracion|length > 0 %}<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ pacientes_sin_valoracion|length }}</span>{% endif %}</button>
+        <article class="dashboard-kpi-card">
+            <div class="dashboard-kpi-icon dashboard-kpi-icon--blue"><i class="fas fa-file-medical" aria-hidden="true"></i></div>
+            <div class="dashboard-kpi-content">
+                <p>Citas de hoy</p>
+                <div class="dashboard-kpi-value-row">
+                    <strong data-kpi="citas-hoy">{{ citas_del_dia|length }}</strong>
+                </div>
+                <small>{{ citas_programadas_hoy }} programadas · {{ citas_atendidas_hoy }} atendidas</small>
+            </div>
+        </article>
+
+        <article class="dashboard-kpi-card">
+            <div class="dashboard-kpi-icon dashboard-kpi-icon--emerald"><i class="fas fa-weight" aria-hidden="true"></i></div>
+            <div class="dashboard-kpi-content">
+                <p>Consultas este mes</p>
+                <div class="dashboard-kpi-value-row">
+                    <strong data-kpi="consultas-mes">{{ valoraciones_mes if can_view_clinical else '—' }}</strong>
+                </div>
+                <small>{{ (promedio_diario ~ ' promedio diario') if can_view_clinical else 'Acceso clínico restringido' }}</small>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-main-grid">
+        <article class="dashboard-panel dashboard-agenda-panel">
+            <header class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-eyebrow">Atención programada</p>
+                    <h3>Agenda de hoy</h3>
+                </div>
+                <span class="dashboard-panel-count">{{ citas_del_dia|length }} {{ 'cita' if citas_del_dia|length == 1 else 'citas' }}</span>
+            </header>
+
+            {% if citas_del_dia %}
+            <div class="dashboard-agenda-list">
+                {% for cita in citas_del_dia[:6] %}
+                {% set estatus_actual = cita.estatus or 'Programada' %}
+                <div class="dashboard-agenda-row" id="fila-cita-{{ cita.id }}">
+                    <time datetime="{{ cita.fecha.isoformat() }}T{{ cita.hora.strftime('%H:%M') }}">{{ cita.hora.strftime('%H:%M') }}</time>
+                    <span class="dashboard-timeline-dot" aria-hidden="true"></span>
+                    <div class="dashboard-avatar" aria-hidden="true">
+                        {{ ((cita.paciente.nombre[0] if cita.paciente else 'P') ~ (cita.paciente.apellido_paterno[0] if cita.paciente else ''))|upper }}
+                    </div>
+                    <div class="dashboard-agenda-patient">
+                        <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}">
+                            {{ cita.paciente.nombre_completo if cita.paciente else 'Paciente no asignado' }}
+                        </a>
+                        <span>{{ cita.motivo or 'Consulta programada' }}</span>
+                    </div>
+                    <div class="dashboard-agenda-actions" id="acciones-cita-{{ cita.id }}">
+                        <span class="dashboard-status dashboard-status--{{ estatus_actual|lower|replace(' ', '-')|replace('ó', 'o') }}">{{ estatus_actual }}</span>
+                        {% if estatus_actual == 'Programada' %}
+                        {% if can_view_clinical %}
+                        <a href="{{ url_for('valoracion.nueva_valoracion', paciente_id=cita.paciente_id) }}" class="dashboard-icon-action" aria-label="Iniciar consulta de {{ cita.paciente.nombre if cita.paciente else 'paciente' }}" title="Iniciar consulta">
+                            <i class="fas fa-stethoscope" aria-hidden="true"></i>
+                        </a>
+                        {% endif %}
+                        <details class="dashboard-row-menu">
+                            <summary aria-label="Más acciones para la cita" title="Más acciones"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></summary>
+                            <div>
+                                <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}"><i class="fas fa-file-medical" aria-hidden="true"></i> Ver expediente</a>
+                                <button type="button" onclick="marcarEstatusCita('{{ cita.id }}', 'No Asistió')"><i class="fas fa-user-times" aria-hidden="true"></i> Marcar inasistencia</button>
+                                <button type="button" onclick="marcarEstatusCita('{{ cita.id }}', 'Cancelada')"><i class="fas fa-ban" aria-hidden="true"></i> Cancelar cita</button>
+                            </div>
+                        </details>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="dashboard-empty-state">
+                <i class="fas fa-file-medical" aria-hidden="true"></i>
+                <strong>Agenda disponible</strong>
+                <span>No hay citas programadas para el día de hoy.</span>
+                <a href="{{ url_for('pacientes.lista_pacientes_activos') }}">Consultar pacientes</a>
+            </div>
+            {% endif %}
+        </article>
+
+        <article class="dashboard-panel dashboard-summary-panel">
+            <header class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-eyebrow">Últimos seis meses</p>
+                    <h3>Resumen de pacientes</h3>
+                </div>
+                <span class="dashboard-panel-count">Altas mensuales</span>
+            </header>
+            <div class="dashboard-summary-total">
+                <strong>{{ total_pacientes }}</strong>
+                <span>pacientes activos</span>
+            </div>
+            <div class="dashboard-chart" role="img" aria-label="Altas de pacientes registradas durante los últimos seis meses">
+                <svg viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="patient-area-gradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0d9488" stop-opacity="0.28"></stop>
+                            <stop offset="100%" stop-color="#0d9488" stop-opacity="0.02"></stop>
+                        </linearGradient>
+                    </defs>
+                    <line x1="18" y1="18" x2="582" y2="18" class="dashboard-chart-grid"></line>
+                    <line x1="18" y1="80" x2="582" y2="80" class="dashboard-chart-grid"></line>
+                    <line x1="18" y1="142" x2="582" y2="142" class="dashboard-chart-grid"></line>
+                    <polygon points="{{ resumen_pacientes.area_points }}" fill="url(#patient-area-gradient)"></polygon>
+                    <polyline points="{{ resumen_pacientes.line_points }}" class="dashboard-chart-line"></polyline>
+                    {% for item in resumen_pacientes['items'] %}
+                    <circle cx="{{ item.x }}" cy="{{ item.y }}" r="4" class="dashboard-chart-dot"><title>{{ item.label }}: {{ item.count }} altas</title></circle>
+                    {% endfor %}
+                </svg>
+                <div class="dashboard-chart-labels">
+                    {% for item in resumen_pacientes['items'] %}
+                    <span><strong>{{ item.count }}</strong>{{ item.label }}</span>
+                    {% endfor %}
                 </div>
             </div>
-            <div class="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
-                <div id="panel-citas-hoy" role="tabpanel" aria-labelledby="tab-citas-hoy" data-tab-panel="citas-hoy">{% include 'dashboard/tabs/_tab_pacientes_dia.html' %}</div>
-                <div id="panel-reagendamiento" role="tabpanel" aria-labelledby="tab-reagendamiento" data-tab-panel="reagendamiento" hidden>{% include 'dashboard/tabs/_tab_reagendamiento.html' %}</div>
-                <div id="panel-seguimiento" role="tabpanel" aria-labelledby="tab-seguimiento" data-tab-panel="seguimiento" hidden>{% include 'dashboard/tabs/_tab_sin_valoracion.html' %}</div>
+        </article>
+    </section>
+
+    <section class="dashboard-main-grid dashboard-main-grid--lower">
+        <article class="dashboard-panel dashboard-recent-panel">
+            <header class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-eyebrow">Altas más recientes</p>
+                    <h3>Pacientes recientes</h3>
+                </div>
+                <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="dashboard-panel-link">Ver todos</a>
+            </header>
+            {% if pacientes_recientes %}
+            <div class="dashboard-table-wrap">
+                <table class="dashboard-recent-table">
+                    <thead>
+                        <tr><th>Paciente</th><th>Expediente</th><th>Última consulta</th><th>Estado</th><th><span class="sr-only">Acción</span></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for paciente in pacientes_recientes %}
+                        <tr>
+                            <td>
+                                <div class="dashboard-patient-cell">
+                                    <span class="dashboard-avatar" aria-hidden="true">{{ (paciente.nombre[0] ~ paciente.apellido_paterno[0])|upper }}</span>
+                                    <span><strong>{{ paciente.nombre_completo }}</strong><small>{{ paciente.edad }} años{% if paciente.ciudad %} · {{ paciente.ciudad }}{% endif %}</small></span>
+                                </div>
+                            </td>
+                            <td>EXP-{{ "%04d"|format(paciente.id) }}</td>
+                            <td>{{ paciente.ultima_consulta|format_date if paciente.ultima_consulta else 'Sin consulta' }}</td>
+                            <td><span class="dashboard-status dashboard-status--{{ paciente.status }}">{{ paciente.status|capitalize }}</span></td>
+                            <td><a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="dashboard-icon-action" aria-label="Ver expediente de {{ paciente.nombre_completo }}" title="Ver expediente"><i class="fas fa-file-medical" aria-hidden="true"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="dashboard-empty-state dashboard-empty-state--compact">
+                <i class="fas fa-users" aria-hidden="true"></i><strong>Aún no hay pacientes</strong><span>Registra el primero para comenzar.</span>
+            </div>
+            {% endif %}
+        </article>
+
+        <article class="dashboard-panel dashboard-tasks-panel">
+            <header class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-eyebrow">Seguimiento operativo</p>
+                    <h3>Pendientes de atención</h3>
+                </div>
+            </header>
+
+            <div class="dashboard-task-list">
+                <details>
+                    <summary>
+                        <span class="dashboard-task-icon dashboard-task-icon--amber"><i class="fas fa-clock" aria-hidden="true"></i></span>
+                        <span><strong>Pendientes de agendar</strong><small>{{ pendientes_por_agendar|length }} pacientes por revisar</small></span>
+                        <span class="dashboard-task-number">{{ pendientes_por_agendar|length }}</span>
+                        <i class="fas fa-chevron-down dashboard-task-chevron" aria-hidden="true"></i>
+                    </summary>
+                    <div class="dashboard-task-detail">
+                        {% for paciente in pendientes_por_agendar[:4] %}
+                        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}"><span>{{ paciente.nombre }} {{ paciente.apellido_paterno }}</span><small>{{ 'Sin cita previa' if not paciente.ultima_cita else 'Última: ' ~ (paciente.ultima_cita|format_date) }}</small></a>
+                        {% else %}<p>No hay pacientes pendientes.</p>{% endfor %}
+                    </div>
+                </details>
+
+                {% if can_view_clinical %}
+                <details>
+                    <summary>
+                        <span class="dashboard-task-icon dashboard-task-icon--rose"><i class="fas fa-stethoscope" aria-hidden="true"></i></span>
+                        <span><strong>Sin consulta reciente</strong><small>Más de 30 días sin atención</small></span>
+                        <span class="dashboard-task-number">{{ pacientes_sin_valoracion|length }}</span>
+                        <i class="fas fa-chevron-down dashboard-task-chevron" aria-hidden="true"></i>
+                    </summary>
+                    <div class="dashboard-task-detail">
+                        {% for paciente in pacientes_sin_valoracion[:4] %}
+                        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}"><span>{{ paciente.nombre }} {{ paciente.apellido_paterno }}</span><small>{{ paciente.dias_transcurridos|int }} días</small></a>
+                        {% else %}<p>No hay seguimientos vencidos.</p>{% endfor %}
+                    </div>
+                </details>
+
+                <details>
+                    <summary>
+                        <span class="dashboard-task-icon dashboard-task-icon--blue"><i class="fas fa-file-medical" aria-hidden="true"></i></span>
+                        <span><strong>Expedientes pendientes</strong><small>Sin historial clínico capturado</small></span>
+                        <span class="dashboard-task-number">{{ pacientes_sin_historial|length }}</span>
+                        <i class="fas fa-chevron-down dashboard-task-chevron" aria-hidden="true"></i>
+                    </summary>
+                    <div class="dashboard-task-detail">
+                        {% for paciente in pacientes_sin_historial[:4] %}
+                        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}"><span>{{ paciente.nombre_completo }}</span><small>Completar historial</small></a>
+                        {% else %}<p>Todos los expedientes están completos.</p>{% endfor %}
+                    </div>
+                </details>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-progress">
+                <div><span>Progreso de citas del día</span><strong>{{ progreso_citas_hoy }}%</strong></div>
+                <div class="dashboard-progress-track" role="progressbar" aria-label="Progreso de citas del día" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progreso_citas_hoy }}"><span style="width: {{ progreso_citas_hoy }}%"></span></div>
+            </div>
+        </article>
+    </section>
+
+    <section class="dashboard-panel dashboard-activity-panel" aria-labelledby="actividad-reciente-title">
+        <header class="dashboard-panel-header">
+            <div><p class="dashboard-panel-eyebrow">Últimos movimientos</p><h3 id="actividad-reciente-title">Actividad reciente</h3></div>
+        </header>
+        <div class="dashboard-activity-grid">
+            {% if pacientes_recientes %}
+            {% set paciente_reciente = pacientes_recientes[0] %}
+            <a href="{{ url_for('pacientes.detalle_paciente', id=paciente_reciente.id) }}" class="dashboard-activity-item">
+                <span class="dashboard-task-icon dashboard-task-icon--teal"><i class="fas fa-user-plus" aria-hidden="true"></i></span>
+                <span><strong>{{ paciente_reciente.nombre_completo }}</strong><small>Paciente registrado · {{ paciente_reciente.fecha_registro|format_date }}</small></span>
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+            {% if can_view_clinical and actividad_reciente %}
+            {% set consulta_reciente = actividad_reciente[0] %}
+            <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=consulta_reciente.id) }}" class="dashboard-activity-item">
+                <span class="dashboard-task-icon dashboard-task-icon--emerald"><i class="fas fa-weight" aria-hidden="true"></i></span>
+                <span><strong>Consulta de {{ consulta_reciente.paciente.nombre_completo if consulta_reciente.paciente else 'paciente' }}</strong><small>Registrada el {{ consulta_reciente.fecha|format_date }}</small></span>
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+            {% if not pacientes_recientes and (not can_view_clinical or not actividad_reciente) %}
+            <div class="dashboard-empty-inline">La actividad aparecerá conforme se registren pacientes y consultas.</div>
+            {% endif %}
         </div>
-    </div>
+    </section>
+
+    <section class="dashboard-panel dashboard-followup-panel">
+        <header class="dashboard-panel-header">
+            <div>
+                <h3>💬 Acompañamiento Intermedio (14-15 Días)</h3>
+                <p class="dashboard-panel-subtitle">Contactos clínicos pendientes dentro de la ventana de seguimiento.</p>
+            </div>
+            {% if seguimiento_14_15|length > 0 %}<span class="dashboard-panel-count dashboard-panel-count--warning">{{ seguimiento_14_15|length }}</span>{% endif %}
+        </header>
+        {% if seguimiento_14_15|length > 0 %}
+        <div class="dashboard-table-wrap">
+            <table class="dashboard-recent-table">
+                <thead><tr><th>Paciente</th><th>Última consulta</th><th>Tiempo</th><th class="text-right">Acción</th></tr></thead>
+                <tbody>
+                    {% for val in seguimiento_14_15 %}
+                    {% set dias = (datetime.now().date() - val.fecha).days %}
+                    <tr id="row-val-{{ val.id }}">
+                        <td><strong>{{ val.paciente.nombre_completo if val.paciente else 'Paciente desconocido' }}</strong></td>
+                        <td>{{ val.fecha|format_date }}</td>
+                        <td><span class="dashboard-status dashboard-status--{{ 'warning' if dias >= 15 else 'activo' }}">{{ dias }} días</span></td>
+                        <td class="text-right">
+                            <div class="dashboard-followup-actions">
+                                <button type="button" onclick="omitirSeguimiento('{{ val.id }}')" class="dashboard-icon-action" aria-label="Posponer seguimiento" title="Posponer seguimiento"><i class="fas fa-clock" aria-hidden="true"></i></button>
+                                <button type="button" onclick="abrirModalWhatsAppDesdeBoton(this)" data-val-id="{{ val.id }}" data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" data-dias="{{ dias }}" class="dashboard-whatsapp-action"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar WhatsApp</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="dashboard-empty-state dashboard-empty-state--compact">
+            <i class="fas fa-clock" aria-hidden="true"></i>
+            <strong>Seguimiento al día</strong>
+            <span>No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.</span>
+        </div>
+        {% endif %}
+    </section>
 </div>
 
-<!-- 3. SECCIÓN INFERIOR: SEGUIMIENTO Y ACOMPAÑAMIENTO INTERMEDIO (14-15 DÍAS) -->
-<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-        <h3 class="text-lg font-bold text-gray-900">💬 Acompañamiento Intermedio (14-15 Días) {% if seguimiento_14_15|length > 0 %}<span class="bg-amber-500 text-white text-xs px-2.5 py-0.5 rounded-full font-semibold">{{ seguimiento_14_15|length }}</span>{% endif %}</h3>
-    </div>
-    {% if seguimiento_14_15|length > 0 %}
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead><tr class="text-xs uppercase text-gray-400 border-b border-gray-100 tracking-wider"><th class="py-3 px-4 font-semibold">Paciente</th><th class="py-3 px-4 font-semibold">Última consulta</th><th class="py-3 px-4 font-semibold">Tiempo</th><th class="py-3 px-4 font-semibold text-right">Acción</th></tr></thead>
-            <tbody class="divide-y divide-gray-50 text-sm">
-                {% for val in seguimiento_14_15 %}
-                {% set dias = (datetime.now().date() - val.fecha).days %}
-                <tr id="row-val-{{ val.id }}" class="hover:bg-gray-50/50 transition">
-                    <td class="py-3.5 px-4 font-medium text-gray-900">{{ val.paciente.nombre_completo if val.paciente else 'Paciente Desconocido' }}</td>
-                    <td class="py-3.5 px-4 text-gray-600">{{ val.fecha.strftime('%d %b, %Y') }}</td>
-                    <td class="py-3.5 px-4"><span class="bg-{{ 'amber' if dias >= 15 else 'teal' }}-100 text-{{ 'amber' if dias >= 15 else 'teal' }}-800 text-xs px-2.5 py-1 rounded-full font-medium">{{ dias }} días</span></td>
-                    <td class="py-3.5 px-4 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                             <button onclick="omitirSeguimiento('{{ val.id }}')" class="text-gray-400 hover:text-amber-600 bg-gray-50 hover:bg-amber-50 p-2 rounded-xl transition border border-gray-200"><i class="fas fa-clock text-xs"></i></button>
-                             <button onclick="abrirModalWhatsAppDesdeBoton(this)" 
-                                     data-val-id="{{ val.id }}" 
-                                     data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" 
-                                     data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" 
-                                     data-dias="{{ dias }}"
-                                     class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 shadow-sm transition"><i class="fab fa-whatsapp text-sm"></i> Enviar WhatsApp</button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="py-8 text-center text-gray-400 text-sm">No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.</div>
-    {% endif %}
-</div>
-
-<!-- MODALES (Omitir y WhatsApp) -->
 <div id="modalOmitirSeguimiento" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
     <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 space-y-5">
-        <h3 class="text-lg font-bold text-gray-900">Omitir o Posponer Seguimiento</h3>
+        <h3 class="text-lg font-bold text-gray-900">Omitir o posponer seguimiento</h3>
         <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
             <button type="button" onclick="cerrarModalOmitir()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs">Cancelar</button>
             <button type="button" onclick="confirmarOmitirSeguimiento()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs">Aceptar</button>
@@ -136,7 +331,8 @@
 
 <div id="modalWhatsApp" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-5">
-        <h3 class="text-base font-bold text-gray-900">Enviar Seguimiento por WhatsApp</h3>
+        <h3 class="text-base font-bold text-gray-900">Enviar seguimiento por WhatsApp</h3>
+        <p id="modalPacienteSub" class="text-xs text-gray-500"></p>
         <textarea id="modalMensajeTexto" rows="5" class="w-full rounded-2xl bg-gray-50 border border-gray-200 p-4 text-sm"></textarea>
         <div class="flex items-center justify-between pt-2">
             <button type="button" onclick="copiarTextoModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100">Copiar texto</button>
@@ -148,8 +344,9 @@
     </div>
 </div>
 
-<div id="data-config" 
-     data-plantilla='{{ contenido_plantilla | tojson | safe if contenido_plantilla else "null" }}' 
-     class="hidden"></div>
+<div id="data-config" data-plantilla='{{ contenido_plantilla | tojson | safe if contenido_plantilla else "null" }}' class="hidden"></div>
+{% endblock %}
+
+{% block extra_js %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

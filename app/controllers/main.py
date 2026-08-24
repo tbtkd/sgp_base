@@ -18,11 +18,60 @@ from app.models.valoracion_antropometrica import ValoracionAntropometrica
 
 main = Blueprint("main", __name__)
 
+WEEKDAYS_ES = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+MONTHS_ES = (
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+)
+
+
+def _dashboard_time_context(moment):
+    if moment.hour < 12:
+        greeting = "Buenos días"
+    elif moment.hour < 19:
+        greeting = "Buenas tardes"
+    else:
+        greeting = "Buenas noches"
+    date_label = f"{WEEKDAYS_ES[moment.weekday()]}, {moment.day} de {MONTHS_ES[moment.month - 1]} de {moment.year}"
+    return greeting, date_label
+
+
+def _patient_chart(series):
+    values = [item["count"] for item in series]
+    maximum = max([1, *values])
+    left, right, top, bottom = 18, 582, 18, 142
+    step = (right - left) / max(len(series) - 1, 1)
+    points = []
+    chart_items = []
+    for index, item in enumerate(series):
+        x = left + (index * step)
+        y = bottom - ((item["count"] / maximum) * (bottom - top))
+        points.append(f"{x:.1f},{y:.1f}")
+        chart_items.append({**item, "x": round(x, 1), "y": round(y, 1)})
+    return {
+        "items": chart_items,
+        "line_points": " ".join(points),
+        "area_points": f"{left},{bottom} {' '.join(points)} {right},{bottom}",
+        "maximum": maximum,
+    }
+
 
 @main.route("/")
 @login_required
 def index():
     can_view_clinical = current_user.rol_clinico in {"admin", "medico"}
+    now = datetime.now()
+    greeting, date_label = _dashboard_time_context(now)
     start_raw, end_raw = request.args.get("fecha_inicio"), request.args.get("fecha_fin")
     if can_view_clinical and start_raw and end_raw:
         try:
@@ -38,6 +87,15 @@ def index():
     else:
         activity = []
     assessments_month = ValoracionAntropometrica.contar_mes_vigente() if can_view_clinical else 0
+    total_patients = Paciente.contar_activos()
+    today_appointments = Cita.obtener_citas_del_dia()
+    scheduled_today = sum(1 for appointment in today_appointments if appointment.estatus == "Programada")
+    attended_today = sum(1 for appointment in today_appointments if appointment.estatus == "Atendida")
+    appointment_progress = round((attended_today / len(today_appointments)) * 100) if today_appointments else 0
+    pending_schedule = Paciente.obtener_pendientes_por_agendar()
+    without_assessment = Paciente.obtener_sin_valoracion_reciente(30) if can_view_clinical else []
+    without_history = Paciente.obtener_sin_historial() if can_view_clinical else []
+    monthly_patient_series = Paciente.resumen_altas_mensuales(6)
     template = PlantillaMensaje.obtener_activa()
     content = (
         template.contenido
@@ -47,7 +105,9 @@ def index():
     return render_template(
         "dashboard/index.html",
         can_view_clinical=can_view_clinical,
-        total_pacientes=Paciente.contar_activos(),
+        saludo=greeting,
+        fecha_actual_etiqueta=date_label,
+        total_pacientes=total_patients,
         crecimiento_pacientes=Paciente.calcular_crecimiento_mensual(),
         total_valoraciones=ValoracionAntropometrica.query.count() if can_view_clinical else 0,
         total_historiales=HistorialClinico.query.count() if can_view_clinical else 0,
@@ -55,9 +115,15 @@ def index():
         valoraciones_mes=assessments_month,
         promedio_diario=round(assessments_month / max(datetime.now().day, 1), 1),
         pacientes_seguimiento=Paciente.contar_en_seguimiento(),
-        pacientes_sin_valoracion=Paciente.obtener_sin_valoracion_reciente(30) if can_view_clinical else [],
-        citas_del_dia=Cita.obtener_citas_del_dia(),
-        pendientes_por_agendar=Paciente.obtener_pendientes_por_agendar(),
+        pacientes_sin_valoracion=without_assessment,
+        pacientes_sin_historial=without_history,
+        pacientes_recientes=Paciente.obtener_recientes(5),
+        citas_del_dia=today_appointments,
+        citas_programadas_hoy=scheduled_today,
+        citas_atendidas_hoy=attended_today,
+        progreso_citas_hoy=appointment_progress,
+        pendientes_por_agendar=pending_schedule,
+        resumen_pacientes=_patient_chart(monthly_patient_series),
         seguimiento_14_15=ValoracionAntropometrica.obtener_seguimiento_14_15_dias() if can_view_clinical else [],
         actividad_reciente=activity,
         contenido_plantilla=content,

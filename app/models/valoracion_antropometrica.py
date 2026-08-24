@@ -130,7 +130,8 @@ class ValoracionAntropometrica(db.Model):
     @staticmethod
     def obtener_recientes(limite=10):
         return (
-            ValoracionAntropometrica.query.order_by(ValoracionAntropometrica.fecha.desc())
+            ValoracionAntropometrica.query.options(joinedload(ValoracionAntropometrica.paciente))
+            .order_by(ValoracionAntropometrica.fecha.desc())
             .limit(min(max(int(limite), 1), 100))
             .all()
         )

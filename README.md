@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.6.2**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Conserva la interfaz original, pero generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.6.3**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Conserva la interfaz original, pero generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -20,6 +20,7 @@ Versión **1.6.2**. Aplicación local para consultorios médicos, dentales, nutr
 - Un solo icono institucional para navegador, interfaz y ejecutable Windows.
 - Cambio propio de contraseña, restablecimiento administrativo y recuperación local para el administrador del equipo.
 - Pestañas clínicas locales, estados vacíos accionables y KPIs coherentes.
+- Dashboard operativo con agenda, altas mensuales, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; no muestra ingresos.
 - Importación XLSX defensiva para expedientes antropométricos históricos.
 
 ## Instalación
@@ -125,7 +126,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 65 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional histórico está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el diagnóstico visual vigente en [docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md](docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md).
+La aceptación funcional incluye 65 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional histórico está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), el diagnóstico visual general en [docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md](docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md) y la especificación del dashboard vigente en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md).
 
 ## Compilación para Windows
 

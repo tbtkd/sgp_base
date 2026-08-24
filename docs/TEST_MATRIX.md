@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.6.2
+# Matriz de pruebas — versión 1.6.3
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -67,7 +67,10 @@ python -m pytest -q
 | UI-HIS-01 | Historial | Paciente y campos clínicos actuales visibles |
 | UI-EMPTY-01 | Estados vacíos | Pacientes, historiales y consultas muestran explicación y acción |
 | UI-SEARCH-01 | Búsqueda | Teléfono y correo localizan pacientes |
-| UI-KPI-01 | Panel | Pacientes, consultas, expedientes y plantillas coinciden con la base |
+| UI-KPI-01 | Panel | Pacientes, citas de hoy y consultas del mes coinciden con la base |
+| UI-DASH-01 | Dashboard | Los tres KPIs proceden de SQLite y el indicador de ingresos está ausente |
+| UI-DASH-02 | Composición | Agenda, gráfica, recientes, pendientes, actividad y acompañamiento visibles |
+| UI-DASH-03 | Privacidad por rol | Recepción no recibe pendientes, acciones o actividad clínica |
 | UI-TAB-01 | Pestañas | Navegación local, teclado y activación ante campos inválidos |
 | UI-PRINT-01 | Impresión | Vista autenticada, independiente, A4 y con nota completa |
 

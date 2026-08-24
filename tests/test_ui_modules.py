@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, time
 from pathlib import Path
 
 from app import db_orm as db
+from app.models.cita import Cita
 from app.models.historial_clinico import HistorialClinico
 from app.models.paciente import Paciente
 from app.models.plantilla import PlantillaMensaje
@@ -101,14 +102,36 @@ def test_dashboard_kpis_match_persisted_records(app, client, login):
         patient = _patient()
         db.session.add(HistorialClinico(paciente_id=patient.id, enfermedades_previas="Asma"))
         db.session.add(PlantillaMensaje(titulo="Seguimiento", contenido="Hola {nombre}", esta_activa=True))
+        db.session.add(
+            Cita(
+                paciente_id=patient.id,
+                fecha=date.today(),
+                hora=time(9, 30),
+                motivo="Consulta de seguimiento",
+                estatus="Programada",
+            )
+        )
         db.session.commit()
         _assessment(patient.id)
 
     page = client.get("/").get_data(as_text=True)
-    assert 'data-kpi="pacientes">1</h3>' in page
-    assert 'data-kpi="consultas">1</h3>' in page
-    assert 'data-kpi="expedientes">1</h3>' in page
-    assert 'data-kpi="plantillas">1</h3>' in page
+    assert 'data-kpi="pacientes">1</strong>' in page
+    assert 'data-kpi="citas-hoy">1</strong>' in page
+    assert 'data-kpi="consultas-mes">1</strong>' in page
+    assert 'data-kpi="ingresos"' not in page
+    assert "Ingresos del mes" not in page
+    assert "Agenda de hoy" in page
+    assert "Resumen de pacientes" in page
+    assert "Pacientes recientes" in page
+    assert "Pendientes de atención" in page
+    assert "Actividad reciente" in page
+    assert "Acompañamiento Intermedio (14-15 Días)" in page
+    assert "Consulta de seguimiento" in page
+    assert "EXP-0001" in page
+    assert 'static/css/dashboard.css' in page
+    assert 'class="fas fa-users"' in page
+    assert 'class="fas fa-file-medical"' in page
+    assert 'class="fas fa-weight"' in page
     assert "WhatsApp / SMS" not in page
 
 

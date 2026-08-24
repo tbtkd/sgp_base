@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.6.3 — Dashboard clínico operativo
+
+- Nueva composición central inspirada en la referencia visual, adaptada al tema claro existente y sin modificar top bar, sidebar, logotipo o iconos institucionales.
+- Encabezado contextual con fecha, saludo y acción directa para registrar pacientes.
+- KPIs reales para pacientes activos, citas de hoy y consultas del mes; se excluye expresamente cualquier indicador de ingresos.
+- Agenda diaria compacta con estados, acceso al expediente, inicio de consulta según permisos y actualización de inasistencia/cancelación.
+- Gráfica SVG local de altas de pacientes durante seis meses, sin dependencias nuevas ni datos simulados.
+- Tabla de pacientes recientes, pendientes expandibles y actividad reciente alimentadas desde SQLite.
+- Conservado íntegramente el bloque de Acompañamiento Intermedio de 14–15 días y sus acciones WhatsApp/posponer.
+- Recepción no recibe conteos, pendientes ni accesos clínicos en el nuevo dashboard.
+- Retiradas las plantillas de pestañas del panel que quedaron obsoletas; las pestañas de consulta siguen intactas.
+- Verificación: 65 pruebas `pytest`, 15 casos `unittest`, Ruff y Bandit sin hallazgos.
+
 ## 1.6.2 — Cabecera determinista y roadmap visual
 
 - El Panel Clínico muestra un título de módulo estable y deja de duplicar la identidad con el saludo “Bienvenido”.

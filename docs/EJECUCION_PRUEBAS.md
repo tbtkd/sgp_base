@@ -35,7 +35,7 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.6.2:
+Resultado esperado para la versión 1.6.3:
 
 ```text
 65 passed

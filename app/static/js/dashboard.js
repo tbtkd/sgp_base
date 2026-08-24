@@ -5,6 +5,55 @@
 let currentValId = null;
 let currentTelefono = null;
 
+async function marcarEstatusCita(citaId, nuevoEstatus) {
+    const allowedStatuses = new Set(['No Asistió', 'Cancelada']);
+    if (!allowedStatuses.has(nuevoEstatus)) return;
+
+    const title = nuevoEstatus === 'No Asistió'
+        ? '¿Marcar como no asistió?'
+        : '¿Cancelar esta cita?';
+    const result = await Swal.fire({
+        title,
+        input: 'textarea',
+        inputLabel: 'Motivo u observaciones (opcional)',
+        inputPlaceholder: 'Describe brevemente el motivo…',
+        inputAttributes: { maxlength: '500' },
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#0d9488',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Confirmar',
+        cancelButtonText: 'Volver',
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/pacientes/citas/${citaId}/cambiar-estatus`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estatus: nuevoEstatus, motivo: result.value || '' }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'No fue posible actualizar la cita.');
+        }
+
+        const actions = document.getElementById(`acciones-cita-${citaId}`);
+        if (actions) {
+            const badge = document.createElement('span');
+            badge.className = nuevoEstatus === 'No Asistió'
+                ? 'dashboard-status dashboard-status--no-asistio'
+                : 'dashboard-status dashboard-status--cancelada';
+            badge.textContent = nuevoEstatus;
+            actions.replaceChildren(badge);
+        }
+        mostrarToast(`Cita actualizada: ${nuevoEstatus}.`);
+    } catch (error) {
+        console.error('Error al actualizar la cita:', error);
+        await Swal.fire('No fue posible actualizar', error.message, 'error');
+    }
+}
+
 function formatearTelefonoMexico(telefono) {
     if (!telefono) return '';
     let telClean = telefono.replace(/[^0-9]/g, '');

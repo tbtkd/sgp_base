@@ -72,6 +72,69 @@ class Paciente(db.Model):
         return Paciente.query.filter_by(status="activo").count()
 
     @staticmethod
+    def obtener_recientes(limite=5):
+        """Devuelve las altas más recientes con la fecha de su última consulta."""
+        from app.models.valoracion_antropometrica import ValoracionAntropometrica
+
+        latest = (
+            db.session.query(
+                ValoracionAntropometrica.paciente_id,
+                func.max(ValoracionAntropometrica.fecha).label("ultima_val"),
+            )
+            .group_by(ValoracionAntropometrica.paciente_id)
+            .subquery()
+        )
+        rows = (
+            db.session.query(Paciente, latest.c.ultima_val.label("ultima_consulta"))
+            .outerjoin(latest, Paciente.id == latest.c.paciente_id)
+            .order_by(Paciente.fecha_registro.desc(), Paciente.id.desc())
+            .limit(min(max(int(limite), 1), 20))
+            .all()
+        )
+        patients = []
+        for patient, latest_date in rows:
+            patient.ultima_consulta = latest_date
+            patients.append(patient)
+        return patients
+
+    @staticmethod
+    def obtener_sin_historial(limite=100):
+        """Lista pacientes activos cuyo expediente clínico aún no fue capturado."""
+        from app.models.historial_clinico import HistorialClinico
+
+        return (
+            Paciente.query.outerjoin(HistorialClinico, HistorialClinico.paciente_id == Paciente.id)
+            .filter(Paciente.status == "activo", HistorialClinico.id.is_(None))
+            .order_by(Paciente.fecha_registro.desc(), Paciente.id.desc())
+            .limit(min(max(int(limite), 1), 500))
+            .all()
+        )
+
+    @staticmethod
+    def resumen_altas_mensuales(meses=6):
+        """Serie cronológica de altas; se calcula en Python para conservar portabilidad."""
+        labels = ("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
+        total_months = min(max(int(meses), 3), 12)
+        now = utcnow_naive()
+        current_index = (now.year * 12) + now.month - 1
+        month_indexes = [current_index - offset for offset in reversed(range(total_months))]
+        keys = [(index // 12, (index % 12) + 1) for index in month_indexes]
+        first_year, first_month = keys[0]
+        start = datetime(first_year, first_month, 1)
+        counts = {key: 0 for key in keys}
+
+        for (registered_at,) in db.session.query(Paciente.fecha_registro).filter(Paciente.fecha_registro >= start).all():
+            if registered_at:
+                key = (registered_at.year, registered_at.month)
+                if key in counts:
+                    counts[key] += 1
+
+        return [
+            {"key": f"{year:04d}-{month:02d}", "label": labels[month - 1], "count": counts[(year, month)]}
+            for year, month in keys
+        ]
+
+    @staticmethod
     def buscar(busqueda, status="activo", ordenar_por="id", orden="desc"):
         from app.models.valoracion_antropometrica import ValoracionAntropometrica
 

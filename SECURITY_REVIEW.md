@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.6.8 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.7.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -52,6 +52,8 @@ La versión 1.6.8 es adecuada para pruebas funcionales y para un piloto en una e
 - Mensajes `success`, `error`, `warning` e `info` con iconos y cierre.
 - El formulario de citas permanece cerrado al cargar, no depende de Alpine/CDN y cancela las consultas de disponibilidad al cerrarse.
 - Los horarios tienen etiquetas HTML reales, contraste explícito y revalidación autoritativa en el servidor.
+- La agenda rápida sólo acepta pacientes activos, limita fechas a dos años, rechaza citas previas y revalida el horario dentro de un bloqueo de escritura del proceso local.
+- La API visual de disponibilidad exige sesión, no entrega datos personales y marca su respuesta como `no-store`.
 - Las pestañas de consulta y panel funcionan con JavaScript local, sin depender de Alpine/CDN.
 - El menú de cuenta inicia cerrado mediante HTML nativo y usa JavaScript local; si el script falla, el detalle permanece oculto y no expone información por defecto.
 - El sidebar móvil, selector de sede y notificaciones usan estados `hidden`/ARIA y controles locales; no existe navegación hacia módulos sin autorización o backend.
@@ -102,7 +104,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 69 pruebas totales.
+- `python -m pytest -q`: 74 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

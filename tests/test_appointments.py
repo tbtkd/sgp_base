@@ -120,6 +120,155 @@ def test_availability_rejects_invalid_date(client, login):
     assert response.get_json()["success"] is False
 
 
+def test_kpi_opens_dedicated_scheduler_without_replacing_patient_modal(app, client, login):
+    login()
+    with app.app_context():
+        patient_id = _patient().id
+
+    dashboard = client.get("/").get_data(as_text=True)
+    scheduler = client.get("/pacientes/agendar-cita").get_data(as_text=True)
+    patient_detail = client.get(f"/pacientes/{patient_id}").get_data(as_text=True)
+    sidebar = (Path(__file__).parents[1] / "app" / "templates" / "components" / "_sidebar.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'href="/pacientes/agendar-cita"' in dashboard
+    assert "Agendar una cita" in scheduler
+    assert scheduler.count("data-calendar-date=") == 21
+    assert 'data-availability-url="/pacientes/disponibilidad_citas"' in scheduler
+    assert 'data-patient-search' in scheduler
+    assert 'data-patient-select' in scheduler
+    assert "EXP-0001" in scheduler
+    assert 'id="modalCita"' in patient_detail
+    assert "agendar_cita_rapida" not in sidebar
+
+
+def test_visual_availability_returns_every_slot_with_explicit_state(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        patient = _patient()
+        db.session.add(
+            Cita(
+                paciente_id=patient.id,
+                fecha=target,
+                hora=time(10, 30),
+                motivo="Horario ocupado",
+                estatus="Programada",
+                estado="pendiente",
+            )
+        )
+        db.session.commit()
+
+    response = client.get(f"/pacientes/disponibilidad_citas?fecha={target.isoformat()}")
+    payload = response.get_json()
+    slots = {slot["hora"]: slot for slot in payload["horarios"]}
+
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+    assert payload["success"] is True
+    assert payload["fecha"] == target.isoformat()
+    assert len(payload["horarios"]) == 21
+    assert slots["09:00"] == {"hora": "09:00", "disponible": True, "estado": "disponible"}
+    assert slots["10:30"] == {"hora": "10:30", "disponible": False, "estado": "ocupado"}
+    assert client.get("/pacientes/disponibilidad_citas?fecha=2000-01-01").status_code == 400
+
+
+def test_quick_scheduler_creates_one_appointment_and_audits_origin(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        patient_id = _patient().id
+
+    page = client.get("/pacientes/agendar-cita")
+    response = client.post(
+        "/pacientes/agendar-cita",
+        data={
+            "csrf_token": csrf_from(page),
+            "paciente_id": str(patient_id),
+            "proxima_cita_fecha": target.isoformat(),
+            "proxima_cita_hora": "12:30",
+            "motivo": "Consulta desde agenda rápida",
+        },
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/#agenda-hoy")
+    with app.app_context():
+        appointment = Cita.query.one()
+        assert appointment.paciente_id == patient_id
+        assert appointment.fecha == target
+        assert appointment.hora == time(12, 30)
+        audit = AuditLog.query.filter_by(action="CREAR_CITA", entity_id=appointment.id).one()
+        assert '"origen":"kpi_dashboard"' in audit.metadata_json
+
+
+def test_quick_scheduler_rejects_existing_appointment_and_stale_slot(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        first = _patient("Primera", "5512345601")
+        second = _patient("Segunda", "5512345602")
+        db.session.add(
+            Cita(
+                paciente_id=first.id,
+                fecha=target,
+                hora=time(15, 0),
+                motivo="Cita existente",
+                estatus="Programada",
+                estado="pendiente",
+            )
+        )
+        db.session.commit()
+        first_id, second_id = first.id, second.id
+
+    first_page = client.get(f"/pacientes/agendar-cita?paciente_id={first_id}")
+    existing = client.post(
+        "/pacientes/agendar-cita",
+        data={
+            "csrf_token": csrf_from(first_page),
+            "paciente_id": str(first_id),
+            "proxima_cita_fecha": _future_day(4).isoformat(),
+            "proxima_cita_hora": "11:00",
+            "motivo": "No debe reemplazarla",
+        },
+    )
+    assert existing.status_code == 400
+    assert "ya tiene una cita programada" in existing.get_data(as_text=True)
+
+    second_page = client.get(f"/pacientes/agendar-cita?paciente_id={second_id}")
+    occupied = client.post(
+        "/pacientes/agendar-cita",
+        data={
+            "csrf_token": csrf_from(second_page),
+            "paciente_id": str(second_id),
+            "proxima_cita_fecha": target.isoformat(),
+            "proxima_cita_hora": "15:00",
+            "motivo": "Conflicto",
+        },
+    )
+    assert occupied.status_code == 400
+    assert "ya no está disponible" in occupied.get_data(as_text=True)
+    with app.app_context():
+        assert Cita.query.count() == 1
+        assert Cita.query.filter_by(paciente_id=second_id).count() == 0
+
+
+def test_quick_scheduler_uses_safe_local_interactions():
+    root = Path(__file__).parents[1]
+    script = (root / "app" / "static" / "js" / "agendar_cita.js").read_text(encoding="utf-8")
+    styles = (root / "app" / "static" / "css" / "appointment_scheduler.css").read_text(encoding="utf-8")
+
+    assert "AbortController" in script
+    assert "replaceChildren" in script
+    assert "textContent" in script
+    assert ".innerHTML" not in script
+    assert "aria-pressed" in script
+    assert "submitting" in script
+    assert 'html[data-theme="dark"] .appointment-time' in styles
+    assert ".appointment-day.is-selected" in styles
+
+
 def test_create_appointment_persists_and_audits(app, client, login):
     login()
     target = _future_day()

@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.6.8:
+Resultado esperado para la versión 1.7.0:
 
 ```text
-69 passed
+74 passed
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -47,6 +47,12 @@ Para ejecutar únicamente los casos de interfaz, shell, tema, pestañas, impresi
 
 ```powershell
 python -m pytest -q tests/test_ui_modules.py
+```
+
+Para validar el modal existente, agenda rápida del KPI, calendario, disponibilidad, conflictos y auditoría:
+
+```powershell
+python -m pytest -q tests/test_appointments.py
 ```
 
 Para validar perfiles profesionales, cédula, snapshot del autor y restricción de antropometría:

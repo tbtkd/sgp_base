@@ -29,6 +29,12 @@
 6. Errores internos se registran, pero no se exponen.
 7. Se añaden cabeceras de seguridad y no-cache.
 
+## Agenda rápida
+
+`GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET sólo lista pacientes activos y construye un resumen de 21 días mediante una consulta acotada. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes.
+
+El POST no confía en el calendario del navegador: valida el identificador, confirma que el paciente siga activo, aplica los validadores comunes de fecha/hora/motivo, limita la anticipación a dos años, impide sobrescribir una cita programada y consulta nuevamente el conflicto del bloque. En el despliegue local actual, la validación final y el `commit` se serializan con el mismo bloqueo de escritura usado por las rutas previas de agendamiento. La auditoría registra `CREAR_CITA` y el origen `kpi_dashboard`, sin guardar el motivo.
+
 ## Perfiles profesionales
 
 El rol controla permisos (`admin`, `medico`, `recepcion`) y `perfil_profesional` describe el área de atención (`medico_general`, `dentista`, `nutricion`). Sólo `nutricion` puede enviar campos antropométricos o importar el formato XLSX; ocultarlos en HTML no es suficiente y el servidor rechaza intentos forjados.

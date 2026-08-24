@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.8 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.0 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -44,6 +44,10 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 36. Pestañas, botones secundarios y divisores del formulario clínico deben conservar contraste suficiente en tema oscuro.
 37. El detalle debe presentar Historial médico antes de Alimentación y Actividad física.
 38. El pendiente de pacientes sin consulta reciente debe mostrarse sólo a perfiles de Nutrición.
+39. La acción Agendar cita del KPI debe permitir seleccionar un paciente activo registrado y consultar visualmente disponibilidad sin navegar a su detalle.
+40. El calendario rápido debe mostrar 21 días, permitir una fecha posterior y distinguir horarios disponibles, ocupados y transcurridos.
+41. La disponibilidad mostrada debe revalidarse al confirmar; el flujo rápido no puede sobrescribir una cita programada existente.
+42. La agenda rápida no debe duplicarse en el sidebar ni retirar el agendamiento/reagendamiento existente en el detalle del paciente.
 
 ## Requisitos de seguridad
 

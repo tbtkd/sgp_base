@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 
 from sqlalchemy import and_, or_, text
 from sqlalchemy.orm import joinedload
@@ -22,6 +22,13 @@ class Cita(db.Model):
     motivo_cancelacion = db.Column(db.String(500), nullable=True)
 
     paciente = db.relationship("Paciente", backref=db.backref("citas", cascade="all, delete-orphan", lazy=True))
+
+    HORARIOS_ATENCION = tuple(
+        time(hour, minute)
+        for hour in range(9, 20)
+        for minute in (0, 30)
+        if not (hour == 19 and minute == 30)
+    )
 
     @staticmethod
     def obtener_siguiente_cita(paciente_id):
@@ -63,3 +70,25 @@ class Cita(db.Model):
         if excluir_cita_id:
             query = query.filter(Cita.id != excluir_cita_id)
         return query.first() is None
+
+    @staticmethod
+    def obtener_disponibilidad_dia(fecha, momento=None, excluir_cita_id=None):
+        """Devuelve todos los bloques de atención con un estado explícito."""
+        current = momento or datetime.now()
+        query = Cita.query.with_entities(Cita.hora).filter_by(fecha=fecha, estatus="Programada")
+        if excluir_cita_id:
+            query = query.filter(Cita.id != excluir_cita_id)
+        occupied = {row.hora for row in query.all()}
+        availability = []
+        for slot in Cita.HORARIOS_ATENCION:
+            elapsed = datetime.combine(fecha, slot) <= current
+            is_occupied = slot in occupied
+            state = "transcurrido" if elapsed else "ocupado" if is_occupied else "disponible"
+            availability.append(
+                {
+                    "hora": slot.strftime("%H:%M"),
+                    "disponible": state == "disponible",
+                    "estado": state,
+                }
+            )
+        return availability

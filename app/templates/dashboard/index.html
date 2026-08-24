@@ -41,7 +41,7 @@
                     <small>{% if citas_del_dia|length %}{{ citas_programadas_hoy }} programadas · {{ citas_atendidas_hoy }} atendidas{% else %}Sin citas programadas para hoy{% endif %}</small>
                 </span>
             </a>
-            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="dashboard-kpi-action" aria-label="Agendar una cita"><i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Agendar cita</span></a>
+            <a href="{{ url_for('pacientes.agendar_cita_rapida') }}" class="dashboard-kpi-action" aria-label="Agendar una cita consultando disponibilidad"><i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Agendar cita</span></a>
         </article>
 
         <article class="dashboard-kpi-card{% if not can_view_clinical %} is-restricted{% endif %}">

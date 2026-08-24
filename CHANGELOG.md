@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0 — Agenda rápida desde el KPI
+
+- La acción **Agendar cita** de Citas de hoy abre un flujo dedicado, sin obligar a navegar primero al detalle del paciente.
+- Selector con búsqueda sobre pacientes activos registrados y referencia visible de expediente/teléfono.
+- Calendario visual de 21 días con conteo de espacios libres y selector adicional de fecha hasta dos años.
+- Horarios completos de 09:00 a 19:00 diferenciados como disponibles, ocupados o transcurridos.
+- Resumen previo de paciente, expediente, fecha y hora, con doble envío bloqueado y nueva validación de disponibilidad al confirmar.
+- Una cita existente nunca se sobrescribe desde el flujo rápido; la interfaz dirige al detalle para reagendarla mediante el comportamiento previo.
+- El modal del detalle del paciente, el sidebar y el resto de los KPI conservan su funcionamiento.
+- Verificación: 74 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.6.8 — Contraste clínico y seguimiento por especialidad
 
 - Las pestañas inactivas, el botón Cancelar y el botón Guardar de la consulta usan estados propios y legibles en tema oscuro.

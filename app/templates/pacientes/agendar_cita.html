@@ -1,0 +1,140 @@
+{% extends "base/base.html" %}
+
+{% block title %}Agendar cita - Sistema Clínico{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/appointment_scheduler.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="appointment-scheduler" data-appointment-scheduler data-availability-url="{{ url_for('pacientes.disponibilidad_citas') }}">
+    <header class="appointment-scheduler-header">
+        <div>
+            <p>Agenda rápida</p>
+            <h2>Agendar una cita</h2>
+            <span>Selecciona un paciente previamente registrado y consulta los espacios disponibles antes de confirmar.</span>
+        </div>
+        <a href="{{ url_for('main.index') }}" class="appointment-back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver al Dashboard</a>
+    </header>
+
+    <form method="POST" class="appointment-scheduler-layout" data-appointment-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="proxima_cita_fecha" value="{{ fecha_seleccionada.isoformat() }}" data-selected-date>
+        <input type="hidden" name="proxima_cita_hora" value="{{ request.form.get('proxima_cita_hora', '') }}" data-selected-time>
+
+        <div class="appointment-scheduler-flow">
+            <section class="appointment-step" aria-labelledby="appointment-patient-title">
+                <div class="appointment-step-heading">
+                    <span>1</span>
+                    <div><h3 id="appointment-patient-title">Selecciona al paciente</h3><p>Sólo se muestran pacientes activos registrados.</p></div>
+                </div>
+                {% if pacientes %}
+                <label for="appointment-patient-search" class="appointment-label">Buscar por nombre, expediente o teléfono</label>
+                <div class="appointment-search-box">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input id="appointment-patient-search" type="search" maxlength="100" autocomplete="off" placeholder="Ej. Laura García o 5512345678" data-patient-search>
+                </div>
+                <label for="appointment-patient" class="sr-only">Paciente registrado</label>
+                <select id="appointment-patient" name="paciente_id" size="6" required data-patient-select>
+                    <option value="" disabled{% if not paciente_seleccionado %} selected{% endif %}>Selecciona un paciente registrado</option>
+                    {% for paciente in pacientes %}
+                    {% set cita_pendiente = citas_pendientes_por_paciente.get(paciente.id) %}
+                    <option value="{{ paciente.id }}"
+                            data-search="{{ (paciente.nombre_completo ~ ' ' ~ paciente.telefono ~ ' EXP-' ~ '%04d'|format(paciente.id))|lower }}"
+                            data-name="{{ paciente.nombre_completo }}"
+                            data-record="EXP-{{ '%04d'|format(paciente.id) }}"
+                            data-phone="{{ paciente.telefono }}"
+                            data-detail-url="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}"
+                            {% if cita_pendiente %}data-existing-appointment="{{ cita_pendiente.fecha|format_date }} · {{ cita_pendiente.hora.strftime('%H:%M') }}"{% endif %}
+                            {% if paciente_seleccionado == paciente.id|string %}selected{% endif %}>
+                        {{ paciente.nombre_completo }} · EXP-{{ '%04d'|format(paciente.id) }} · {{ paciente.telefono }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="appointment-results" data-patient-results aria-live="polite">{{ pacientes|length }} pacientes disponibles</p>
+                <div class="appointment-existing" data-existing-warning hidden>
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    <span><strong>Este paciente ya tiene una cita programada.</strong><small data-existing-copy></small></span>
+                    <a href="#" data-existing-link>Ver o reagendar</a>
+                </div>
+                {% else %}
+                <div class="appointment-empty-patients">
+                    <i class="fas fa-user-plus" aria-hidden="true"></i>
+                    <strong>No hay pacientes activos registrados</strong>
+                    <p>Registra primero al paciente para poder asignarle una cita.</p>
+                    <a href="{{ url_for('pacientes.nuevo_paciente') }}">Registrar paciente</a>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="appointment-step" aria-labelledby="appointment-date-title">
+                <div class="appointment-step-heading">
+                    <span>2</span>
+                    <div><h3 id="appointment-date-title">Consulta una fecha disponible</h3><p>Se muestran los próximos 21 días y la cantidad de horarios libres.</p></div>
+                </div>
+                <div class="appointment-calendar" role="group" aria-label="Disponibilidad de los próximos 21 días">
+                    {% for dia in calendario_citas %}
+                    <button type="button"
+                            class="appointment-day{% if dia.fecha == fecha_seleccionada %} is-selected{% endif %}{% if dia.disponibles == 0 %} is-full{% endif %}"
+                            data-calendar-date="{{ dia.iso }}"
+                            aria-pressed="{{ 'true' if dia.fecha == fecha_seleccionada else 'false' }}"
+                            aria-label="{{ dia.dia_semana }} {{ dia.fecha.day }} de {{ dia.mes }}: {{ dia.disponibles }} horarios disponibles">
+                        <small>{{ dia.dia_semana }}</small><strong>{{ dia.fecha.day }}</strong><span>{{ dia.mes }}</span>
+                        <em>{% if dia.disponibles %}{{ dia.disponibles }} {{ 'libre' if dia.disponibles == 1 else 'libres' }}{% else %}Sin espacios{% endif %}</em>
+                    </button>
+                    {% endfor %}
+                </div>
+                <div class="appointment-custom-date">
+                    <label for="appointment-custom-date">¿Necesitas una fecha posterior?</label>
+                    <input id="appointment-custom-date" type="date" min="{{ fecha_minima.isoformat() }}" max="{{ fecha_maxima.isoformat() }}" value="{{ fecha_seleccionada.isoformat() }}" data-custom-date>
+                </div>
+            </section>
+
+            <section class="appointment-step" aria-labelledby="appointment-time-title">
+                <div class="appointment-step-heading">
+                    <span>3</span>
+                    <div><h3 id="appointment-time-title">Elige un horario</h3><p>Los espacios ocupados o transcurridos permanecen deshabilitados.</p></div>
+                </div>
+                <div class="appointment-availability-status" data-availability-status role="status" aria-live="polite">
+                    <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Consultando disponibilidad…
+                </div>
+                <div class="appointment-time-grid" data-time-grid aria-label="Horarios disponibles"></div>
+                <div class="appointment-time-legend" aria-label="Leyenda de horarios">
+                    <span><i class="is-available"></i>Disponible</span>
+                    <span><i class="is-selected"></i>Seleccionado</span>
+                    <span><i class="is-unavailable"></i>Ocupado o transcurrido</span>
+                </div>
+            </section>
+
+            <section class="appointment-step" aria-labelledby="appointment-reason-title">
+                <div class="appointment-step-heading">
+                    <span>4</span>
+                    <div><h3 id="appointment-reason-title">Motivo de la cita</h3><p>Opcional; ayuda a preparar la atención.</p></div>
+                </div>
+                <label for="appointment-reason" class="appointment-label">Motivo u observaciones</label>
+                <textarea id="appointment-reason" name="motivo" rows="3" maxlength="500" placeholder="Ej. Consulta inicial, revisión o seguimiento">{{ request.form.get('motivo', '') }}</textarea>
+                <span class="appointment-character-count" data-character-count>0 / 500</span>
+            </section>
+        </div>
+
+        <aside class="appointment-summary" aria-labelledby="appointment-summary-title">
+            <div class="appointment-summary-heading"><i class="fas fa-calendar-check" aria-hidden="true"></i><div><p>Resumen</p><h3 id="appointment-summary-title">Cita por confirmar</h3></div></div>
+            <dl>
+                <div><dt>Paciente</dt><dd data-summary-patient>Selecciona un paciente</dd></div>
+                <div><dt>Expediente</dt><dd data-summary-record>—</dd></div>
+                <div><dt>Fecha</dt><dd data-summary-date>—</dd></div>
+                <div><dt>Horario</dt><dd data-summary-time>—</dd></div>
+            </dl>
+            <p class="appointment-summary-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> El servidor volverá a validar el espacio al confirmar para evitar citas duplicadas.</p>
+            <button type="submit" class="appointment-submit" data-appointment-submit disabled>
+                <i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Confirmar cita</span>
+            </button>
+            <a href="{{ url_for('main.index') }}" class="appointment-cancel">Cancelar y volver</a>
+        </aside>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/agendar_cita.js') }}"></script>
+{% endblock %}

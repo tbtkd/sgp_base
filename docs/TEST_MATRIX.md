@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.6.8
+# Matriz de pruebas — versión 1.7.0
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -35,6 +35,11 @@ Estos 15 casos permanecen por compatibilidad y son recolectados por la suite uni
 | CITA-CRUD-01 | Alta | Cita futura persistida y evento `CREAR_CITA` |
 | CITA-CRUD-02 | Reagenda | Mismo registro actualizado y evento `ACTUALIZAR_CITA` |
 | CITA-CRUD-03 | Conflictos | Horario ocupado y fecha pasada no se persisten |
+| CITA-KPI-01 | Acceso dedicado | KPI abre agenda rápida, sin agregarla al sidebar ni retirar el modal del detalle |
+| CITA-KPI-02 | Calendario visual | 21 fechas y API con 21 bloques disponibles/ocupados/transcurridos |
+| CITA-KPI-03 | Alta rápida | Paciente activo, cita y auditoría con origen de Dashboard persistidos |
+| CITA-KPI-04 | Protección | Cita previa y horario que dejó de estar libre son rechazados sin sobrescribir datos |
+| CITA-KPI-05 | Frontend seguro | DOM local, cancelación de solicitudes, doble envío, ARIA y tema oscuro |
 
 Comando oficial único:
 
@@ -118,7 +123,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 69/69 (incluye 15 casos unittest)
+pytest: 74/74 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

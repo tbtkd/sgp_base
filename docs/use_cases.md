@@ -14,7 +14,7 @@ El profesional captura el motivo, síntomas, signos vitales, diagnóstico, plan 
 
 ## UC-04 — Agendar una cita
 
-El usuario registra fecha, hora y motivo. El sistema evita horarios duplicados y audita cambios de estado.
+Desde el KPI Citas de hoy, el usuario busca un paciente activo previamente registrado, consulta 21 días de disponibilidad, puede elegir otra fecha, selecciona un horario libre y revisa el resumen antes de confirmar. El servidor revalida el espacio y audita la creación. Si el paciente ya tiene una cita programada, el flujo rápido no la sobrescribe y dirige al detalle para reagendarla. El modal del detalle permanece disponible para el flujo individual previo.
 
 ## UC-05 — Registrar un pago
 

@@ -7,6 +7,8 @@
     {% set titulo_modulo = 'Editar paciente' %}{% set subtitulo_modulo = 'Pacientes' %}
 {% elif endpoint_actual == 'pacientes.detalle_paciente' %}
     {% set titulo_modulo = 'Detalle del paciente' %}{% set subtitulo_modulo = 'Pacientes' %}
+{% elif endpoint_actual == 'pacientes.agendar_cita_rapida' %}
+    {% set titulo_modulo = 'Agendar cita' %}{% set subtitulo_modulo = 'Agenda y disponibilidad' %}
 {% elif 'pacientes.' in endpoint_actual %}
     {% set titulo_modulo = 'Pacientes' %}{% set subtitulo_modulo = 'Gestión de expedientes' %}
 {% elif endpoint_actual == 'valoracion.nueva_valoracion' %}

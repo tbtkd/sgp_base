@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.6.8 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.7.0 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida con paciente, calendario y horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
 
 Módulos evaluados:
 
@@ -200,6 +200,16 @@ Módulos evaluados:
 - Medicina general y Odontología mantienen pendientes de agenda/expediente sin recibir seguimiento nutricional irrelevante.
 - No se modifican esquema, rutas, datos clínicos ni permisos base.
 
+### Fase 1.12: agenda rápida del KPI — completada en 1.7.0
+
+- **Agendar cita** deja de dirigir a la lista de pacientes y abre un flujo dedicado.
+- Búsqueda y selección de pacientes activos con expediente/teléfono visibles.
+- Calendario de 21 días con conteo real de espacios y selector para fechas posteriores.
+- Horarios de 09:00 a 19:00 clasificados como disponibles, ocupados o transcurridos.
+- Resumen previo y confirmación protegida contra doble envío, fecha inválida, paciente inactivo y conflicto de último momento.
+- Una cita existente no se reemplaza desde el KPI; el usuario conserva la reagenda en el detalle.
+- Sidebar, modal del paciente, datos, esquema y permisos actuales permanecen intactos.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -250,6 +260,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | UI-SHELL-04 | Topbar persistente | Viewport estable, contenido desplazable y cabecera compacta visible |
 | UI-THEME-05 | Consulta oscura | Pestañas, botones secundarios y divisores sin fondos/líneas blancas |
 | PRO-08 | Seguimiento nutricional | Ausencia de consulta reciente visible sólo para Nutrición |
+| CITA-KPI-01 | Agenda rápida | Paciente, calendario, horarios, revalidación y auditoría sin duplicar navegación |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
 
 Suite oficial:
@@ -258,7 +269,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.6.8: **69 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.7.0: **74 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

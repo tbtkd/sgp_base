@@ -7,24 +7,28 @@
 {% endblock %}
 
 {% block content %}
-<div class="clinical-dashboard max-w-[1440px] mx-auto space-y-6">
+<div class="clinical-dashboard max-w-[1440px] mx-auto space-y-5">
     <section class="dashboard-welcome" aria-labelledby="dashboard-welcome-title">
         <div>
             <p class="dashboard-date">{{ fecha_actual_etiqueta }}</p>
             <h2 id="dashboard-welcome-title">{{ saludo }}, {{ current_user.nombre }}.</h2>
             <p class="dashboard-welcome-copy">Aquí tienes el resumen de actividad de tu consultorio.</p>
         </div>
-        <a href="{{ url_for('pacientes.nuevo_paciente') }}" class="dashboard-primary-action">
-            <i class="fas fa-user-plus" aria-hidden="true"></i>
-            <span>Nuevo paciente</span>
-        </a>
     </section>
+
+    <nav class="dashboard-quick-actions" aria-label="Acciones rápidas">
+        <a href="{{ url_for('pacientes.nuevo_paciente') }}"><span class="dashboard-quick-icon dashboard-task-icon--teal"><i class="fas fa-user-plus" aria-hidden="true"></i></span><span><strong>Nuevo paciente</strong><small>Registrar expediente</small></span></a>
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}"><span class="dashboard-quick-icon dashboard-task-icon--blue"><i class="fas fa-calendar-plus" aria-hidden="true"></i></span><span><strong>Agendar cita</strong><small>Seleccionar paciente</small></span></a>
+        {% if can_view_clinical %}
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}"><span class="dashboard-quick-icon dashboard-task-icon--emerald"><i class="fas fa-stethoscope" aria-hidden="true"></i></span><span><strong>Nueva consulta</strong><small>Seleccionar paciente</small></span></a>
+        {% endif %}
+    </nav>
 
     <section class="dashboard-kpi-grid" aria-label="Indicadores principales">
         <article class="dashboard-kpi-card">
             <div class="dashboard-kpi-icon dashboard-kpi-icon--teal"><i class="fas fa-users" aria-hidden="true"></i></div>
             <div class="dashboard-kpi-content">
-                <p>Pacientes activos</p>
+                <p>Pacientes registrados</p>
                 <div class="dashboard-kpi-value-row">
                     <strong data-kpi="pacientes">{{ total_pacientes | default(0) }}</strong>
                     {% if crecimiento_pacientes %}<span>+{{ crecimiento_pacientes }}</span>{% endif %}
@@ -45,19 +49,19 @@
         </article>
 
         <article class="dashboard-kpi-card">
-            <div class="dashboard-kpi-icon dashboard-kpi-icon--emerald"><i class="fas fa-weight" aria-hidden="true"></i></div>
+            <div class="dashboard-kpi-icon dashboard-kpi-icon--emerald"><i class="fas fa-clipboard-list" aria-hidden="true"></i></div>
             <div class="dashboard-kpi-content">
-                <p>Consultas este mes</p>
+                <p>Consultas pendientes</p>
                 <div class="dashboard-kpi-value-row">
-                    <strong data-kpi="consultas-mes">{{ valoraciones_mes if can_view_clinical else '—' }}</strong>
+                    <strong data-kpi="consultas-pendientes">{{ consultas_pendientes_hoy if can_view_clinical else '—' }}</strong>
                 </div>
-                <small>{{ (promedio_diario ~ ' promedio diario') if can_view_clinical else 'Acceso clínico restringido' }}</small>
+                <small>{{ ('Programadas para hoy · ' ~ valoraciones_mes ~ ' realizadas este mes') if can_view_clinical else 'Acceso clínico restringido' }}</small>
             </div>
         </article>
     </section>
 
     <section class="dashboard-main-grid">
-        <article class="dashboard-panel dashboard-agenda-panel">
+        <article id="agenda-hoy" class="dashboard-panel dashboard-agenda-panel">
             <header class="dashboard-panel-header">
                 <div>
                     <p class="dashboard-panel-eyebrow">Atención programada</p>
@@ -113,19 +117,31 @@
             {% endif %}
         </article>
 
-        <article class="dashboard-panel dashboard-summary-panel">
+        <article class="dashboard-panel dashboard-summary-panel" data-dashboard-charts>
             <header class="dashboard-panel-header">
                 <div>
-                    <p class="dashboard-panel-eyebrow">Últimos seis meses</p>
-                    <h3>Resumen de pacientes</h3>
+                    <p class="dashboard-panel-eyebrow">Actividad real</p>
+                    <h3>Citas y consultas</h3>
                 </div>
-                <span class="dashboard-panel-count">Altas mensuales</span>
+                <div class="dashboard-chart-tabs" role="tablist" aria-label="Cambiar gráfica">
+                    <button type="button" role="tab" aria-selected="true" aria-controls="chart-activity" data-dashboard-chart-tab="activity">7 días</button>
+                    <button type="button" role="tab" aria-selected="false" aria-controls="chart-patients" data-dashboard-chart-tab="patients">Pacientes</button>
+                </div>
             </header>
-            <div class="dashboard-summary-total">
-                <strong>{{ total_pacientes }}</strong>
-                <span>pacientes activos</span>
+            <div id="chart-activity" data-dashboard-chart-panel="activity" class="dashboard-chart dashboard-chart--activity" role="tabpanel" aria-label="Citas y consultas de los últimos siete días">
+                <div class="dashboard-chart-legend"><span><i class="dashboard-legend-dot dashboard-legend-dot--appointments"></i>Citas</span>{% if can_view_clinical %}<span><i class="dashboard-legend-dot dashboard-legend-dot--consultations"></i>Consultas</span>{% endif %}</div>
+                <svg viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <line x1="18" y1="18" x2="582" y2="18" class="dashboard-chart-grid"></line><line x1="18" y1="80" x2="582" y2="80" class="dashboard-chart-grid"></line><line x1="18" y1="142" x2="582" y2="142" class="dashboard-chart-grid"></line>
+                    <polyline points="{{ resumen_actividad.appointment_points }}" class="dashboard-chart-line dashboard-chart-line--appointments"></polyline>
+                    {% if can_view_clinical %}<polyline points="{{ resumen_actividad.consultation_points }}" class="dashboard-chart-line dashboard-chart-line--consultations"></polyline>{% endif %}
+                    {% for item in resumen_actividad['items'] %}
+                    <circle cx="{{ item.x }}" cy="{{ item.appointment_y }}" r="4" class="dashboard-chart-dot dashboard-chart-dot--appointments"><title>{{ item.date }}: {{ item.appointments }} citas</title></circle>
+                    {% if can_view_clinical %}<circle cx="{{ item.x }}" cy="{{ item.consultation_y }}" r="4" class="dashboard-chart-dot dashboard-chart-dot--consultations"><title>{{ item.date }}: {{ item.consultations }} consultas</title></circle>{% endif %}
+                    {% endfor %}
+                </svg>
+                <div class="dashboard-chart-labels dashboard-chart-labels--seven">{% for item in resumen_actividad['items'] %}<span><strong>{{ item.appointments }}{% if can_view_clinical %} / {{ item.consultations }}{% endif %}</strong>{{ item.label }}</span>{% endfor %}</div>
             </div>
-            <div class="dashboard-chart" role="img" aria-label="Altas de pacientes registradas durante los últimos seis meses">
+            <div id="chart-patients" data-dashboard-chart-panel="patients" class="dashboard-chart" role="tabpanel" aria-label="Altas de pacientes registradas durante los últimos seis meses" hidden>
                 <svg viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                     <defs>
                         <linearGradient id="patient-area-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -148,6 +164,64 @@
                     {% endfor %}
                 </div>
             </div>
+        </article>
+    </section>
+
+    <section class="dashboard-operational-row">
+        <article class="dashboard-panel dashboard-upcoming-panel" aria-labelledby="proximas-citas-title">
+            <header class="dashboard-panel-header"><div><p class="dashboard-panel-eyebrow">Continuidad de atención</p><h3 id="proximas-citas-title">Próximas citas</h3></div><a href="#agenda-hoy" class="dashboard-panel-link">Ver agenda de hoy</a></header>
+            {% if proximas_citas %}
+            <div class="dashboard-upcoming-list">
+                {% for cita in proximas_citas %}
+                <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}" class="dashboard-upcoming-item">
+                    <time datetime="{{ cita.fecha.isoformat() }}T{{ cita.hora.strftime('%H:%M') }}"><strong>{{ cita.fecha|format_date }}</strong><span>{{ cita.hora.strftime('%H:%M') }}</span></time>
+                    <span class="dashboard-avatar" aria-hidden="true">{{ ((cita.paciente.nombre[0] if cita.paciente else 'P') ~ (cita.paciente.apellido_paterno[0] if cita.paciente else ''))|upper }}</span>
+                    <span><strong>{{ cita.paciente.nombre_completo if cita.paciente else 'Paciente no asignado' }}</strong><small>{{ cita.motivo or 'Consulta programada' }}</small></span>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}<div class="dashboard-empty-state dashboard-empty-state--compact"><i class="fas fa-calendar-check" aria-hidden="true"></i><strong>Sin próximas citas</strong><span>La agenda futura aparecerá aquí.</span></div>{% endif %}
+        </article>
+
+        <article class="dashboard-panel dashboard-followup-panel" aria-labelledby="acompanamiento-title">
+            <header class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-eyebrow">Seguimiento clínico</p>
+                    <h3 id="acompanamiento-title">💬 Acompañamiento Intermedio (14-15 Días)</h3>
+                    <p class="dashboard-panel-subtitle">Contactos pendientes dentro de la ventana de seguimiento.</p>
+                </div>
+                {% if seguimiento_14_15|length > 0 %}<span class="dashboard-panel-count dashboard-panel-count--warning">{{ seguimiento_14_15|length }}</span>{% endif %}
+            </header>
+            {% if seguimiento_14_15|length > 0 %}
+            <div class="dashboard-table-wrap">
+                <table class="dashboard-recent-table">
+                    <thead><tr><th>Paciente</th><th>Última consulta</th><th>Tiempo</th><th class="text-right">Acción</th></tr></thead>
+                    <tbody>
+                        {% for val in seguimiento_14_15 %}
+                        {% set dias = (datetime.now().date() - val.fecha).days %}
+                        <tr id="row-val-{{ val.id }}">
+                            <td><strong>{{ val.paciente.nombre_completo if val.paciente else 'Paciente desconocido' }}</strong></td>
+                            <td>{{ val.fecha|format_date }}</td>
+                            <td><span class="dashboard-status dashboard-status--{{ 'warning' if dias >= 15 else 'activo' }}">{{ dias }} días</span></td>
+                            <td class="text-right">
+                                <div class="dashboard-followup-actions">
+                                    <button type="button" onclick="omitirSeguimiento('{{ val.id }}')" class="dashboard-icon-action" aria-label="Posponer seguimiento" title="Posponer seguimiento"><i class="fas fa-clock" aria-hidden="true"></i></button>
+                                    <button type="button" onclick="abrirModalWhatsAppDesdeBoton(this)" data-val-id="{{ val.id }}" data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" data-dias="{{ dias }}" class="dashboard-whatsapp-action"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar WhatsApp</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="dashboard-empty-state dashboard-empty-state--compact">
+                <i class="fas fa-clock" aria-hidden="true"></i>
+                <strong>Seguimiento al día</strong>
+                <span>No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.</span>
+            </div>
+            {% endif %}
         </article>
     </section>
 
@@ -279,44 +353,6 @@
         </div>
     </section>
 
-    <section class="dashboard-panel dashboard-followup-panel">
-        <header class="dashboard-panel-header">
-            <div>
-                <h3>💬 Acompañamiento Intermedio (14-15 Días)</h3>
-                <p class="dashboard-panel-subtitle">Contactos clínicos pendientes dentro de la ventana de seguimiento.</p>
-            </div>
-            {% if seguimiento_14_15|length > 0 %}<span class="dashboard-panel-count dashboard-panel-count--warning">{{ seguimiento_14_15|length }}</span>{% endif %}
-        </header>
-        {% if seguimiento_14_15|length > 0 %}
-        <div class="dashboard-table-wrap">
-            <table class="dashboard-recent-table">
-                <thead><tr><th>Paciente</th><th>Última consulta</th><th>Tiempo</th><th class="text-right">Acción</th></tr></thead>
-                <tbody>
-                    {% for val in seguimiento_14_15 %}
-                    {% set dias = (datetime.now().date() - val.fecha).days %}
-                    <tr id="row-val-{{ val.id }}">
-                        <td><strong>{{ val.paciente.nombre_completo if val.paciente else 'Paciente desconocido' }}</strong></td>
-                        <td>{{ val.fecha|format_date }}</td>
-                        <td><span class="dashboard-status dashboard-status--{{ 'warning' if dias >= 15 else 'activo' }}">{{ dias }} días</span></td>
-                        <td class="text-right">
-                            <div class="dashboard-followup-actions">
-                                <button type="button" onclick="omitirSeguimiento('{{ val.id }}')" class="dashboard-icon-action" aria-label="Posponer seguimiento" title="Posponer seguimiento"><i class="fas fa-clock" aria-hidden="true"></i></button>
-                                <button type="button" onclick="abrirModalWhatsAppDesdeBoton(this)" data-val-id="{{ val.id }}" data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" data-dias="{{ dias }}" class="dashboard-whatsapp-action"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar WhatsApp</button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="dashboard-empty-state dashboard-empty-state--compact">
-            <i class="fas fa-clock" aria-hidden="true"></i>
-            <strong>Seguimiento al día</strong>
-            <span>No hay pacientes pendientes de seguimiento intermedio (14-15 días) en este momento.</span>
-        </div>
-        {% endif %}
-    </section>
 </div>
 
 <div id="modalOmitirSeguimiento" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm hidden">

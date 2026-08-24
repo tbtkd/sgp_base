@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.3 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.6 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -27,12 +27,19 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 19. Hasta 10 medicamentos estructurados con genérico, presentación, dosis, vía, frecuencia y duración.
 20. Instantánea inmutable de los datos de paciente y profesional al emitir una receta.
 21. Rechazo explícito del módulo para recetas especiales/controladas.
-22. Identidad de cuenta en top bar sin duplicarla en sidebar e iconografía institucional unificada.
+22. Identidad y menú de cuenta en el footer del sidebar, topbar reservado a herramientas globales e iconografía institucional unificada.
 23. Recetas originales, adicionales y sustituciones con folios independientes e historial inmutable.
 24. Folios sustituidos marcados como no vigentes y enlazados al reemplazo.
 25. Cambio propio, restablecimiento administrativo y recuperación local de contraseñas para administradores.
 26. Identidad compacta mediante nombre de usuario y detalle rotulado de nombre, rol, área clínica y cédula en el menú de cuenta.
 27. Limpieza segura y explícita de recursos obsoletos al actualizar sobre una carpeta existente.
+28. Búsqueda global conectada al buscador autorizado de pacientes, breadcrumb y selector informativo de sede local.
+29. Tema claro/oscuro persistente, foco visible y navegación de shell operable con teclado.
+30. Los módulos no implementados deben identificarse como planificados y no deben exponer rutas ficticias.
+31. Dashboard con acciones rápidas sin duplicados, tres KPIs reales, agenda, próximas citas, gráfica de citas/consultas, actividad, una sola vista de pendientes y Acompañamiento Intermedio.
+32. Estados vacíos, indicador de carga de navegación y mensajes de confirmación sin inventar información clínica.
+33. Recetas y Expedientes deben permanecer en el sidebar y no duplicarse como acciones rápidas del dashboard.
+34. Plantillas, Usuarios, Auditoría y Configuración deben agruparse bajo Administración sin modificar la autorización de cada destino.
 
 ## Requisitos de seguridad
 

@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.6.3
+# Arquitectura técnica — versión 1.6.6
 
 ## Componentes
 
@@ -11,9 +11,9 @@
 - `app/controllers/`: transacciones y casos de uso.
 - `app/templates/` y `app/static/`: interfaz actual preservada y adaptada al dominio clínico general.
 
-El dashboard agrega consultas de lectura acotadas para altas de seis meses, pacientes recientes y expedientes pendientes. La gráfica se genera como SVG local a partir de una serie construida en servidor; no incorpora bibliotecas de visualización ni servicios externos.
+El dashboard agrega consultas de lectura acotadas para altas de seis meses, actividad de siete días, próximas citas, pacientes recientes y expedientes pendientes. Las gráficas se generan como SVG local a partir de series construidas en servidor; no incorporan bibliotecas de visualización ni servicios externos.
 
-La cabecera usa HTML nativo (`hidden`) como estado seguro del menú de cuenta y JavaScript local para su interacción. Alpine sigue presente en componentes legados, pero ya no determina si el detalle de identidad aparece durante la carga.
+Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; `theme-init.js` aplica la preferencia antes de renderizar. Alpine sigue presente en componentes legados, pero no gobierna el shell.
 
 ## Persistencia portable
 

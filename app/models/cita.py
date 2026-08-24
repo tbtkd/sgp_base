@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import text
+from sqlalchemy import and_, or_, text
 from sqlalchemy.orm import joinedload
 
 from app import db_orm as db
@@ -42,6 +42,20 @@ class Cita(db.Model):
     def obtener_citas_del_dia(fecha=None):
         target = fecha or datetime.now().date()
         return Cita.query.options(joinedload(Cita.paciente)).filter_by(fecha=target).order_by(Cita.hora).all()
+
+    @staticmethod
+    def obtener_proximas(limite=5, momento=None):
+        current = momento or datetime.now()
+        return (
+            Cita.query.options(joinedload(Cita.paciente))
+            .filter(
+                Cita.estatus == "Programada",
+                or_(Cita.fecha > current.date(), and_(Cita.fecha == current.date(), Cita.hora >= current.time())),
+            )
+            .order_by(Cita.fecha.asc(), Cita.hora.asc())
+            .limit(max(1, min(int(limite), 20)))
+            .all()
+        )
 
     @staticmethod
     def es_horario_disponible(fecha, hora, excluir_cita_id=None):

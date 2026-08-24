@@ -5,6 +5,30 @@
 let currentValId = null;
 let currentTelefono = null;
 
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-dashboard-charts]').forEach((chartGroup) => {
+        const tabs = Array.from(chartGroup.querySelectorAll('[data-dashboard-chart-tab]'));
+        const panels = Array.from(chartGroup.querySelectorAll('[data-dashboard-chart-panel]'));
+        const activate = (tab) => {
+            const target = tab.dataset.dashboardChartTab;
+            tabs.forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+            panels.forEach((panel) => { panel.hidden = panel.dataset.dashboardChartPanel !== target; });
+            tab.focus();
+        };
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => activate(tab));
+            tab.addEventListener('keydown', (event) => {
+                if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                let nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : index;
+                if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+                if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+                activate(tabs[nextIndex]);
+            });
+        });
+    });
+});
+
 async function marcarEstatusCita(citaId, nuevoEstatus) {
     const allowedStatuses = new Set(['No Asistió', 'Cancelada']);
     if (!allowedStatuses.has(nuevoEstatus)) return;

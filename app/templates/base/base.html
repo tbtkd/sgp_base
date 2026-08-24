@@ -1,13 +1,16 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50">
+<html lang="es" class="h-full" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="light dark">
     <title>{% block title %}Sistema de Expediente Clínico{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/png">
     <link rel="alternate icon" href="{{ url_for('static', filename='img/logo.ico') }}" type="image/x-icon">
     
+    <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
+
     <!-- Component CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_forms.css') }}">
@@ -36,6 +39,7 @@
     
     <!-- Custom Theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
     
     {% block extra_css %}{% endblock %}
     <style>
@@ -48,18 +52,19 @@
         }
     </style>
 </head>
-<body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: true }">
-    <div class="min-h-screen flex">
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-50">
+    <div class="shell-loading-bar" data-navigation-progress aria-hidden="true"></div>
+    <div class="min-h-screen flex shell-layout">
         <!-- Sidebar -->
         {% include 'components/_sidebar.html' %}
 
         <!-- Main Wrapper -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden shell-main-wrapper">
             <!-- Header -->
             {% include 'components/_header.html' %}
 
             <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+            <main id="main-content" class="flex-1 overflow-y-auto p-4 lg:p-8 shell-main" tabindex="-1">
                 <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -67,7 +72,7 @@
                             {% for category, message in messages %}
                                 <div class="flash-alert p-4 rounded-xl text-sm font-medium shadow-sm border {% if category == 'error' %}bg-red-50 text-red-700 border-red-200{% elif category == 'success' %}bg-teal-50 text-teal-700 border-teal-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %} flex items-center justify-between">
                                     <span><i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} mr-2"></i>{{ message }}</span>
-                                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                                    <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar mensaje"><i class="fas fa-times" aria-hidden="true"></i></button>
                                 </div>
                             {% endfor %}
                         </div>
@@ -78,6 +83,8 @@
             </main>
         </div>
     </div>
+
+    <div class="shell-live-region" data-shell-live-region role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- App JS -->
     <script src="{{ url_for('static', filename='js/tabs.js') }}"></script>

@@ -1,5 +1,7 @@
 # Dashboard clínico — especificación visual 1.6.3
 
+> Documento histórico. El shell y las ampliaciones vigentes del dashboard se documentan en `SHELL_NAVEGACION_1_6_4.md`.
+
 ## Alcance
 
 El cambio afecta únicamente el contenido central de `dashboard/index.html`. El top bar, sidebar, logotipo PNG, icono ICO y sus clases permanecen idénticos a 1.6.2. La referencia visual se adapta a la paleta clara vigente para evitar un tema oscuro aislado dentro de la aplicación.

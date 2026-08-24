@@ -260,7 +260,7 @@ def test_prescription_server_validation_rejects_incomplete_or_excess_items():
         prescription_payload(duplicated)
 
 
-def test_account_identity_is_only_in_topbar_and_icon_is_canonical(app, client, login):
+def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login):
     login()
     page = client.get("/").get_data(as_text=True)
     root = Path(__file__).parents[1]
@@ -274,19 +274,18 @@ def test_account_identity_is_only_in_topbar_and_icon_is_canonical(app, client, l
     assert page.count("Cerrar Sesión") == 1
     assert "Admin Pruebas Sistema" in page
     assert "Administrador · Nutrición" in page
-    assert "administrator" in page
-    assert "Nombre registrado" in page
-    assert "Usuario:" in page
-    assert "Rol de acceso:" in page
-    assert "Área clínica:" in page
     assert "Bienvenido," not in page
-    assert "Panel clínico" in page
-    assert "Cerrar Sesión" not in sidebar
-    assert "current_user.nombre" not in sidebar
+    assert "Dashboard" in page
+    assert "Cerrar Sesión" in sidebar
+    assert "auth.logout" in sidebar
+    assert "current_user.nombre_completo" in sidebar
     assert "current_user.nombre_corto" not in header
-    assert "current_user.username" in header
-    assert "data-account-menu-toggle" in header
-    assert "data-account-menu-panel" in header
+    assert "current_user.username" not in header
+    assert "data-account-menu-toggle" not in header
+    assert "data-account-menu-panel" not in header
+    assert "data-account-menu-toggle" in sidebar
+    assert "data-account-menu-panel" in sidebar
+    assert 'class="shell-account-more">...</button>' in sidebar
     assert "x-show=\"open\"" not in header
     assert "hidden>" in header
     assert "panel.hidden = true" in app_script

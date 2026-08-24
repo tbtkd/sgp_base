@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.6.3 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.6.6 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -54,7 +54,10 @@ La versión 1.6.3 es adecuada para pruebas funcionales y para un piloto en una e
 - Los horarios tienen etiquetas HTML reales, contraste explícito y revalidación autoritativa en el servidor.
 - Las pestañas de consulta y panel funcionan con JavaScript local, sin depender de Alpine/CDN.
 - El menú de cuenta inicia cerrado mediante HTML nativo y usa JavaScript local; si el script falla, el detalle permanece oculto y no expone información por defecto.
-- El dashboard no calcula ni presenta ingresos; las métricas operativas proceden de consultas acotadas a SQLite.
+- El sidebar móvil, selector de sede y notificaciones usan estados `hidden`/ARIA y controles locales; no existe navegación hacia módulos sin autorización o backend.
+- La búsqueda global reutiliza la consulta limitada y validada de pacientes; no introduce un endpoint universal que exponga datos clínicos.
+- El tema se conserva sólo como preferencia visual en `localStorage`; no almacena identidad, datos clínicos ni credenciales.
+- El dashboard no calcula ni presenta ingresos; las métricas operativas proceden de consultas acotadas a SQLite y respetan permisos clínicos.
 - Recepción no recibe el contenido de pendientes clínicos, actividad de consultas ni acciones para iniciar atención.
 - La vista de impresión es una ruta clínica autenticada, aislada del shell y sin recursos externos.
 - El perfil profesional se valida por separado del rol de acceso.
@@ -98,7 +101,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 65 pruebas totales.
+- `python -m pytest -q`: 68 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

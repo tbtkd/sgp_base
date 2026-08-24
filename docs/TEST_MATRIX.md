@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.6.3
+# Matriz de pruebas — versión 1.6.6
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -67,12 +67,17 @@ python -m pytest -q
 | UI-HIS-01 | Historial | Paciente y campos clínicos actuales visibles |
 | UI-EMPTY-01 | Estados vacíos | Pacientes, historiales y consultas muestran explicación y acción |
 | UI-SEARCH-01 | Búsqueda | Teléfono y correo localizan pacientes |
-| UI-KPI-01 | Panel | Pacientes, citas de hoy y consultas del mes coinciden con la base |
+| UI-KPI-01 | Panel | Pacientes, citas de hoy y consultas pendientes coinciden con la base |
 | UI-DASH-01 | Dashboard | Los tres KPIs proceden de SQLite y el indicador de ingresos está ausente |
-| UI-DASH-02 | Composición | Agenda, gráfica, recientes, pendientes, actividad y acompañamiento visibles |
+| UI-DASH-02 | Composición | Agenda, gráfica, recientes, pendientes únicos, actividad y acompañamiento visibles |
 | UI-DASH-03 | Privacidad por rol | Recepción no recibe pendientes, acciones o actividad clínica |
 | UI-TAB-01 | Pestañas | Navegación local, teclado y activación ante campos inválidos |
 | UI-PRINT-01 | Impresión | Vista autenticada, independiente, A4 y con nota completa |
+| UI-SHELL-01 | Navegación | Búsqueda, sede, notificaciones, breadcrumb, tema y controles ARIA visibles |
+| UI-SHELL-02 | Módulos planificados | Opciones sin backend quedan deshabilitadas y sin rutas ficticias |
+| UI-DASH-04 | Próximas citas | Consulta ordenada por fecha/hora y representación con datos persistidos |
+| UI-SHELL-03 | Recetas y administración | Recetas enlaza al contexto existente; Administración agrupa opciones sin cambiar permisos |
+| UI-DASH-05 | Densidad y tema | Acciones no duplicadas, seguimiento junto a próximas citas y separadores oscuros consistentes |
 
 ## Perfiles profesionales (`tests/test_professional_profiles.py`)
 
@@ -98,7 +103,7 @@ python -m pytest -q
 | RX-HIS-01 | Historial | Original, adicional y sustitución conservan folios/versiones y vigencia independiente |
 | RX-SUB-01 | Corrección | Motivo obligatorio, documento anterior intacto y leyenda de no surtir |
 | RX-MIG-01 | Migración | Unicidad legada retirada sin perder folios y llaves foráneas verificadas |
-| UI-ID-01 | Identidad | Cuenta sólo en top bar, sidebar sin duplicado e icono canónico en PNG/ICO |
+| UI-ID-01 | Identidad | Cuenta sólo en sidebar, topbar sin identidad e icono canónico PNG/ICO |
 | UI-ID-02 | Estado de cuenta | Panel cerrado por `hidden`, sin saludo duplicado y control local con `aria-expanded` |
 
 ## Mantenimiento de la entrega (`tests/test_project_cleanup.py`)
@@ -110,7 +115,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 65/65 (incluye 15 casos unittest)
+pytest: 68/68 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

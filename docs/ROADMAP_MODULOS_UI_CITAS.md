@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.6.3 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central ahora presenta agenda, altas, pacientes recientes, pendientes y actividad con datos reales, sin incluir ingresos. Top bar, sidebar e iconos permanecen sin cambios. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.6.6 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. Top bar y sidebar cuentan con shell responsive y tema persistente; la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
 
 Módulos evaluados:
 
@@ -90,7 +90,7 @@ Módulos evaluados:
 
 - Títulos y subtítulos específicos por módulo.
 - Menú del usuario protegido inicialmente con `x-cloak`; en 1.6.2 se reemplazó por `hidden` nativo y control local determinista.
-- Identidad, rol/perfil y cierre de sesión concentrados en el top bar; el duplicado se retiró del sidebar.
+- Identidad y rol/perfil concentrados en el top bar; el sidebar sólo agrega el cierre de sesión solicitado, sin repetir el perfil.
 
 ### Fase 1.1: perfiles profesionales y autoría — completada en 1.4.0
 
@@ -155,6 +155,32 @@ Módulos evaluados:
 - Acompañamiento Intermedio de 14–15 días conservado con sus acciones.
 - Sidebar, top bar, PNG e ICO comprobados sin modificaciones.
 
+### Fase 1.7: shell clínico y tema — completada en 1.6.4
+
+- Sidebar reagrupado con accesos operativos, contextuales y planificados claramente diferenciados.
+- Top bar con búsqueda real, sede informativa, notificaciones vacías, breadcrumb, tema y cuenta.
+- Tema oscuro persistente, foco visible, teclado/Escape y sidebar móvil controlado localmente.
+- Dashboard ampliado con acciones rápidas, gráfica de siete días, próximas citas y alertas reales.
+- Se mantienen sin backend Laboratorio, Hospitalización, Facturación, Inventario, Reportes, Configuración y Portal del paciente.
+- Próximo: autocontener recursos CDN, pruebas de navegador y diseño formal de cada módulo antes de habilitarlo.
+
+### Fase 1.8: simplificación del shell — completada en 1.6.5
+
+- Identidad y cuenta trasladadas del topbar al footer del sidebar mediante menú `...`.
+- Paleta del sidebar alineada a la referencia azul petróleo/teal.
+- Acción duplicada de Nuevo paciente retirada del encabezado.
+- Alertas duplicadas eliminadas; Pendientes de atención queda como única fuente operativa.
+- Próximas citas ampliada sin cambiar su consulta ni sus permisos.
+
+### Fase 1.9: densidad del panel y jerarquía administrativa — completada en 1.6.6
+
+- Acompañamiento Intermedio comparte fila con Próximas citas y se apila de forma responsive.
+- Crear receta y Ver expedientes se retiran de Acciones rápidas por duplicar módulos del sidebar.
+- Recetas se convierte en un acceso contextual funcional hacia la lista de consultas existente.
+- Plantillas, Usuarios, Auditoría y Configuración se agrupan bajo Administración sin modificar permisos.
+- Los separadores del dashboard usan bordes azul petróleo consistentes en tema oscuro.
+- Próximo: diseñar y aprobar funcionalmente Configuración, módulos planificados y pruebas de navegador antes de habilitar rutas nuevas.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -197,9 +223,10 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | RX-HIS-01 | Adicional/sustitución | Folios y versiones conservados; documento anterior no vigente |
 | RX-MIG-01 | Esquema legado | Datos preservados y nueva relación 1:N verificada |
 | SEC-PASS-01 | Recuperación de acceso | Cambio, temporal, invalidación y contingencia local |
-| UI-ID-01 | Navegación | Cuenta sólo en top bar e icono canónico |
+| UI-ID-01 | Navegación | Identidad y logout sólo en sidebar, topbar limpio e icono canónico |
 | UI-ID-02 | Identidad | Usuario, nombre, rol, área y cédula diferenciados |
 | UI-ID-03 | Cabecera | Título sin saludo duplicado, panel nativamente cerrado y control local accesible |
+| UI-NAV-04 | Densidad y navegación | Acciones no duplicadas, Recetas contextual y Administración desplegable |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
 
 Suite oficial:
@@ -208,7 +235,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.6.3: **65 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, dashboard, navegación, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.6.6: **68 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, dashboard, shell, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
@@ -226,7 +253,7 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - Compilar Tailwind localmente y retirar su CDN.
 - Empaquetar FontAwesome, Alpine y SweetAlert o reemplazar sus usos restantes con componentes locales.
 - Consolidar reglas duplicadas de tablas, formularios, pestañas y modales.
-- Sustituir el estado global restante del sidebar y menús secundarios por JavaScript local; el menú de cuenta ya fue migrado.
+- Sustituir los usos legados restantes de Alpine; sidebar, top bar, pestañas clínicas y menú de cuenta ya utilizan JavaScript local.
 - Pruebas de interfaz con navegador real para resoluciones de escritorio y móvil.
 - Pruebas visuales específicas de impresión en Chrome/Edge y ejecutable PyInstaller.
 
@@ -250,7 +277,7 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - La receta ordinaria se genera separada, con datos profesionales completos y medicamentos estructurados.
 - Se pueden emitir recetas adicionales y sustituir una vigente sin borrar o reescribir ningún folio.
 - Un usuario puede cambiar su contraseña; un administrador puede restablecer otra cuenta y existe una contingencia local para el administrador único.
-- La cuenta no se duplica entre top bar y sidebar y toda la aplicación utiliza el mismo icono.
+- La identidad y el cierre de sesión residen únicamente en el footer del sidebar y toda la aplicación utiliza el mismo icono.
 - La identidad compacta no inventa abreviaturas: usa el usuario y separa claramente datos personales, permisos y área profesional.
 - Los módulos sin datos explican el estado y ofrecen una acción.
 - Los KPIs coinciden con los registros persistidos.

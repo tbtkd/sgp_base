@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user
@@ -66,6 +66,53 @@ def _patient_chart(series):
     }
 
 
+def _activity_chart(moment, can_view_clinical):
+    start = moment.date() - timedelta(days=6)
+    days = [start + timedelta(days=index) for index in range(7)]
+    appointment_counts = {day: 0 for day in days}
+    consultation_counts = {day: 0 for day in days}
+    for (day,) in Cita.query.with_entities(Cita.fecha).filter(Cita.fecha.between(start, moment.date())).all():
+        appointment_counts[day] += 1
+    if can_view_clinical:
+        rows = (
+            ValoracionAntropometrica.query.with_entities(ValoracionAntropometrica.fecha)
+            .filter(ValoracionAntropometrica.fecha.between(start, moment.date()))
+            .all()
+        )
+        for (day,) in rows:
+            consultation_counts[day] += 1
+
+    maximum = max([1, *appointment_counts.values(), *consultation_counts.values()])
+    left, right, top, bottom = 18, 582, 18, 142
+    step = (right - left) / 6
+    items, appointment_points, consultation_points = [], [], []
+    for index, day in enumerate(days):
+        x = left + (index * step)
+        appointments = appointment_counts[day]
+        consultations = consultation_counts[day]
+        appointment_y = bottom - ((appointments / maximum) * (bottom - top))
+        consultation_y = bottom - ((consultations / maximum) * (bottom - top))
+        appointment_points.append(f"{x:.1f},{appointment_y:.1f}")
+        consultation_points.append(f"{x:.1f},{consultation_y:.1f}")
+        items.append(
+            {
+                "date": day.isoformat(),
+                "label": WEEKDAYS_ES[day.weekday()][:3].capitalize(),
+                "appointments": appointments,
+                "consultations": consultations,
+                "x": round(x, 1),
+                "appointment_y": round(appointment_y, 1),
+                "consultation_y": round(consultation_y, 1),
+            }
+        )
+    return {
+        "items": items,
+        "appointment_points": " ".join(appointment_points),
+        "consultation_points": " ".join(consultation_points),
+        "maximum": maximum,
+    }
+
+
 @main.route("/")
 @login_required
 def index():
@@ -121,9 +168,12 @@ def index():
         citas_del_dia=today_appointments,
         citas_programadas_hoy=scheduled_today,
         citas_atendidas_hoy=attended_today,
+        consultas_pendientes_hoy=scheduled_today,
         progreso_citas_hoy=appointment_progress,
+        proximas_citas=Cita.obtener_proximas(5, now),
         pendientes_por_agendar=pending_schedule,
         resumen_pacientes=_patient_chart(monthly_patient_series),
+        resumen_actividad=_activity_chart(now, can_view_clinical),
         seguimiento_14_15=ValoracionAntropometrica.obtener_seguimiento_14_15_dias() if can_view_clinical else [],
         actividad_reciente=activity,
         contenido_plantilla=content,

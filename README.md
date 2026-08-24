@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.6.3**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Conserva la interfaz original, pero generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.6.6**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -15,12 +15,15 @@ Versión **1.6.3**. Aplicación local para consultorios médicos, dentales, nutr
 - Nombre, perfil y cédula del autor conservados dentro de cada consulta nueva.
 - Auditoría administrativa de accesos y operaciones críticas.
 - Enlaces directos a WhatsApp e impresión limpia de notas y recetas como PDF.
-- Identidad de cuenta concentrada en el top bar y navegación sin duplicados en el sidebar.
+- Shell clínico responsive con búsqueda global, sede local, notificaciones vacías explícitas, breadcrumb y tema claro/oscuro persistente.
+- Identidad y menú de cuenta concentrados al pie del sidebar; el botón `...` despliega datos profesionales, cambio de contraseña y cierre de sesión.
 - Menú de cuenta cerrado de forma nativa al cargar, con apertura explícita y cierre por Escape o clic exterior.
 - Un solo icono institucional para navegador, interfaz y ejecutable Windows.
 - Cambio propio de contraseña, restablecimiento administrativo y recuperación local para el administrador del equipo.
 - Pestañas clínicas locales, estados vacíos accionables y KPIs coherentes.
-- Dashboard operativo con agenda, altas mensuales, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; no muestra ingresos.
+- Dashboard operativo con agenda, gráfica local, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; Próximas citas y Acompañamiento Intermedio comparten una fila adaptable, sin duplicar alertas ni mostrar ingresos.
+- Acciones rápidas limitadas a Nuevo paciente, Agendar cita y Nueva consulta; Recetas y Expedientes se consultan desde el sidebar para evitar duplicidad.
+- Navegación que diferencia enlaces operativos, acceso contextual funcional a recetas, grupo desplegable de Administración y módulos planificados sin crear rutas ficticias.
 - Importación XLSX defensiva para expedientes antropométricos históricos.
 
 ## Instalación
@@ -126,7 +129,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 65 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional histórico está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), el diagnóstico visual general en [docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md](docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md) y la especificación del dashboard vigente en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md).
+La aceptación funcional incluye 68 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), la base histórica del panel en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md), el shell base en [docs/SHELL_NAVEGACION_1_6_4.md](docs/SHELL_NAVEGACION_1_6_4.md) y el ajuste vigente en [docs/AJUSTE_DASHBOARD_NAVEGACION_1_6_6.md](docs/AJUSTE_DASHBOARD_NAVEGACION_1_6_6.md).
 
 ## Compilación para Windows
 

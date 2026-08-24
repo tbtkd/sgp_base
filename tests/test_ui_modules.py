@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 from app import db_orm as db
@@ -117,22 +117,99 @@ def test_dashboard_kpis_match_persisted_records(app, client, login):
     page = client.get("/").get_data(as_text=True)
     assert 'data-kpi="pacientes">1</strong>' in page
     assert 'data-kpi="citas-hoy">1</strong>' in page
-    assert 'data-kpi="consultas-mes">1</strong>' in page
+    assert 'data-kpi="consultas-pendientes">1</strong>' in page
     assert 'data-kpi="ingresos"' not in page
     assert "Ingresos del mes" not in page
     assert "Agenda de hoy" in page
-    assert "Resumen de pacientes" in page
+    assert "Citas y consultas" in page
+    assert "Próximas citas" in page
+    assert "Alertas clínicas y administrativas" not in page
+    assert "Acciones rápidas" in page
     assert "Pacientes recientes" in page
     assert "Pendientes de atención" in page
+    assert page.count("Nuevo paciente") == 1
+    assert "Crear receta" not in page
+    assert "Ver expedientes" not in page
     assert "Actividad reciente" in page
     assert "Acompañamiento Intermedio (14-15 Días)" in page
+    assert page.index("Próximas citas") < page.index("Acompañamiento Intermedio (14-15 Días)") < page.index("Pacientes recientes")
     assert "Consulta de seguimiento" in page
     assert "EXP-0001" in page
     assert 'static/css/dashboard.css' in page
     assert 'class="fas fa-users"' in page
     assert 'class="fas fa-file-medical"' in page
-    assert 'class="fas fa-weight"' in page
+    assert 'class="fas fa-clipboard-list"' in page
     assert "WhatsApp / SMS" not in page
+
+
+def test_shell_navigation_theme_and_planned_modules_are_accessible(client, login):
+    login()
+    page = client.get("/").get_data(as_text=True)
+    root = Path(__file__).parents[1]
+    sidebar = (root / "app" / "templates" / "components" / "_sidebar.html").read_text(encoding="utf-8")
+    app_script = (root / "app" / "static" / "js" / "app.js").read_text(encoding="utf-8")
+    theme_init = (root / "app" / "static" / "js" / "theme-init.js").read_text(encoding="utf-8")
+    shell_css = (root / "app" / "static" / "css" / "shell.css").read_text(encoding="utf-8")
+
+    assert 'role="search"' in page
+    assert 'name="busqueda"' in page
+    assert "Consultorio principal" in page
+    assert 'data-theme-toggle' in page
+    assert 'aria-label="Abrir notificaciones"' in page
+    assert 'aria-label="Ruta de navegación"' in page
+    assert 'data-sidebar-toggle' in page
+    assert "Agenda y citas" in sidebar
+    assert "url_for('valoracion.todas_valoraciones', origen='recetas')" in sidebar
+    assert 'data-planned-module="Recetas"' not in sidebar
+    assert "Administración" in sidebar
+    assert "Usuarios y permisos" in sidebar
+    assert "Portal del paciente" in sidebar
+    assert sidebar.count('data-planned-module=') >= 7
+    assert 'aria-disabled="true"' in sidebar
+    assert "sgpn-theme" in theme_init
+    assert "localStorage.setItem('sgpn-theme'" in app_script
+    assert "event.key === 'Escape'" in app_script
+    assert "ArrowDown" in app_script
+    assert ":focus-visible" in shell_css
+    assert 'html[data-theme="dark"]' in shell_css
+    assert "background: #061f26" in shell_css
+    assert "background: #1d6c69" in shell_css
+    assert ".shell-sidebar-account-panel" in shell_css
+    assert ".shell-nav-group" in shell_css
+    assert ".shell-nav-children" in shell_css
+
+
+def test_recipe_sidebar_context_and_dashboard_layout(client, login):
+    login()
+    page = client.get("/").get_data(as_text=True)
+    recipe_context = client.get("/valoraciones/?origen=recetas").get_data(as_text=True)
+    dashboard_css = (Path(__file__).parents[1] / "app" / "static" / "css" / "dashboard.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'href="/valoraciones/?origen=recetas"' in page
+    assert "Selecciona una consulta para gestionar sus recetas" in recipe_context
+    assert 'aria-current="page"' in recipe_context
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in dashboard_css
+    assert 'html[data-theme="dark"] .dashboard-panel-header' in dashboard_css
+    assert "border-color: #29464d" in dashboard_css
+
+
+def test_upcoming_appointments_are_ordered_and_visible(app, client, login):
+    login()
+    with app.app_context():
+        patient = _patient(name="Lucía")
+        tomorrow = datetime.now().date() + timedelta(days=1)
+        later = Cita(paciente_id=patient.id, fecha=tomorrow, hora=time(13, 0), motivo="Control posterior", estatus="Programada")
+        earlier = Cita(paciente_id=patient.id, fecha=tomorrow, hora=time(9, 0), motivo="Primera cita futura", estatus="Programada")
+        db.session.add_all([later, earlier])
+        db.session.commit()
+        upcoming = Cita.obtener_proximas(5)
+        assert [item.hora for item in upcoming[:2]] == [time(9, 0), time(13, 0)]
+
+    page = client.get("/").get_data(as_text=True)
+    assert "Primera cita futura" in page
+    assert "Control posterior" in page
 
 
 def test_consultation_tabs_use_local_navigation(app, client, login):

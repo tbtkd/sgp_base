@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.6.6 — Densidad del dashboard y navegación administrativa
+
+- **Acompañamiento Intermedio (14-15 Días)** se coloca junto a **Próximas citas** en una cuadrícula de dos columnas que se apila en pantallas menores a 1100 px.
+- Retiradas del dashboard las acciones duplicadas **Crear receta** y **Ver expedientes**; permanecen los accesos funcionales en el sidebar.
+- **Recetas** deja de ser un módulo planificado: abre el listado de consultas en contexto de gestión de recetas y muestra cabecera específica.
+- Plantillas de mensajes, Usuarios y permisos, Auditoría y Configuración se agrupan bajo **Administración**, conservando permisos y dejando Configuración como opción planificada.
+- Corregidos los separadores claros heredados dentro del tema oscuro mediante bordes azul petróleo consistentes.
+- Verificación: 68 pruebas `pytest`; no se introducen cambios de esquema, permisos ni lógica clínica.
+
+## 1.6.5 — Simplificación visual e identidad en sidebar
+
+- Eliminado el bloque **Alertas clínicas y administrativas** porque duplicaba exactamente las fuentes de **Pendientes de atención**.
+- Conservado **Pendientes de atención** como única vista de seguimiento, incluyendo sus detalles expandibles y progreso diario.
+- **Próximas citas** ocupa el espacio liberado y distribuye sus elementos de forma adaptable.
+- Retirada la acción superior duplicada de **Nuevo paciente**; permanece dentro de Acciones rápidas.
+- Reducido el espacio vertical del encabezado del dashboard para aligerar la zona superior.
+- Sidebar actualizado a la gama azul petróleo/teal de la referencia, manteniendo logotipo, iconos, rutas y permisos.
+- Identidad de usuario retirada del topbar y trasladada al pie del sidebar.
+- Nuevo botón `...` accesible para desplegar nombre completo, rol/perfil, cédula condicional, cambio de contraseña y cierre de sesión.
+- El topbar queda dedicado a contexto, búsqueda, sede, notificaciones y tema.
+- Verificación: 67 pruebas `pytest`; no se introducen cambios de esquema ni de lógica clínica.
+
+## 1.6.4 — Shell clínico accesible y dashboard ampliado
+
+- Sidebar reorganizado por General, Clínico, Gestión y Otros, conservando las rutas y permisos existentes.
+- Agenda enlaza al bloque operativo real; Recetas informa que se gestionan desde una consulta; Laboratorio, Hospitalización, Facturación, Inventario, Reportes, Configuración y Portal del paciente quedan identificados como planificados, sin rutas ni datos simulados.
+- Cierre de sesión disponible en el sidebar y en el menú de cuenta, manteniendo la identidad detallada exclusivamente en el top bar.
+- Top bar con búsqueda real de pacientes, selector informativo de sede local, notificaciones con estado vacío, breadcrumb, menú de cuenta y selector de tema.
+- Tema claro/oscuro persistente mediante `localStorage`, paleta oscura teal local y estilos de impresión forzados a claro.
+- Sidebar móvil, popovers y menú de cuenta controlados por JavaScript local con Escape, foco restaurado y estados ARIA; Alpine deja de ser necesario para estos componentes.
+- Indicador de navegación, mensajes accesibles para módulos planificados y foco visible global.
+- Dashboard con acciones rápidas, KPI de consultas pendientes, gráfica SVG de citas/consultas de siete días, gráfica secundaria de altas, próximas citas y alertas basadas en SQLite.
+- La vista de recepción conserva los límites de acceso clínico y no recibe conteos de consultas ni accesos protegidos.
+- Verificación: 67 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.6.3 — Dashboard clínico operativo
 
 - Nueva composición central inspirada en la referencia visual, adaptada al tema claro existente y sin modificar top bar, sidebar, logotipo o iconos institucionales.

@@ -1,134 +1,71 @@
 {% set endpoint_actual = request.endpoint or '' %}
 {% if endpoint_actual == 'main.index' %}
-    {% set titulo_modulo = 'Panel clínico' %}
-    {% set subtitulo_modulo = 'Panel de control clínico - Resumen del sistema' %}
+    {% set titulo_modulo = 'Dashboard' %}{% set subtitulo_modulo = 'Resumen del sistema' %}
 {% elif endpoint_actual == 'pacientes.nuevo_paciente' %}
-    {% set titulo_modulo = 'Registrar paciente' %}
-    {% set subtitulo_modulo = 'Alta de datos generales y contacto' %}
+    {% set titulo_modulo = 'Registrar paciente' %}{% set subtitulo_modulo = 'Pacientes' %}
 {% elif endpoint_actual == 'pacientes.editar_paciente' %}
-    {% set titulo_modulo = 'Editar paciente' %}
-    {% set subtitulo_modulo = 'Actualización de datos generales' %}
+    {% set titulo_modulo = 'Editar paciente' %}{% set subtitulo_modulo = 'Pacientes' %}
 {% elif endpoint_actual == 'pacientes.detalle_paciente' %}
-    {% set titulo_modulo = 'Detalle del paciente' %}
-    {% set subtitulo_modulo = 'Expediente, pagos, citas y seguimiento' %}
+    {% set titulo_modulo = 'Detalle del paciente' %}{% set subtitulo_modulo = 'Pacientes' %}
 {% elif 'pacientes.' in endpoint_actual %}
-    {% set titulo_modulo = 'Pacientes' %}
-    {% set subtitulo_modulo = 'Búsqueda y gestión de expedientes' %}
+    {% set titulo_modulo = 'Pacientes' %}{% set subtitulo_modulo = 'Gestión de expedientes' %}
 {% elif endpoint_actual == 'valoracion.nueva_valoracion' %}
-    {% set titulo_modulo = 'Nueva consulta clínica' %}
-    {% set subtitulo_modulo = 'Captura de nota, signos vitales y tratamiento' %}
+    {% set titulo_modulo = 'Nueva consulta' %}{% set subtitulo_modulo = 'Consultas' %}
 {% elif endpoint_actual == 'valoracion.editar_valoracion' %}
-    {% set titulo_modulo = 'Editar consulta clínica' %}
-    {% set subtitulo_modulo = 'Actualización de la nota médica' %}
-{% elif endpoint_actual == 'valoracion.detalle_valoracion' %}
-    {% set titulo_modulo = 'Nota de consulta clínica' %}
-    {% set subtitulo_modulo = 'Detalle clínico e impresión' %}
+    {% set titulo_modulo = 'Editar consulta' %}{% set subtitulo_modulo = 'Consultas' %}
+{% elif endpoint_actual == 'valoracion.todas_valoraciones' and request.args.get('origen') == 'recetas' %}
+    {% set titulo_modulo = 'Recetas' %}{% set subtitulo_modulo = 'Selecciona una consulta para gestionar sus recetas' %}
 {% elif 'valoracion.' in endpoint_actual %}
-    {% set titulo_modulo = 'Consultas clínicas' %}
-    {% set subtitulo_modulo = 'Historial de notas y evolución' %}
-{% elif endpoint_actual == 'recetas.nueva_receta' %}
-    {% set titulo_modulo = 'Nueva receta ordinaria' %}
-    {% set subtitulo_modulo = 'Prescripción estructurada y datos del profesional' %}
+    {% set titulo_modulo = 'Consultas' %}{% set subtitulo_modulo = 'Atención clínica' %}
 {% elif 'recetas.' in endpoint_actual %}
-    {% set titulo_modulo = 'Receta médica ordinaria' %}
-    {% set subtitulo_modulo = 'Documento independiente de la nota clínica' %}
-{% elif endpoint_actual == 'historial_clinico.lista_historiales' %}
-    {% set titulo_modulo = 'Historiales clínicos' %}
-    {% set subtitulo_modulo = 'Antecedentes, alergias, medicación y hábitos' %}
+    {% set titulo_modulo = 'Recetas' %}{% set subtitulo_modulo = 'Consulta clínica' %}
 {% elif 'historial_clinico.' in endpoint_actual %}
-    {% set titulo_modulo = 'Expediente clínico' %}
-    {% set subtitulo_modulo = 'Antecedentes y condiciones del paciente' %}
+    {% set titulo_modulo = 'Expedientes clínicos' %}{% set subtitulo_modulo = 'Clínico' %}
 {% elif 'plantillas.' in endpoint_actual %}
-    {% set titulo_modulo = 'Plantillas de mensajes' %}
-    {% set subtitulo_modulo = 'Comunicación y seguimiento por WhatsApp' %}
+    {% set titulo_modulo = 'Plantillas de mensajes' %}{% set subtitulo_modulo = 'Gestión' %}
 {% elif endpoint_actual == 'auth.auditoria' %}
-    {% set titulo_modulo = 'Auditoría' %}
-    {% set subtitulo_modulo = 'Trazabilidad de eventos críticos' %}
+    {% set titulo_modulo = 'Auditoría' %}{% set subtitulo_modulo = 'Gestión' %}
 {% elif 'auth.' in endpoint_actual %}
-    {% set titulo_modulo = 'Gestión de usuarios' %}
-    {% set subtitulo_modulo = 'Usuarios, roles y control de acceso' %}
+    {% set titulo_modulo = 'Usuarios y permisos' %}{% set subtitulo_modulo = 'Gestión' %}
 {% else %}
-    {% set titulo_modulo = 'Sistema clínico' %}
-    {% set subtitulo_modulo = 'Gestión de pacientes y expedientes' %}
+    {% set titulo_modulo = 'Sistema clínico' %}{% set subtitulo_modulo = 'Inicio' %}
 {% endif %}
-<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shadow-sm">
-    <!-- Left: Hamburger & Page Title -->
-    <div class="flex items-center gap-4">
-        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-500 hover:text-slate-700 focus:outline-none">
-            <i class="fas fa-bars text-xl"></i>
-        </button>
-        <div>
-            <h1 class="text-xl font-bold text-slate-800">{{ titulo_modulo or 'Sistema clínico' }}</h1>
-            <p class="text-xs text-slate-500 mt-0.5 hidden sm:block">
-                {{ subtitulo_modulo }}
-            </p>
+<header class="shell-topbar">
+    <div class="shell-topbar-context">
+        <button type="button" data-sidebar-toggle class="shell-icon-button shell-menu-button" aria-label="Abrir navegación" aria-controls="application-sidebar" aria-expanded="false"><i class="fas fa-bars" aria-hidden="true"></i></button>
+        <div class="shell-page-context">
+            <nav aria-label="Ruta de navegación" class="shell-breadcrumb"><a href="{{ url_for('main.index') }}">Inicio</a><i class="fas fa-chevron-right" aria-hidden="true"></i><span aria-current="page">{{ titulo_modulo }}</span></nav>
+            <h1>{{ titulo_modulo }}</h1>
+            <p>{{ subtitulo_modulo }}</p>
         </div>
     </div>
 
-    <!-- Right: User Dropdown -->
-    <div class="flex items-center gap-4">
-        <!-- Menú de cuenta: oculto por HTML nativo y controlado por JS local. -->
-        <div class="relative" data-account-menu>
-            <button type="button"
-                    data-account-menu-toggle
-                    aria-expanded="false"
-                    aria-controls="account-menu-panel"
-                    aria-haspopup="menu"
-                    aria-label="Abrir menú de cuenta"
-                    class="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-teal-500 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
-                <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center border border-teal-200">
-                    {{ current_user.username[0]|upper if current_user.is_authenticated and current_user.username else 'U' }}
-                </div>
-                <div class="text-left hidden md:block">
-                    <span class="block max-w-52 truncate text-sm font-semibold text-slate-700 leading-tight">{{ current_user.username if current_user.is_authenticated else 'Usuario' }}</span>
-                    <span class="block max-w-52 truncate text-xs text-slate-500">{{ current_user.rol_etiqueta if current_user.is_authenticated else 'Rol' }}{% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %} · {{ current_user.perfil_profesional_etiqueta }}{% endif %}</span>
-                </div>
-                <i class="fas fa-chevron-down text-xs text-slate-400 ml-1"></i>
-            </button>
+    <div class="shell-topbar-actions">
+        <form action="{{ url_for('pacientes.lista_pacientes_activos') }}" method="GET" class="shell-global-search" role="search">
+            <label for="global-search" class="sr-only">Buscar paciente, teléfono o correo</label>
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input id="global-search" name="busqueda" type="search" maxlength="100" autocomplete="off" placeholder="Buscar paciente, teléfono o correo…">
+            <kbd>Enter</kbd>
+        </form>
 
-            <!-- Dropdown Menu -->
-            <div id="account-menu-panel"
-                 data-account-menu-panel
-                 role="menu"
-                 class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50"
-                 hidden>
-                <div class="px-4 py-3 border-b border-slate-100">
-                    <dl class="space-y-2 text-xs">
-                        <div>
-                            <dt class="font-medium text-slate-500">Nombre registrado</dt>
-                            <dd class="text-sm font-semibold text-slate-800 break-words">{{ current_user.nombre_completo if current_user.is_authenticated else 'Usuario' }}</dd>
-                        </div>
-                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
-                            <dt class="font-medium text-slate-500">Usuario:</dt>
-                            <dd class="text-slate-700 break-all">{{ current_user.username if current_user.is_authenticated else '—' }}</dd>
-                        </div>
-                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
-                            <dt class="font-medium text-slate-500">Rol de acceso:</dt>
-                            <dd class="text-slate-700">{{ current_user.rol_etiqueta if current_user.is_authenticated else '—' }}</dd>
-                        </div>
-                        {% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %}
-                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
-                            <dt class="font-medium text-slate-500">Área clínica:</dt>
-                            <dd class="text-teal-700 font-medium">{{ current_user.perfil_profesional_etiqueta }}</dd>
-                        </div>
-                        {% endif %}
-                        {% if current_user.is_authenticated and current_user.cedula_profesional %}
-                        <div>
-                            <dt class="font-medium text-slate-500">Cédula profesional</dt>
-                            <dd class="text-slate-700 break-all">{{ current_user.cedula_profesional }}</dd>
-                        </div>
-                        {% endif %}
-                    </dl>
-                </div>
-                <a href="{{ url_for('auth.cambiar_contrasena') }}" role="menuitem" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors"><i class="fas fa-key w-4"></i><span>Cambiar contraseña</span></a>
-                <form action="{{ url_for('auth.logout') }}" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" role="menuitem" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
-                        <i class="fas fa-sign-out-alt w-4"></i>
-                        <span>Cerrar Sesión</span>
-                    </button>
-                </form>
+        <div class="shell-popover" data-popover>
+            <button type="button" class="shell-clinic-selector" data-popover-toggle aria-expanded="false" aria-controls="clinic-menu" aria-haspopup="dialog">
+                <i class="fas fa-clinic-medical" aria-hidden="true"></i><span><small>Sede</small>Consultorio principal</span><i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="clinic-menu" data-popover-panel class="shell-popover-panel shell-clinic-panel" role="dialog" aria-label="Selector de sede" hidden>
+                <strong>Consultorio principal</strong><p>Es la sede local activa. La administración de múltiples sedes se habilitará en una fase posterior.</p>
             </div>
         </div>
+
+        <div class="shell-popover" data-popover>
+            <button type="button" class="shell-icon-button" data-popover-toggle aria-expanded="false" aria-controls="notifications-menu" aria-haspopup="dialog" aria-label="Abrir notificaciones"><i class="fas fa-bell" aria-hidden="true"></i><span class="shell-notification-dot"><span class="sr-only">Sin notificaciones nuevas</span></span></button>
+            <div id="notifications-menu" data-popover-panel class="shell-popover-panel shell-notifications-panel" role="dialog" aria-label="Notificaciones" hidden>
+                <div class="shell-popover-heading"><strong>Notificaciones</strong><span>0 nuevas</span></div>
+                <div class="shell-popover-empty"><i class="fas fa-bell-slash" aria-hidden="true"></i><strong>Todo al día</strong><p>No hay notificaciones pendientes.</p></div>
+            </div>
+        </div>
+
+        <button type="button" class="shell-icon-button" data-theme-toggle aria-label="Cambiar a tema oscuro" aria-pressed="false"><i class="fas fa-moon" data-theme-icon aria-hidden="true"></i></button>
+
     </div>
 </header>

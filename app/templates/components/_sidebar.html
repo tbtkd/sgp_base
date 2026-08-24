@@ -1,65 +1,80 @@
-<!-- Sidebar para Desktop y Mobile -->
-<aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-auto"
-       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-    <!-- Sidebar Header / Logo -->
-    <div class="h-16 flex items-center justify-between px-6 bg-slate-950/50 border-b border-slate-800">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white font-bold shadow-lg shadow-teal-600/30">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="SGPN" class="w-8 h-8 object-contain rounded-lg">
-            </div>
-            <span class="font-bold text-white tracking-wide text-lg">Sistema Clínico</span>
-        </div>
-        <button @click="sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white">
-            <i class="fas fa-times text-xl"></i>
-        </button>
+{% set endpoint_actual = request.endpoint or '' %}
+{% set nav_link = 'shell-nav-link' %}
+{% set recetas_activa = 'recetas.' in endpoint_actual or (endpoint_actual == 'valoracion.todas_valoraciones' and request.args.get('origen') == 'recetas') %}
+{% set consultas_activa = 'valoracion.' in endpoint_actual and not recetas_activa %}
+{% set administracion_activa = 'plantillas.' in endpoint_actual or endpoint_actual == 'auth.auditoria' or endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %}
+<!-- Navegación principal. Los módulos aún no implementados se exponen como estado planificado, sin rutas ficticias. -->
+<aside id="application-sidebar" data-sidebar aria-label="Navegación principal" class="shell-sidebar">
+    <div class="shell-sidebar-brand">
+        <a href="{{ url_for('main.index') }}" class="shell-brand-link" aria-label="Ir al Dashboard de Sistema Clínico">
+            <span class="shell-brand-icon"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="" width="32" height="32"></span>
+            <span>Sistema Clínico</span>
+        </a>
+        <button type="button" data-sidebar-close class="shell-icon-button shell-sidebar-close" aria-label="Cerrar navegación"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
 
-    <!-- Navigation Menu -->
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint == 'main.index' %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-chart-pie w-5 text-center"></i>
-            <span>Panel Clínico</span>
-        </a>
-        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint and 'pacientes' in request.endpoint %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-users w-5 text-center"></i>
-            <span>Pacientes</span>
-        </a>
+    <nav class="shell-sidebar-nav" aria-label="Módulos del sistema">
+        <p class="shell-nav-section">General</p>
+        <a href="{{ url_for('main.index') }}" class="{{ nav_link }}{% if endpoint_actual == 'main.index' %} is-active{% endif %}"{% if endpoint_actual == 'main.index' %} aria-current="page"{% endif %}><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Dashboard</span></a>
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="{{ nav_link }}{% if 'pacientes.' in endpoint_actual %} is-active{% endif %}"{% if 'pacientes.' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-users" aria-hidden="true"></i><span>Pacientes</span></a>
+        <a href="{{ url_for('main.index') }}#agenda-hoy" class="{{ nav_link }}"><i class="fas fa-calendar-alt" aria-hidden="true"></i><span>Agenda y citas</span></a>
         {% if current_user.rol_clinico in ['admin', 'medico'] %}
-        <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint and 'valoracion' in request.endpoint %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-stethoscope w-5 text-center"></i>
-            <span>Consultas Clínicas</span>
-        </a>
-        <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint and 'historial_clinico' in request.endpoint %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-file-medical w-5 text-center"></i>
-            <span>Historial Clínico</span>
-        </a>
+        <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="{{ nav_link }}{% if consultas_activa %} is-active{% endif %}"{% if consultas_activa %} aria-current="page"{% endif %}><i class="fas fa-stethoscope" aria-hidden="true"></i><span>Consultas</span></a>
+
+        <p class="shell-nav-section">Clínico</p>
+        <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="{{ nav_link }}{% if 'historial_clinico.' in endpoint_actual %} is-active{% endif %}"{% if 'historial_clinico.' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-file-medical" aria-hidden="true"></i><span>Expedientes clínicos</span></a>
+        <a href="{{ url_for('valoracion.todas_valoraciones', origen='recetas') }}" class="{{ nav_link }}{% if recetas_activa %} is-active{% endif %}"{% if recetas_activa %} aria-current="page"{% endif %}><i class="fas fa-prescription" aria-hidden="true"></i><span>Recetas</span><small>Desde consulta</small></a>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Laboratorio" aria-disabled="true"><i class="fas fa-flask" aria-hidden="true"></i><span>Laboratorio</span><small>Próximamente</small></button>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Hospitalización" aria-disabled="true"><i class="fas fa-hospital" aria-hidden="true"></i><span>Hospitalización</span><small>Próximamente</small></button>
         {% endif %}
 
-        {% if current_user.is_authenticated and current_user.rol_clinico in ['admin', 'medico'] %}
-        <!-- Separador -->
-        <div class="border-t border-slate-700/50 my-3"></div>
-        <span class="px-3 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Administración</span>
-
-        <!-- Plantillas de Mensajes -->
-        <a href="{{ url_for('plantillas.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint and 'plantillas' in request.endpoint %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fab fa-whatsapp w-5 text-center"></i>
-            <span>Plantillas de Mensajes</span>
-        </a>
-
-        {% if current_user.rol_clinico == 'admin' %}
-        <!-- Gestión de Usuarios -->
-        <a href="{{ url_for('auth.lista_usuarios') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint and ('auth' in request.endpoint or 'usuario' in request.endpoint) %}bg-teal-600 text-white shadow-lg shadow-teal-600/20{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-users-cog w-5 text-center"></i>
-            <span>Gestión de Usuarios</span>
-        </a>
-        <a href="{{ url_for('auth.auditoria') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors {% if request.endpoint == 'auth.auditoria' %}bg-teal-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
-            <i class="fas fa-shield-alt w-5 text-center"></i><span>Auditoría</span>
-        </a>
+        <p class="shell-nav-section">Gestión</p>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Facturación" aria-disabled="true"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Facturación</span><small>Próximamente</small></button>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Inventario" aria-disabled="true"><i class="fas fa-boxes" aria-hidden="true"></i><span>Inventario</span><small>Próximamente</small></button>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Reportes" aria-disabled="true"><i class="fas fa-chart-bar" aria-hidden="true"></i><span>Reportes</span><small>Próximamente</small></button>
+        {% if current_user.rol_clinico in ['admin', 'medico'] %}
+        <details class="shell-nav-group"{% if administracion_activa %} open{% endif %}>
+            <summary class="shell-nav-link{% if administracion_activa %} is-active{% endif %}"><i class="fas fa-sliders-h" aria-hidden="true"></i><span>Administración</span><i class="fas fa-chevron-down shell-nav-group-chevron" aria-hidden="true"></i></summary>
+            <div class="shell-nav-children">
+                <a href="{{ url_for('plantillas.index') }}" class="{{ nav_link }} shell-nav-child{% if 'plantillas.' in endpoint_actual %} is-active{% endif %}"{% if 'plantillas.' in endpoint_actual %} aria-current="page"{% endif %}><i class="fab fa-whatsapp" aria-hidden="true"></i><span>Plantillas de mensajes</span></a>
+                {% if current_user.rol_clinico == 'admin' %}
+                <a href="{{ url_for('auth.lista_usuarios') }}" class="{{ nav_link }} shell-nav-child{% if endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %} is-active{% endif %}"{% if endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %} aria-current="page"{% endif %}><i class="fas fa-users-cog" aria-hidden="true"></i><span>Usuarios y permisos</span></a>
+                <a href="{{ url_for('auth.auditoria') }}" class="{{ nav_link }} shell-nav-child{% if endpoint_actual == 'auth.auditoria' %} is-active{% endif %}"{% if endpoint_actual == 'auth.auditoria' %} aria-current="page"{% endif %}><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Auditoría</span></a>
+                {% endif %}
+                <button type="button" class="{{ nav_link }} shell-nav-child shell-nav-planned" data-planned-module="Configuración" aria-disabled="true"><i class="fas fa-cog" aria-hidden="true"></i><span>Configuración</span><small>Próximamente</small></button>
+            </div>
+        </details>
+        {% else %}
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Configuración" aria-disabled="true"><i class="fas fa-cog" aria-hidden="true"></i><span>Configuración</span><small>Próximamente</small></button>
         {% endif %}
-        {% endif %}
+
+        <p class="shell-nav-section">Otros</p>
+        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Portal del paciente" aria-disabled="true"><i class="fas fa-user-circle" aria-hidden="true"></i><span>Portal del paciente</span><small>Próximamente</small></button>
+        <p id="planned-modules-help" class="sr-only">Los módulos marcados como Próximamente todavía no están habilitados.</p>
     </nav>
 
+    <div class="shell-sidebar-footer">
+        <div class="shell-sidebar-account" data-account-menu>
+            <span class="shell-account-avatar" aria-hidden="true">{{ current_user.username[0]|upper if current_user.is_authenticated and current_user.username else 'U' }}</span>
+            <span class="shell-sidebar-account-copy">
+                <strong>{{ current_user.nombre_completo if current_user.is_authenticated else 'Usuario' }}</strong>
+                <small>{{ current_user.rol_etiqueta if current_user.is_authenticated else 'Rol' }}{% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %} · {{ current_user.perfil_profesional_etiqueta }}{% endif %}</small>
+            </span>
+            <button type="button" data-account-menu-toggle aria-expanded="false" aria-controls="account-menu-panel" aria-haspopup="menu" aria-label="Abrir opciones de cuenta" class="shell-account-more">...</button>
+            <div id="account-menu-panel" data-account-menu-panel role="menu" class="shell-popover-panel shell-account-panel shell-sidebar-account-panel" hidden>
+                <div class="shell-account-detail">
+                    <strong>{{ current_user.nombre_completo if current_user.is_authenticated else 'Usuario' }}</strong>
+                    <span>{{ current_user.rol_etiqueta if current_user.is_authenticated else '—' }}{% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %} · {{ current_user.perfil_profesional_etiqueta }}{% endif %}</span>
+                    {% if current_user.is_authenticated and current_user.cedula_profesional %}<small>Cédula {{ current_user.cedula_profesional }}</small>{% endif %}
+                </div>
+                <a href="{{ url_for('auth.cambiar_contrasena') }}" role="menuitem"><i class="fas fa-key" aria-hidden="true"></i><span>Cambiar contraseña</span></a>
+                <form action="{{ url_for('auth.logout') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" role="menuitem"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Cerrar Sesión</span></button>
+                </form>
+            </div>
+        </div>
+    </div>
 </aside>
 
-<!-- Overlay para mobile -->
-<div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden" x-transition.opacity></div>
+<button type="button" data-sidebar-overlay class="shell-sidebar-overlay" aria-label="Cerrar navegación" hidden></button>

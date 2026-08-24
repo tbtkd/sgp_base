@@ -35,15 +35,15 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.6.3:
+Resultado esperado para la versión 1.6.6:
 
 ```text
-65 passed
+68 passed
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
 
-Para ejecutar únicamente los casos agregados para interfaz, pestañas, impresión, KPIs y estados vacíos:
+Para ejecutar únicamente los casos de interfaz, shell, tema, pestañas, impresión, KPIs y estados vacíos:
 
 ```powershell
 python -m pytest -q tests/test_ui_modules.py
@@ -55,7 +55,7 @@ Para validar perfiles profesionales, cédula, snapshot del autor y restricción 
 python -m pytest -q tests/test_professional_profiles.py
 ```
 
-Para validar recetas originales/adicionales/sustituciones, migración, impresión, top bar, estado cerrado del menú de cuenta e icono:
+Para validar recetas originales/adicionales/sustituciones, migración, impresión, cuenta en sidebar, estado cerrado del menú e icono:
 
 ```powershell
 python -m pytest -q tests/test_prescriptions.py

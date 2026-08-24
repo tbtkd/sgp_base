@@ -1,57 +1,8 @@
 {% extends "base/base.html" %}
-
-{% block title %}Valoraciones Antropométricas - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
-
+{% block title %}Consultas clínicas - {{ paciente.nombre_completo }}{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <!-- Encabezado -->
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Valoraciones Antropométricas</h1>
-            <p class="text-gray-600 mt-1">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
-        </div>
-        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition">Volver al Paciente</a>
-    </div>
-
-    <!-- Tabla de Valoraciones -->
-    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="text-gray-500 border-b">
-                        <th class="pb-3 font-medium">Fecha</th>
-                        <th class="pb-3 font-medium text-center">Cita</th>
-                        <th class="pb-3 font-medium text-right">Peso (kg)</th>
-                        <th class="pb-3 font-medium text-right">IMC</th>
-                        <th class="pb-3 font-medium text-right">% Grasa</th>
-                        <th class="pb-3 font-medium text-center">Tensión arterial</th>
-                        <th class="pb-3 font-medium text-right">Frecuencia cardíaca</th>
-                        <th class="pb-3 font-medium text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    {% for valoracion in valoraciones %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="py-4 text-gray-900">{{ valoracion['fecha'] }}</td>
-                        <td class="py-4 text-gray-900 text-center">{{ valoracion['numero_cita'] }}</td>
-                        <td class="py-4 text-gray-900 text-right">{{ valoracion['peso'] }}</td>
-                        <td class="py-4 text-gray-900 text-right">{{ valoracion['imc'] }}</td>
-                        <td class="py-4 text-gray-900 text-right">{{ valoracion['porcentaje_grasa'] }}%</td>
-                        <td class="py-4 text-gray-900 text-center">{{ valoracion['tension_arterial'] }}</td>
-                        <td class="py-4 text-gray-900 text-right">{{ valoracion['frecuencia_cardiaca'] }} lpm</td>
-                        <td class="py-4 text-center">
-                            <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=valoracion['id']) }}" 
-                                class="text-teal-600 hover:text-teal-800 font-medium">Ver Detalles</a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="8" class="py-8 text-center text-gray-500">No hay valoraciones registradas para este paciente.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex items-center justify-between"><div><h1 class="text-3xl font-bold">Consultas clínicas</h1><p class="text-gray-600">{{ paciente.nombre_completo }}</p></div><a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-5 py-3 bg-gray-100 rounded-xl">Volver</a></div>
+    <div class="bg-white p-6 rounded-2xl border overflow-x-auto"><table class="w-full text-left"><thead><tr class="border-b text-gray-500"><th class="p-3">Fecha</th><th class="p-3">Consulta</th><th class="p-3">Motivo</th><th class="p-3">TA</th><th class="p-3">FC</th><th class="p-3">Acción</th></tr></thead><tbody class="divide-y">{% for item in valoraciones %}<tr><td class="p-3">{{ item.fecha|format_date }}</td><td class="p-3">#{{ item.numero_cita }}</td><td class="p-3">{{ item.motivo_consulta }}</td><td class="p-3">{{ item.tension_arterial or '—' }}</td><td class="p-3">{{ item.frecuencia_cardiaca or '—' }}</td><td class="p-3"><a class="text-teal-600 font-semibold" href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=item.id) }}">Ver</a></td></tr>{% else %}<tr><td colspan="6" class="p-8 text-center text-gray-500">No hay consultas registradas.</td></tr>{% endfor %}</tbody></table></div>
 </div>
 {% endblock %}

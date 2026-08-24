@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema de Gestión Nutricional{% endblock %}</title>
-    <link rel="icon" href="{{ url_for('static', filename='img/icons/logo.ico') }}" type="image/x-icon">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Sistema de Expediente Clínico{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" type="image/png">
+    <link rel="alternate icon" href="{{ url_for('static', filename='img/logo.ico') }}" type="image/x-icon">
     
     <!-- Component CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css') }}">
@@ -38,6 +40,12 @@
     {% block extra_css %}{% endblock %}
     <style>
         [x-cloak] { display: none !important; }
+        @media print {
+            aside, header, .no-print, button, .modal, [role="dialog"] { display: none !important; }
+            main { padding: 0 !important; overflow: visible !important; }
+            body, .printable-clinical-note, .printable-clinical-note section { background: #fff !important; box-shadow: none !important; }
+            .printable-clinical-note section { break-inside: avoid; border-color: #d1d5db !important; }
+        }
     </style>
 </head>
 <body class="h-full font-sans antialiased text-slate-800 bg-slate-50" x-data="{ sidebarOpen: true }">
@@ -57,8 +65,8 @@
                     {% if messages %}
                         <div class="mb-6 space-y-2">
                             {% for category, message in messages %}
-                                <div class="flash-alert p-4 rounded-xl text-sm font-medium shadow-sm border {% if category == 'error' %}bg-red-50 text-red-700 border-red-200{% elif category == 'success' %}bg-teal-50 text-teal-700 border-teal-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %} flex items-center justify-between">
-                                    <span>{{ message }}</span>
+                                <div class="flash-alert p-4 rounded-xl text-sm font-medium shadow-sm border {% if category == 'error' %}bg-red-50 text-red-700 border-red-200{% elif category == 'success' %}bg-teal-50 text-teal-700 border-teal-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %} flex items-center justify-between">
+                                    <span><i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} mr-2"></i>{{ message }}</span>
                                     <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                                 </div>
                             {% endfor %}
@@ -72,8 +80,8 @@
     </div>
 
     <!-- App JS -->
+    <script src="{{ url_for('static', filename='js/tabs.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/components/modal.js') }}"></script>
     {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>

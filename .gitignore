@@ -1,4 +1,5 @@
 # Entorno Virtual
+.venv/
 venv/
 env/
 ENV/
@@ -6,6 +7,9 @@ ENV/
 # Base de Datos SQLite (datos locales)
 instance/
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 *.sqlite3
 
 # Caché de Python y Compilación
@@ -13,6 +17,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 build/
 dist/
 *.spec
@@ -20,6 +27,11 @@ dist/
 # Archivos de Respaldo y Logs
 *.zip
 *.log
+crash_log.txt
+
+# Secretos locales y respaldos de datos
+.secret_key
+backups/
 
 # Configuraciones de IDE / Editor
 .vscode/

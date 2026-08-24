@@ -2,10 +2,8 @@ export function validarFormularioPaciente(form) {
     const campos = [
         { id: 'nombre', label: 'Nombre' },
         { id: 'apellido_paterno', label: 'Apellido Paterno' },
-        { id: 'apellido_materno', label: 'Apellido Materno' },
         { id: 'fecha_nacimiento', label: 'Fecha de Nacimiento' },
         { id: 'telefono', label: 'Teléfono' },
-        { id: 'correo', label: 'Correo Electrónico' },
         { id: 'ciudad', label: 'Ciudad' }
     ];
 
@@ -36,7 +34,7 @@ export function validarFormularioPaciente(form) {
             mensajeError = `Por favor, ingrese ${campo.label.toLowerCase()}.`;
         } else if (campo.id === 'nombre' && !validarTexto(valor, 3, 30)) {
             mensajeError = "El nombre debe tener entre 3 y 30 caracteres.";
-        } else if ((campo.id === 'apellido_paterno' || campo.id === 'apellido_materno') && !validarTexto(valor, 2, 40)) {
+        } else if (campo.id === 'apellido_paterno' && !validarTexto(valor, 2, 60)) {
             mensajeError = "El apellido debe tener entre 2 y 40 caracteres.";
         } else if (campo.id === 'ciudad' && !validarTexto(valor, 3, 50)) {
             mensajeError = "La ciudad debe tener entre 3 y 50 caracteres.";
@@ -44,8 +42,6 @@ export function validarFormularioPaciente(form) {
             mensajeError = "La fecha de nacimiento no es válida (debe ser posterior a 1900 y anterior a hoy).";
         } else if (campo.id === 'telefono' && !validarTelefono(valor)) {
             mensajeError = "El número de teléfono debe tener exactamente 10 dígitos.";
-        } else if (campo.id === 'correo' && !validarCorreo(valor)) {
-            mensajeError = "El correo electrónico ingresado no parece ser válido.";
         }
 
         if (mensajeError) {
@@ -74,6 +70,11 @@ export function validarFormularioPaciente(form) {
         return false;
     }
 
+    const optionalEmail = document.getElementById('correo');
+    if (optionalEmail && optionalEmail.value.trim() && !validarCorreo(optionalEmail.value.trim())) {
+        optionalEmail.focus();
+        return false;
+    }
     return true;
 }
 

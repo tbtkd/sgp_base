@@ -1,0 +1,18 @@
+{% extends "base/base.html" %}
+{% block title %}Auditoría del sistema{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div><h1 class="text-3xl font-bold text-gray-900">Auditoría del sistema</h1><p class="text-gray-500 mt-1">Últimos 500 eventos críticos registrados.</p></div>
+    <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-5 rounded-2xl border border-gray-100">
+        <input name="accion" maxlength="80" value="{{ accion }}" placeholder="Acción" class="rounded-xl border-gray-200">
+        <input name="modulo" maxlength="50" value="{{ modulo }}" placeholder="Módulo" class="rounded-xl border-gray-200">
+        <select name="resultado" class="rounded-xl border-gray-200"><option value="">Todos los resultados</option>{% for value in ['success','failure','denied'] %}<option value="{{ value }}" {% if resultado == value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select>
+        <button class="bg-teal-600 text-white rounded-xl font-semibold">Filtrar</button>
+    </form>
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+        <table class="w-full text-sm"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-3 text-left">Fecha</th><th class="p-3 text-left">Usuario</th><th class="p-3 text-left">Módulo</th><th class="p-3 text-left">Acción</th><th class="p-3 text-left">Descripción</th><th class="p-3 text-left">IP</th><th class="p-3 text-left">Resultado</th></tr></thead><tbody class="divide-y">
+        {% for event in eventos %}<tr><td class="p-3 whitespace-nowrap">{{ event.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td><td class="p-3">{{ event.usuario.username if event.usuario else 'Sistema' }}</td><td class="p-3">{{ event.module }}</td><td class="p-3 font-medium">{{ event.action }}</td><td class="p-3">{{ event.description }}</td><td class="p-3">{{ event.ip_address or 'local' }}</td><td class="p-3">{{ event.outcome }}</td></tr>{% else %}<tr><td colspan="7" class="p-8 text-center text-gray-500">No hay eventos para los filtros seleccionados.</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+</div>
+{% endblock %}

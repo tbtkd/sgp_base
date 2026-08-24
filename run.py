@@ -1,119 +1,134 @@
+import logging
 import os
-import sys
 import socket
+import sys
 import traceback
 import webbrowser
+from contextlib import suppress
+from getpass import getpass
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from threading import Timer
-from app import create_app
-from app.__init__ import get_database_path
 
-def is_port_in_use(port, host='127.0.0.1'):
-    """Verifica si el puerto especificado ya se encuentra en uso por otro proceso."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex((host, port)) == 0
 
-def open_browser(port):
-    """Abre el navegador predeterminado en la URL de la aplicación."""
+def _port():
     try:
-        webbrowser.open(f'http://127.0.0.1:{port}/')
-    except Exception as e:
-        print(f"[ADVERTENCIA] No se pudo abrir el navegador automáticamente: {e}")
+        port = int(os.environ.get("SGPN_PORT", "5000"))
+    except ValueError as error:
+        raise RuntimeError("SGPN_PORT debe ser numérico.") from error
+    if not 1024 <= port <= 65535:
+        raise RuntimeError("SGPN_PORT debe estar entre 1024 y 65535.")
+    return port
 
-def show_stylized_error_window():
-    """Abre la plantilla HTML estilizada de error de inicio en el navegador o mediante archivo local."""
+
+def _port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as connection:
+        connection.settimeout(0.5)
+        return connection.connect_ex(("127.0.0.1", port)) == 0
+
+
+def _open_browser(port):
+    with suppress(Exception):
+        webbrowser.open(f"http://127.0.0.1:{port}/", new=1)
+
+
+def _runtime_directory():
+    """Resuelve la carpeta de datos sin importar Flask ni dependencias externas."""
+    configured = os.environ.get("SGPN_DATA_DIR")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+def _error_summary(error):
+    message = " ".join(str(error).split()) or "sin detalle adicional"
+    return f"{type(error).__name__}: {message[:500]}"
+
+
+def _write_startup_failure(error):
+    """Registra fallos que ocurren incluso antes de que Flask configure su logger."""
+    handler = None
     try:
-        if getattr(sys, 'frozen', False):
-            base_dir = sys._MEIPASS
-        else:
-            base_dir = os.path.abspath(os.path.dirname(__file__))
-        
-        html_path = os.path.join(base_dir, 'app', 'templates', 'errors', 'error_inicio.html')
-        if not os.path.exists(html_path):
-            # Ruta alternativa si se ejecuta desde la raíz
-            html_path = os.path.abspath('app/templates/errors/error_inicio.html')
-        
-        if os.path.exists(html_path):
-            webbrowser.open(f'file:///{os.path.abspath(html_path)}')
-    except Exception as e:
-        print(f"[ADVERTENCIA] No se pudo abrir la ventana estilizada de error: {e}")
-
-def show_error_dialog(title, message):
-    """Muestra una ventana emergente de error en Windows si la consola está oculta o falla stdin."""
-    try:
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(0, message, title, 0x10) # 0x10 = Icono de Error (MB_ICONERROR)
-    except Exception:
-        pass
-
-def safe_input(prompt="Presiona ENTER para salir..."):
-    """Espera la entrada del usuario de forma segura sin fallar si no hay consola (stdin)."""
-    try:
-        if sys.stdin and sys.stdin.isatty():
-            input(prompt)
-    except (EOFError, RuntimeError):
-        pass
-
-if __name__ == '__main__':
-    try:
-        print("========================================================")
-        print("   INICIANDO SISTEMA DE GESTION DE PACIENTES Y NUTRICION ")
-        print("========================================================")
-        
-        if not getattr(sys, 'frozen', False):
-            db_activa = get_database_path()
-            print(f"[MODO DEV] Base de datos activa: {db_activa}")
-            print("--------------------------------------------------------")
-        
-        port = int(os.getenv('PORT', 5000))
-
-        # 1. Validacion de Puerto Ocupado
-        if is_port_in_use(port):
-            error_msg = f"El puerto {port} ya se encuentra ocupado. Es posible que la aplicación ya esté ejecutándose en segundo plano."
-            print(f"\n[ERROR CRITICO] {error_msg}")
-            show_stylized_error_window()
-            safe_input()
-            sys.exit(1)
-
-        # 2. Inicializar la app de Flask
-        app = create_app()
-        
-        # 3. Programa la apertura del navegador (usando hilos daemon)
-        timer = Timer(1.5, open_browser, args=[port])
-        timer.daemon = True  # Permite que el hilo muera si la app se cierra antes
-        timer.start()
-        
-        print(f"[INFO] Servidor corriendo en http://127.0.0.1:{port}/")
-        
-        # 4. Iniciar servidor Flask
-        app.run(
-            host='127.0.0.1',
-            port=port,
-            debug=False,
-            use_reloader=False
+        log_directory = _runtime_directory() / "instance" / "logs"
+        log_directory.mkdir(parents=True, exist_ok=True)
+        log_path = log_directory / "startup.log"
+        handler = RotatingFileHandler(log_path, maxBytes=1_048_576, backupCount=3, encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        logger = logging.Logger("sgpn.startup", level=logging.ERROR)
+        logger.addHandler(handler)
+        logger.error(
+            "Fallo crítico durante el inicio",
+            exc_info=(type(error), error, error.__traceback__),
         )
+        return log_path
+    except OSError:
+        return None
+    finally:
+        if handler is not None:
+            handler.close()
 
-    except Exception as e:
-        # Obtener el traceback formateado
-        error_details = traceback.format_exc()
 
-        # Guardar en un archivo físico crash_log.txt para diagnosticar si el cliente no tiene consola
-        try:
-            exe_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.abspath(".")
-            crash_path = os.path.join(exe_dir, "crash_log.txt")
-            with open(crash_path, "a", encoding="utf-8") as f:
-                f.write(f"\n=== FALLO CRITICO [{os.times()}] ===\n{error_details}\n")
-        except Exception:
-            pass
+def _report_startup_failure(error):
+    log_path = _write_startup_failure(error)
+    print("No fue posible iniciar SGPN.", file=sys.stderr)
+    print(f"Causa: {_error_summary(error)}", file=sys.stderr)
+    if log_path:
+        print(f"Registro técnico: {log_path}", file=sys.stderr)
+    else:
+        print("No se pudo escribir el registro técnico; se muestra el traceback:", file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-        print("\n========================================================")
-        print("[ERROR CRITICO] Ocurrio un fallo al iniciar la aplicacion:")
-        print("========================================================")
-        print(error_details)
-        print("\n")
 
-        # Notificar mediante plantilla estilizada y diálogo de respaldo
-        show_stylized_error_window()
-        show_error_dialog("Error Crítico de Ejecución", f"Ocurrió un error al iniciar la aplicación:\n\n{e}\n\nRevisa el archivo crash_log.txt para más detalles.")
+def _handle_maintenance_command(argv=None):
+    """Ejecuta recuperación local sin iniciar el servidor ni abrir el navegador."""
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if not arguments:
+        return False
+    if arguments[0] != "--reset-password" or len(arguments) != 2:
+        raise RuntimeError("Uso: python run.py --reset-password NOMBRE_USUARIO")
 
-        safe_input()
-        sys.exit(1)
+    from app import create_app
+    from app.core.password_recovery import reset_password_offline
+
+    recovery_password = getpass("Nueva contraseña de recuperación: ")
+    confirmation = getpass("Confirma la contraseña: ")
+    if recovery_password != confirmation:
+        raise RuntimeError("Las contraseñas no coinciden.")
+    app = create_app(os.environ.get("SGPN_ENV", "default"))
+    with app.app_context():
+        user = reset_password_offline(arguments[1], recovery_password)
+        app.logger.warning("Recuperación local completada; usuario_id=%s", user.id)
+    print("Contraseña restablecida. Inicia sesión y establece una contraseña definitiva.")
+    return True
+
+
+def main():
+    if _handle_maintenance_command():
+        return
+    port = _port()
+    if _port_in_use(port):
+        raise RuntimeError(f"El puerto local {port} ya está en uso.")
+
+    # Las importaciones se hacen aquí para que también se diagnostiquen las
+    # dependencias ausentes o los errores tempranos de configuración.
+    from waitress import serve
+
+    from app import create_app, get_database_path
+
+    app = create_app(os.environ.get("SGPN_ENV", "default"))
+    if os.environ.get("SGPN_NO_BROWSER") != "1":
+        timer = Timer(1.0, _open_browser, args=[port])
+        timer.daemon = True
+        timer.start()
+    app.logger.info("SGPN iniciado en interfaz local; database=%s", get_database_path().name)
+    serve(app, host="127.0.0.1", port=port, threads=4, clear_untrusted_proxy_headers=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        _report_startup_failure(error)
+        raise SystemExit(1) from error

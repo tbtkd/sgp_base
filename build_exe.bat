@@ -1,97 +1,62 @@
 @echo off
-setlocal enabledelayedexpansion
-cls
+setlocal
+cd /d "%~dp0"
 
 echo ========================================================
-echo   COMPILANDO SISTEMA PACIENTES (ONEFILE + CONSOLE)
+echo   COMPILANDO SGPN PARA WINDOWS
 echo ========================================================
-echo.
 
-:: 1. Validar que PyInstaller este disponible
-where pyinstaller >nul 2>nul
-if %errorlevel% neq 0 (
-    echo [ERROR] PyInstaller no esta instalado o no esta activado el entorno virtual.
-    echo Por favor activa tu entorno virtual ^(ej. venv\Scripts\activate^) e intenta de nuevo.
-    echo.
-    pause
+where python >nul 2>nul
+if errorlevel 1 (
+    echo [ERROR] Python no esta disponible en PATH.
     exit /b 1
 )
 
-:: 2. Validar que todos los archivos y carpetas --add-data y el icono existan obligatoriamente
-echo [--] Validando integridad de recursos y dependencias...
+python -c "import PyInstaller, defusedxml, flask, flask_login, flask_sqlalchemy, flask_wtf, openpyxl, waitress" >nul 2>nul
+if errorlevel 1 (
+    echo [ERROR] Faltan dependencias. Ejecuta: pip install -r requirements-build.txt
+    exit /b 1
+)
 
 if not exist "app\templates" (
-    echo [ERROR] La carpeta obligatoria 'app\templates' no existe.
-    pause
+    echo [ERROR] No existe app\templates.
     exit /b 1
 )
-
 if not exist "app\static" (
-    echo [ERROR] La carpeta obligatoria 'app\static' no existe.
-    pause
+    echo [ERROR] No existe app\static.
     exit /b 1
 )
 
-if not exist "app\static\img\icons\logo.ico" (
-    echo [ERROR] El archivo de icono obligatorio 'app\static\img\icons\logo.ico' no existe.
-    pause
+echo [1/3] Validando sintaxis...
+python -m compileall -q app run.py seed_admin.py
+if errorlevel 1 exit /b 1
+
+echo [2/3] Limpiando compilaciones anteriores...
+if exist "build" rmdir /s /q "build"
+if exist "dist" rmdir /s /q "dist"
+if exist "SistemaPacientes.spec" del /f /q "SistemaPacientes.spec"
+python scripts\cleanup_project.py --quiet
+if errorlevel 1 (
+    echo [ERROR] No fue posible limpiar artefactos obsoletos.
     exit /b 1
 )
 
-:: Validar si la base de datos existe en instance; si no, crear la carpeta vacía o advertir/crearla
-if not exist "instance" mkdir instance
-if not exist "instance\sgpca.db" (
-    echo [ADVERTENCIA] No se encontro 'instance\sgpca.db'. Se creara un archivo base vacio para empaquetar.
-    type nul > "instance\sgpca.db"
-)
-
-:: 3. Limpieza de carpetas y archivos temporales previos
-echo [--] Limpiando compilaciones anteriores...
-if exist build rmdir /s /q build
-if exist dist rmdir /s /q dist
-if exist *.spec del /f /q *.spec
-
-if exist dist (
-    echo.
-    echo [ERROR] No se pudo eliminar la carpeta 'dist'. 
-    echo Asegurate de cerrar 'SistemaPacientes.exe' si esta ejecutandose.
-    echo.
-    pause
-    exit /b 1
-)
-
-echo [--] Iniciando empaquetado con PyInstaller...
-echo.
-
-:: 4. Ejecutar PyInstaller con separador Windows (;) y todas las validaciones
-pyinstaller --noconfirm --onefile --console ^
+echo [3/3] Generando ejecutable...
+pyinstaller --noconfirm --clean --onefile --console ^
+  --icon "app/static/img/logo.ico" ^
   --add-data "app/templates;app/templates" ^
   --add-data "app/static;app/static" ^
-  --add-data "instance/sgpca.db;instance" ^
-  --icon="app/static/img/icons/logo.ico" ^
+  --collect-submodules flask_wtf ^
   --name "SistemaPacientes" run.py
-
-:: 5. Evaluacion de Errores
-if %errorlevel% equ 0 (
-    if exist "dist\SistemaPacientes.exe" (
-        echo.
-        echo ========================================================
-        echo   ¡COMPILACION EXITOSA!
-        echo ========================================================
-        echo Archivo generado en: dist\SistemaPacientes.exe
-        echo.
-    ) else (
-        echo.
-        echo [ERROR] PyInstaller finalizo sin codigo de error, pero no se encontro el .exe en dist\
-        echo.
-    )
-) else (
-    echo.
-    echo ========================================================
-    echo   [ERROR] FALLO LA COMPILACION CON CODIGO %errorlevel%
-    echo ========================================================
-    echo Revisa los mensajes anteriores en la consola para identificar la causa.
-    echo.
+if errorlevel 1 (
+    echo [ERROR] PyInstaller no pudo generar la entrega.
+    exit /b 1
 )
 
-pause
+if not exist "dist\SistemaPacientes.exe" (
+    echo [ERROR] No se encontro dist\SistemaPacientes.exe.
+    exit /b 1
+)
+
+echo [OK] Ejecutable generado: dist\SistemaPacientes.exe
+exit /b 0

@@ -42,7 +42,7 @@ function abrirModalWhatsApp(valId, telefono, nombrePaciente, diasTranscurridos) 
     const plantillaRaw = configElement ? configElement.getAttribute('data-plantilla') : null;
     const dashboardPlantillaActiva = plantillaRaw && plantillaRaw !== 'null' ? JSON.parse(plantillaRaw) : null;
 
-    const plantillaTemplate = dashboardPlantillaActiva || "¡Hola, {nombre}! 👋 Te saluda la nutrióloga Aurora Ángeles. Han pasado {dias} días desde tu última consulta y quería saber cómo te has sentido con tu plan de alimentación y si te ha surgido alguna duda. ¡Sigo al pendiente de tus avances!";
+    const plantillaTemplate = dashboardPlantillaActiva || "Hola, {nombre}. Han pasado {dias} días desde tu última consulta. Queremos saber cómo continúa tu evolución y si necesitas agendar una revisión.";
     
     const mensajeBase = plantillaTemplate
         .replace('{nombre}', nombrePaciente)
@@ -86,8 +86,15 @@ function mostrarToast(mensaje, tipo = 'success') {
     
     const iconClass = tipo === 'success' ? 'fa-check' : 'fa-exclamation';
     const colorClass = tipo === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400';
-    
-    toast.innerHTML = `<div class="w-8 h-8 rounded-xl ${colorClass} flex items-center justify-center shrink-0"><i class="fas ${iconClass}"></i></div><span>${mensaje}</span>`;
+    toast.replaceChildren();
+    const iconBox = document.createElement('div');
+    iconBox.className = `w-8 h-8 rounded-xl ${colorClass} flex items-center justify-center shrink-0`;
+    const icon = document.createElement('i');
+    icon.className = `fas ${iconClass}`;
+    iconBox.appendChild(icon);
+    const label = document.createElement('span');
+    label.textContent = String(mensaje || '');
+    toast.append(iconBox, label);
 
     setTimeout(() => {
         toast.classList.remove('translate-y-20', 'opacity-0');
@@ -177,7 +184,8 @@ function confirmarEnviarWhatsApp() {
     }
     cerrarModalWhatsApp();
 
-    window.open(urlWa, '_blank');
+    const waWindow = window.open(urlWa, '_blank', 'noopener,noreferrer');
+    if (waWindow) waWindow.opener = null;
 
     fetch(`/dashboard/marcar-seguimiento/${valIdToProcess}`, {
         method: 'POST',

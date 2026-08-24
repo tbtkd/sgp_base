@@ -12,7 +12,15 @@ function mostrarToast(mensaje, tipo = 'success') {
     }
     
     toast.className = 'fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border bg-gray-900 text-white border-gray-800 transition-all duration-300 transform translate-y-20 opacity-0';
-    toast.innerHTML = `<div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0"><i class="fas fa-check"></i></div><span>${mensaje}</span>`;
+    toast.replaceChildren();
+    const iconBox = document.createElement('div');
+    iconBox.className = 'w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0';
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-check';
+    iconBox.appendChild(icon);
+    const label = document.createElement('span');
+    label.textContent = String(mensaje || '');
+    toast.append(iconBox, label);
 
     setTimeout(() => {
         toast.classList.remove('translate-y-20', 'opacity-0');

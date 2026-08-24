@@ -23,13 +23,13 @@ function enviarExcel(event) {
     .then(data => {
         mostrarModalResultadoCarga(data);
     })
-    .catch(error => {
+    .catch(() => {
         mostrarModalResultadoCarga({
             success: false,
-            message: 'Ocurrió un error al procesar la solicitud: ' + error,
+            message: 'No fue posible procesar la solicitud. Intenta nuevamente.',
             registros_procesados: 0,
             registros_duplicados: 0,
-            errores: [error.toString()]
+            errores: []
         });
     });
 }

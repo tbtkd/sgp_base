@@ -3,31 +3,58 @@
 {% block title %}Lista de Historiales Clínicos{% endblock %}
 
 {% block content %}
-<div class="valoracion-container">
-    <h2>Lista de Historiales Clínicos</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th class="table__header">Paciente</th>
-                <th class="table__header">Padecimientos</th>
-                <th class="table__header">Actividad Física</th>
-                <th class="table__header">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for historial in historiales %}
-            <tr>
-                <td class="table__cell">{{ historial['nombre'] }} {{ historial['apellido_paterno'] }} {{ historial['apellido_materno'] }}</td>
-                <td class="table__cell">{{ historial['padecimientos'] }}</td>
-                <td class="table__cell">{{ historial['tipo_actividad_fisica'] }} - {{ historial['frecuencia_actividad_fisica'] }}</td>
-                <td class="table__cell">
-                    <a href="{{ url_for('historial_clinico.ver_crear_historial', paciente_id=historial['paciente_id']) }}" class="action-button">Ver/Editar</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<div class="max-w-7xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Historiales clínicos</h1>
+        <p class="mt-2 text-gray-500">Antecedentes, alergias, medicación y hábitos registrados por paciente.</p>
+    </div>
 
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Paciente</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Antecedentes y padecimientos</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Alergias y medicación</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Actividad física</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for historial in historiales %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-sm">
+                            <p class="font-semibold text-gray-900">{{ historial.paciente.nombre_completo if historial.paciente else 'Paciente no disponible' }}</p>
+                            <p class="mt-1 text-xs text-gray-500">Expediente #{{ historial.paciente_id }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                            {{ (historial.enfermedades_previas or historial.antecedentes_familiares or 'Sin antecedentes registrados')|truncate(110, true) }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                            {{ (historial.alergias_medicamentosas or historial.alergias_alimentarias or historial.medicamentos_actuales or 'Sin alergias o medicación registrada')|truncate(110, true) }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">{{ historial.actividad_fisica or 'No registrada' }}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{{ url_for('historial_clinico.ver_crear_historial', paciente_id=historial.paciente_id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl text-sm font-semibold transition">
+                                <i class="fas fa-file-medical" aria-hidden="true"></i> Ver / editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-14 text-center">
+                            <i class="fas fa-file-medical text-4xl text-gray-300 mb-3" aria-hidden="true"></i>
+                            <p class="font-semibold text-gray-700">No hay historiales clínicos registrados.</p>
+                            <p class="mt-1 text-sm text-gray-500">Abre el expediente de un paciente para registrar sus antecedentes.</p>
+                            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="inline-flex mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold">Ver pacientes</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 

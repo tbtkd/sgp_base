@@ -1,3 +1,56 @@
+{% set endpoint_actual = request.endpoint or '' %}
+{% if endpoint_actual == 'main.index' %}
+    {% set titulo_modulo = none %}
+    {% set subtitulo_modulo = 'Panel de control clínico - Resumen del sistema' %}
+{% elif endpoint_actual == 'pacientes.nuevo_paciente' %}
+    {% set titulo_modulo = 'Registrar paciente' %}
+    {% set subtitulo_modulo = 'Alta de datos generales y contacto' %}
+{% elif endpoint_actual == 'pacientes.editar_paciente' %}
+    {% set titulo_modulo = 'Editar paciente' %}
+    {% set subtitulo_modulo = 'Actualización de datos generales' %}
+{% elif endpoint_actual == 'pacientes.detalle_paciente' %}
+    {% set titulo_modulo = 'Detalle del paciente' %}
+    {% set subtitulo_modulo = 'Expediente, pagos, citas y seguimiento' %}
+{% elif 'pacientes.' in endpoint_actual %}
+    {% set titulo_modulo = 'Pacientes' %}
+    {% set subtitulo_modulo = 'Búsqueda y gestión de expedientes' %}
+{% elif endpoint_actual == 'valoracion.nueva_valoracion' %}
+    {% set titulo_modulo = 'Nueva consulta clínica' %}
+    {% set subtitulo_modulo = 'Captura de nota, signos vitales y tratamiento' %}
+{% elif endpoint_actual == 'valoracion.editar_valoracion' %}
+    {% set titulo_modulo = 'Editar consulta clínica' %}
+    {% set subtitulo_modulo = 'Actualización de la nota médica' %}
+{% elif endpoint_actual == 'valoracion.detalle_valoracion' %}
+    {% set titulo_modulo = 'Nota de consulta clínica' %}
+    {% set subtitulo_modulo = 'Detalle clínico e impresión' %}
+{% elif 'valoracion.' in endpoint_actual %}
+    {% set titulo_modulo = 'Consultas clínicas' %}
+    {% set subtitulo_modulo = 'Historial de notas y evolución' %}
+{% elif endpoint_actual == 'recetas.nueva_receta' %}
+    {% set titulo_modulo = 'Nueva receta ordinaria' %}
+    {% set subtitulo_modulo = 'Prescripción estructurada y datos del profesional' %}
+{% elif 'recetas.' in endpoint_actual %}
+    {% set titulo_modulo = 'Receta médica ordinaria' %}
+    {% set subtitulo_modulo = 'Documento independiente de la nota clínica' %}
+{% elif endpoint_actual == 'historial_clinico.lista_historiales' %}
+    {% set titulo_modulo = 'Historiales clínicos' %}
+    {% set subtitulo_modulo = 'Antecedentes, alergias, medicación y hábitos' %}
+{% elif 'historial_clinico.' in endpoint_actual %}
+    {% set titulo_modulo = 'Expediente clínico' %}
+    {% set subtitulo_modulo = 'Antecedentes y condiciones del paciente' %}
+{% elif 'plantillas.' in endpoint_actual %}
+    {% set titulo_modulo = 'Plantillas de mensajes' %}
+    {% set subtitulo_modulo = 'Comunicación y seguimiento por WhatsApp' %}
+{% elif endpoint_actual == 'auth.auditoria' %}
+    {% set titulo_modulo = 'Auditoría' %}
+    {% set subtitulo_modulo = 'Trazabilidad de eventos críticos' %}
+{% elif 'auth.' in endpoint_actual %}
+    {% set titulo_modulo = 'Gestión de usuarios' %}
+    {% set subtitulo_modulo = 'Usuarios, roles y control de acceso' %}
+{% else %}
+    {% set titulo_modulo = 'Sistema clínico' %}
+    {% set subtitulo_modulo = 'Gestión de pacientes y expedientes' %}
+{% endif %}
 <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-30 shadow-sm">
     <!-- Left: Hamburger & Page Title -->
     <div class="flex items-center gap-4">
@@ -5,11 +58,9 @@
             <i class="fas fa-bars text-xl"></i>
         </button>
         <div>
-            <h1 class="text-xl font-bold text-slate-800">
-                {% block page_title %}Bienvenido, <span class="text-emerald-600">{{ current_user.nombre or current_user.username }}</span>{% endblock %}
-            </h1>
+            <h1 class="text-xl font-bold text-slate-800">{% if titulo_modulo %}{{ titulo_modulo }}{% else %}Bienvenido, <span class="text-emerald-600">{{ current_user.nombre or current_user.username }}</span>{% endif %}</h1>
             <p class="text-xs text-slate-500 mt-0.5 hidden sm:block">
-                {% block page_subtitle %}Panel de control clínico - Resumen del sistema{% endblock %}
+                {{ subtitulo_modulo }}
             </p>
         </div>
     </div>
@@ -18,34 +69,62 @@
     <div class="flex items-center gap-4">
         <!-- User Profile Dropdown (Alpine.js) -->
         <div class="relative" x-data="{ open: false }">
-            <button @click="open = !open" class="flex items-center gap-3 focus:outline-none p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+            <button type="button" @click="open = !open" @keydown.escape.window="open = false" :aria-expanded="open.toString()" aria-haspopup="menu" aria-label="Abrir menú de cuenta" class="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-teal-500 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
                 <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center border border-teal-200">
-                    {{ current_user.username[0]|upper if current_user.is_authenticated else 'U' }}
+                    {{ current_user.username[0]|upper if current_user.is_authenticated and current_user.username else 'U' }}
                 </div>
                 <div class="text-left hidden md:block">
-                    <span class="block text-sm font-semibold text-slate-700 leading-tight">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</span>
-                    <span class="block text-xs text-slate-500">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</span>
+                    <span class="block max-w-52 truncate text-sm font-semibold text-slate-700 leading-tight">{{ current_user.username if current_user.is_authenticated else 'Usuario' }}</span>
+                    <span class="block max-w-52 truncate text-xs text-slate-500">{{ current_user.rol_etiqueta if current_user.is_authenticated else 'Rol' }}{% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %} · {{ current_user.perfil_profesional_etiqueta }}{% endif %}</span>
                 </div>
                 <i class="fas fa-chevron-down text-xs text-slate-400 ml-1"></i>
             </button>
 
             <!-- Dropdown Menu -->
-            <div x-show="open" @click.away="open = false" 
+            <div x-show="open" @click.away="open = false" x-cloak
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="transform opacity-0 scale-95"
                  x-transition:enter-end="transform opacity-100 scale-100"
                  x-transition:leave="transition ease-in duration-75"
                  x-transition:leave-start="transform opacity-100 scale-100"
                  x-transition:leave-end="transform opacity-0 scale-95"
-                 class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
-                <div class="px-4 py-2 border-b border-slate-100 md:hidden">
-                    <p class="text-sm font-semibold text-slate-800">{{ current_user.nombre if current_user.is_authenticated else 'Usuario' }}</p>
-                    <p class="text-xs text-teal-600 font-medium">{{ current_user.rol if current_user.is_authenticated else 'Rol' }}</p>
+                 role="menu" class="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <dl class="space-y-2 text-xs">
+                        <div>
+                            <dt class="font-medium text-slate-500">Nombre registrado</dt>
+                            <dd class="text-sm font-semibold text-slate-800 break-words">{{ current_user.nombre_completo if current_user.is_authenticated else 'Usuario' }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
+                            <dt class="font-medium text-slate-500">Usuario:</dt>
+                            <dd class="text-slate-700 break-all">{{ current_user.username if current_user.is_authenticated else '—' }}</dd>
+                        </div>
+                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
+                            <dt class="font-medium text-slate-500">Rol de acceso:</dt>
+                            <dd class="text-slate-700">{{ current_user.rol_etiqueta if current_user.is_authenticated else '—' }}</dd>
+                        </div>
+                        {% if current_user.is_authenticated and current_user.perfil_profesional_etiqueta %}
+                        <div class="grid grid-cols-[auto_1fr] gap-x-2">
+                            <dt class="font-medium text-slate-500">Área clínica:</dt>
+                            <dd class="text-teal-700 font-medium">{{ current_user.perfil_profesional_etiqueta }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if current_user.is_authenticated and current_user.cedula_profesional %}
+                        <div>
+                            <dt class="font-medium text-slate-500">Cédula profesional</dt>
+                            <dd class="text-slate-700 break-all">{{ current_user.cedula_profesional }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
                 </div>
-                <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
-                    <i class="fas fa-sign-out-alt w-4"></i>
-                    <span>Cerrar Sesión</span>
-                </a>
+                <a href="{{ url_for('auth.cambiar_contrasena') }}" role="menuitem" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 font-medium transition-colors"><i class="fas fa-key w-4"></i><span>Cambiar contraseña</span></a>
+                <form action="{{ url_for('auth.logout') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" role="menuitem" class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-medium transition-colors">
+                        <i class="fas fa-sign-out-alt w-4"></i>
+                        <span>Cerrar Sesión</span>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

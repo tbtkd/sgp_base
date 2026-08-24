@@ -18,35 +18,15 @@
     {% include 'pacientes/partials/_historial_clinico.html' %}
 </div>
 
-<!-- Modales (Excel, Cita, Advertencia Cita) -->
-<div x-data="{ 
-        modalExcelOpen: false, 
-        modalCitaOpen: false, 
-        modalAdvertenciaOpen: false,
-        tieneCita: {{ 'true' if siguiente_cita else 'false' }},
-        fechaCita: '{{ siguiente_cita.strftime('%Y-%m-%d') if siguiente_cita else '' }}',
-        horaCita: '{{ siguiente_cita.strftime('%H:%M') if siguiente_cita else '' }}',
-        verificarCita() {
-            if (this.tieneCita) {
-                this.modalAdvertenciaOpen = true;
-            } else {
-                this.modalCitaOpen = true;
-            }
-        },
-        reagendarCita() {
-            this.modalAdvertenciaOpen = false;
-            this.modalCitaOpen = true;
-        }
-    }" 
-    @open-excel-modal.window="modalExcelOpen = true" 
-    @open-cita-modal.window="verificarCita()">
+<!-- Modales -->
+<div x-data="{ modalExcelOpen: false }" @open-excel-modal.window="modalExcelOpen = true">
 
     <!-- Modal Excel -->
     <div x-show="modalExcelOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" style="display: none;" x-cloak>
         <div @click.away="modalExcelOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Importar desde Excel</h3>
             <form id="formCargarExcel" action="{{ url_for('pacientes.cargar_excel', id=paciente['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4" x-data="{ error: '' }" @submit.prevent="enviarExcel(event)">
-                <input type="file" name="file" accept=".xlsx, .xls" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" @change="error = ''">
+                <input type="file" name="file" accept=".xlsx" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" @change="error = ''">
                 <p x-show="error" class="text-sm text-red-600 bg-red-50 p-2 rounded-lg" x-text="error" x-cloak></p>
                 <div class="flex gap-4 mt-6">
                     <button type="button" @click="modalExcelOpen = false; error = ''" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
@@ -108,46 +88,70 @@
       </div>
     </div>
 
-    <!-- Modal Advertencia Cita Existente -->
-    <div x-show="modalAdvertenciaOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 " x-cloak>
-        <div @click.away="modalAdvertenciaOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Cita Ya Registrada</h3>
+    <!-- Modal Advertencia Cita Existente: control local, cerrado por defecto -->
+    <div id="modalAdvertenciaCita" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" role="dialog" aria-modal="true" aria-labelledby="tituloAdvertenciaCita" hidden>
+        <div class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all relative">
+            <button type="button" id="btnCerrarAdvertenciaCita" class="absolute right-4 top-4 text-gray-400 hover:text-gray-700 p-2" aria-label="Cerrar advertencia de cita">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <h3 id="tituloAdvertenciaCita" class="text-xl font-bold text-gray-900 mb-4">Cita ya registrada</h3>
             <p class="text-sm text-gray-600 mb-6">
-                El paciente <span class="font-semibold text-gray-900">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}</span> ya tiene una cita agendada para el día <span class="font-semibold text-teal-600" x-text="fechaCita"></span> a las <span class="font-semibold text-teal-600" x-text="horaCita"></span>. ¿Deseas modificar o reagendar esta cita?
+                El paciente <span class="font-semibold text-gray-900">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}</span> ya tiene una cita agendada{% if cita_programada %} para el día <span class="font-semibold text-teal-600">{{ cita_programada.fecha|format_date }}</span> a las <span class="font-semibold text-teal-600">{{ cita_programada.hora.strftime('%H:%M') }}</span>{% endif %}. ¿Deseas modificar o reagendar esta cita?
             </p>
             <div class="flex gap-4 mt-6">
-                <button type="button" @click="modalAdvertenciaOpen = false" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
-                <button type="button" @click="reagendarCita()" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Reagendar</button>
+                <button type="button" id="btnCancelarAdvertenciaCita" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                <button type="button" id="btnConfirmarCambioCita" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Reagendar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Cita -->
-    <div x-show="modalCitaOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" x-cloak>
-        <div @click.away="modalCitaOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all">
-            <h3 class="text-xl font-bold text-gray-900 mb-6">Agendar Próxima Cita</h3>
-            <form action="{{ url_for('pacientes.registrar_proxima_cita', id=paciente['id']) }}" method="POST" class="space-y-4" x-data="citaForm('{{ siguiente_cita.strftime('%Y-%m-%d') if siguiente_cita else '' }}')">
+    <!-- Modal Cita: no depende de Alpine ni de recursos externos -->
+    <div id="modalCita"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="tituloModalCita"
+         data-tiene-cita="{{ 'true' if cita_programada else 'false' }}"
+         data-fecha-inicial="{{ cita_programada.fecha.isoformat() if cita_programada else '' }}"
+         data-hora-inicial="{{ cita_programada.hora.strftime('%H:%M') if cita_programada else '' }}"
+         data-cita-id="{{ cita_programada.id if cita_programada else '' }}"
+         data-disponibilidad-url="{{ url_for('pacientes.disponibilidad_horas') }}"
+         hidden>
+        <div class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl transform transition-all relative">
+            <button type="button" id="btnCerrarModalCita" class="absolute right-4 top-4 text-gray-400 hover:text-gray-700 p-2" aria-label="Cerrar formulario de cita">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+            <h3 id="tituloModalCita" class="text-xl font-bold text-gray-900 mb-6">{{ 'Reagendar próxima cita' if cita_programada else 'Agendar próxima cita' }}</h3>
+            <form id="formProximaCita" action="{{ url_for('pacientes.registrar_proxima_cita', id=paciente['id']) }}" method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Fecha:</label>
-                    <input type="date" name="proxima_cita_fecha" x-model="fecha" @change="actualizarDisponibilidad()" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                    <label for="proxima_cita_fecha" class="block text-sm font-medium text-gray-700">Fecha:</label>
+                    <input type="date" id="proxima_cita_fecha" name="proxima_cita_fecha" min="{{ today.date().isoformat() }}" value="{{ cita_programada.fecha.isoformat() if cita_programada else '' }}" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white text-gray-900" required>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Hora:</label>
-                    <select name="proxima_cita_hora" x-model="hora" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                    <label for="proxima_cita_hora" class="block text-sm font-medium text-gray-700">Hora:</label>
+                    <select id="proxima_cita_hora" name="proxima_cita_hora" class="appointment-time-select w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white text-gray-900" required>
                         <option value="">Seleccionar hora</option>
                         {% for h in range(9, 20) %}
-                            {% set hora_str = '%02d:00' % h %}
-                            <option value="{{ hora_str }}" 
-                                    :disabled="horasOcupadas.includes('{{ hora_str }}')"
-                                    :class="horasOcupadas.includes('{{ hora_str }}') ? 'bg-gray-100 text-gray-400' : ''"
-                                    x-text="'{{ hora_str }}' + (horasOcupadas.includes('{{ hora_str }}') ? ' (Ocupada)' : '')">
-                            </option>
+                            {% for minuto in [0, 30] %}
+                                {% if not (h == 19 and minuto == 30) %}
+                                    {% set hora_str = '%02d:%02d' % (h, minuto) %}
+                                    <option value="{{ hora_str }}" data-hora-base="{{ hora_str }}" {% if cita_programada and cita_programada.hora.strftime('%H:%M') == hora_str %}selected{% endif %}>{{ hora_str }}</option>
+                                {% endif %}
+                            {% endfor %}
                         {% endfor %}
                     </select>
+                    <p id="estadoDisponibilidad" class="mt-2 text-xs text-gray-500" aria-live="polite" hidden>Consultando disponibilidad…</p>
+                    <p id="errorDisponibilidad" class="mt-2 text-xs text-red-600" role="alert" hidden>No fue posible consultar los horarios ocupados. Puedes cerrar el formulario e intentarlo nuevamente.</p>
+                </div>
+                <div>
+                    <label for="motivo_cita" class="block text-sm font-medium text-gray-700">Motivo:</label>
+                    <input type="text" id="motivo_cita" name="motivo" maxlength="500" value="{{ cita_programada.motivo if cita_programada and cita_programada.motivo else '' }}" class="w-full border-gray-200 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white text-gray-900" placeholder="Motivo de la cita">
                 </div>
                 <div class="flex gap-4 mt-6">
-                    <button type="button" @click="modalCitaOpen = false" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
-                    <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700">Agendar</button>
+                    <button type="button" id="btnCancelarModalCita" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                    <button type="submit" id="btnGuardarCita" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 disabled:opacity-60 disabled:cursor-wait">
+                        <span id="textoGuardarCita">{{ 'Actualizar' if cita_programada else 'Agendar' }}</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -199,7 +203,7 @@
             </div>
 
             <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
-                <a href="https://wa.me/{{ paciente['telefono']|replace(' ', '')|replace('-', '') }}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 flex items-center gap-2 transition">
+                <a href="{{ paciente.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 flex items-center gap-2 transition">
                     <i class="fab fa-whatsapp text-sm"></i> Abrir Chat WhatsApp
                 </a>
                 <button type="button" onclick="cerrarBitacoraWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">

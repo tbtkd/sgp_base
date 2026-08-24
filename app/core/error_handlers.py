@@ -1,53 +1,63 @@
-# app/core/error_handlers.py
 import logging
-from flask import render_template, jsonify, request
+
+from flask import jsonify, render_template, request
+from flask_wtf.csrf import CSRFError
 from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import HTTPException
+
+from app import db_orm as db
 
 logger = logging.getLogger(__name__)
 
-def register_error_handlers(app) -> None:
-    """
-    Registra manejadores de errores globales en la aplicación Flask.
-    Captura fallas de base de datos (SQLAlchemyError), errores HTTP (400, 404, 500)
-    y excepciones generales, respondiendo con JSON para AJAX/API y HTML para navegación normal.
-    """
-    
+
+def _wants_json():
+    return (
+        request.path.startswith("/api/")
+        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.is_json
+        or request.accept_mimetypes.best == "application/json"
+    )
+
+
+def _response(message, status):
+    if _wants_json():
+        return jsonify({"success": False, "error": message}), status
+    template = "errors/404.html" if status == 404 else "errors/500.html"
+    if status in {400, 401, 403, 413, 429}:
+        template = "errors/error.html"
+    return render_template(template, message=message, status_code=status), status
+
+
+def register_error_handlers(app):
+    @app.errorhandler(CSRFError)
+    def csrf_error(error):
+        logger.warning("Solicitud rechazada por CSRF")
+        return _response("La sesión del formulario expiró. Recarga la página e inténtalo nuevamente.", 400)
+
     @app.errorhandler(SQLAlchemyError)
-    def handle_sqlalchemy_error(error: SQLAlchemyError):
-        """Manejador global para errores relacionados con la Base de Datos."""
-        logger.error(f"Error de Base de Datos [SQLAlchemyError]: {error}")
-        error_msg = "Error en la base de datos al procesar la operación."
-        if request.path.startswith('/api/') or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return jsonify({'success': False, 'error': error_msg, 'details': str(error)}), 500
-        return render_template('errors/500.html', message=error_msg), 500
+    def database_error(error):
+        db.session.rollback()
+        logger.exception("Error de base de datos")
+        return _response("No fue posible completar la operación en la base de datos.", 500)
 
-    @app.errorhandler(400)
-    def bad_request_error(error):
-        """Manejador para errores 400 (Bad Request)."""
-        mensaje = error.description if hasattr(error, 'description') and error.description else "Petición incorrecta o mal formada."
-        if request.path.startswith('/api/') or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return jsonify({'success': False, 'error': mensaje}), 400
-        return render_template('errors/400.html', message=mensaje), 400
+    @app.errorhandler(413)
+    def too_large(error):
+        return _response("La solicitud excede el límite permitido de 16 MB.", 413)
 
-    @app.errorhandler(404)
-    def not_found_error(error):
-        """Manejador para errores 404 (Not Found)."""
-        if request.path.startswith('/api/') or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return jsonify({'success': False, 'error': 'Recurso o página no encontrada'}), 404
-        return render_template('errors/404.html'), 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        """Manejador para errores 500 (Internal Server Error)."""
-        logger.error(f"Error interno del servidor [500]: {error}")
-        if request.path.startswith('/api/') or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return jsonify({'success': False, 'error': 'Error interno del servidor'}), 500
-        return render_template('errors/500.html'), 500
+    @app.errorhandler(HTTPException)
+    def http_error(error):
+        messages = {
+            400: "La solicitud contiene datos inválidos.",
+            401: "Debes iniciar sesión para continuar.",
+            403: "No tienes permiso para realizar esta acción.",
+            404: "El recurso solicitado no existe.",
+            405: "El método solicitado no está permitido.",
+            429: "Demasiados intentos. Espera antes de intentarlo nuevamente.",
+        }
+        return _response(messages.get(error.code, "No fue posible procesar la solicitud."), error.code)
 
     @app.errorhandler(Exception)
-    def handle_exception(e):
-        """Manejador global para cualquier excepción no controlada."""
-        logger.exception(f"Excepción no controlada detectada en el sistema: {e}")
-        if request.path.startswith('/api/') or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
-            return jsonify({'success': False, 'error': 'Ocurrió un error inesperado en el servidor'}), 500
-        return render_template('errors/500.html'), 500
+    def unhandled_error(error):
+        db.session.rollback()
+        logger.exception("Excepción no controlada")
+        return _response("Ocurrió un error inesperado. El incidente quedó registrado.", 500)

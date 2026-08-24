@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota clínica - {{ paciente.nombre_completo }} - {{ valoracion.fecha|format_date }}</title>
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #eef2f7; color: #0f172a; font: 12px/1.5 Arial, sans-serif; }
+        .print-toolbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 20px; background: #0f766e; color: #fff; }
+        .print-toolbar p { margin: 0; }
+        .print-toolbar button, .print-toolbar a { border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
+        .print-toolbar button { background: #fff; color: #0f766e; }
+        .print-toolbar a { color: #fff; border: 1px solid rgba(255,255,255,.65); }
+        .print-sheet { width: min(210mm, calc(100% - 32px)); min-height: 270mm; margin: 20px auto; padding: 16mm; background: #fff; box-shadow: 0 8px 28px rgba(15, 23, 42, .14); }
+        .note-header { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 14px; border-bottom: 2px solid #0f766e; }
+        h1 { margin: 0 0 4px; font-size: 24px; }
+        h2 { margin: 0 0 10px; font-size: 15px; color: #0f766e; }
+        h3 { margin: 0 0 4px; font-size: 12px; }
+        p { margin: 0; }
+        .muted { color: #475569; }
+        .note-meta { text-align: right; white-space: nowrap; }
+        .professional-meta { margin-top: 8px; font-size: 11px; color: #334155; }
+        .section { margin-top: 18px; padding-top: 14px; border-top: 1px solid #cbd5e1; break-inside: avoid; }
+        .text-block { margin-top: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .vitals { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .vitals th, .vitals td { padding: 7px 8px; border: 1px solid #cbd5e1; text-align: left; vertical-align: top; }
+        .vitals th { background: #f1f5f9; color: #334155; font-size: 10px; }
+        .clinical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .clinical-grid > div { break-inside: avoid; }
+        .signature { margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+        .signature div { padding-top: 24px; border-top: 1px solid #64748b; text-align: center; color: #475569; }
+        @page { size: A4; margin: 12mm; }
+        @media print {
+            body { background: #fff !important; }
+            .print-toolbar { display: none !important; }
+            .print-sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+            .section { break-inside: avoid; }
+        }
+        @media (max-width: 700px) {
+            .print-toolbar { align-items: flex-start; flex-direction: column; }
+            .print-sheet { width: 100%; margin: 0; padding: 20px; }
+            .note-header, .clinical-grid { display: block; }
+            .note-meta { margin-top: 12px; text-align: left; }
+            .clinical-grid > div + div { margin-top: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-toolbar">
+        <p><strong>Vista de impresión:</strong> en el diálogo selecciona “Guardar como PDF” y desactiva “Encabezados y pies de página” para un resultado limpio.</p>
+        <div>
+            <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=valoracion.id) }}">Volver</a>
+            <button type="button" onclick="window.print()">Imprimir / guardar PDF</button>
+        </div>
+    </div>
+
+    <main class="print-sheet">
+        <header class="note-header">
+            <div>
+                <h1>Nota de consulta clínica</h1>
+                <p class="muted">{{ paciente.nombre_completo }}</p>
+                {% if valoracion.profesional_nombre_mostrado %}
+                <div class="professional-meta">
+                    <p><strong>Profesional:</strong> {{ valoracion.profesional_nombre_mostrado }}</p>
+                    {% if valoracion.profesional_perfil_etiqueta %}<p><strong>Área:</strong> {{ valoracion.profesional_perfil_etiqueta }}</p>{% endif %}
+                    {% if valoracion.profesional_cedula_mostrada %}<p><strong>Cédula profesional:</strong> {{ valoracion.profesional_cedula_mostrada }}</p>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="note-meta">
+                <p><strong>Consulta:</strong> #{{ valoracion.numero_cita }}</p>
+                <p><strong>Fecha:</strong> {{ valoracion.fecha|format_date }}</p>
+                {% if valoracion.created_at %}<p><strong>Elaboración:</strong> {{ valoracion.created_at.strftime('%d/%m/%Y %H:%M') }}</p>{% endif %}
+                <p><strong>Expediente:</strong> #{{ paciente.id }}</p>
+            </div>
+        </header>
+
+        <section class="section">
+            <h2>Motivo y síntomas</h2>
+            <div class="text-block"><h3>Motivo de consulta</h3><p>{{ valoracion.motivo_consulta or 'No registrado' }}</p></div>
+            <div class="text-block"><h3>Síntomas y evolución referida</h3><p>{{ valoracion.sintomas or 'No registrados' }}</p></div>
+        </section>
+
+        <section class="section">
+            <h2>Signos vitales</h2>
+            <table class="vitals">
+                <tbody>
+                    <tr><th>Tensión arterial</th><td>{{ (valoracion.tension_arterial ~ ' mmHg') if valoracion.tension_arterial else 'No registrada' }}</td><th>Frecuencia cardíaca</th><td>{{ (valoracion.frecuencia_cardiaca ~ ' lpm') if valoracion.frecuencia_cardiaca is not none else 'No registrada' }}</td></tr>
+                    <tr><th>Frecuencia respiratoria</th><td>{{ (valoracion.frecuencia_respiratoria ~ ' rpm') if valoracion.frecuencia_respiratoria is not none else 'No registrada' }}</td><th>Temperatura</th><td>{{ (valoracion.temperatura ~ ' °C') if valoracion.temperatura is not none else 'No registrada' }}</td></tr>
+                    <tr><th>SpO₂</th><td>{{ (valoracion.saturacion_oxigeno ~ ' %') if valoracion.saturacion_oxigeno is not none else 'No registrada' }}</td><th>Estatura</th><td>{{ (valoracion.estatura ~ ' cm') if valoracion.estatura is not none else 'No registrada' }}</td></tr>
+                    <tr><th>Peso</th><td>{{ (valoracion.peso ~ ' kg') if valoracion.peso is not none else 'No registrado' }}</td><th>IMC</th><td>{{ valoracion.imc if valoracion.imc is not none else 'No registrado' }}</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section clinical-grid">
+            <div><h2>Impresión diagnóstica</h2><p class="text-block">{{ valoracion.impresion_diagnostica or 'No registrada' }}</p></div>
+            <div><h2>Plan de tratamiento</h2><p class="text-block">{{ valoracion.plan_tratamiento or 'No registrado' }}</p></div>
+        </section>
+
+        <section class="section">
+            <h2>{{ valoracion.etiqueta_prescripcion }}</h2>
+            <p class="text-block">{{ valoracion.prescripcion or 'No registrada' }}</p>
+        </section>
+
+        {% if valoracion.cintura is not none or valoracion.porcentaje_grasa is not none or valoracion.bicep is not none %}
+        <section class="section">
+            <h2>Antropometría opcional</h2>
+            <table class="vitals">
+                <tbody>
+                    <tr><th>Cintura</th><td>{{ (valoracion.cintura ~ ' cm') if valoracion.cintura is not none else '—' }}</td><th>% grasa</th><td>{{ (valoracion.porcentaje_grasa ~ ' %') if valoracion.porcentaje_grasa is not none else '—' }}</td></tr>
+                    <tr><th>Bíceps</th><td>{{ (valoracion.bicep ~ ' mm') if valoracion.bicep is not none else '—' }}</td><th>Tríceps</th><td>{{ (valoracion.tricep ~ ' mm') if valoracion.tricep is not none else '—' }}</td></tr>
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+
+        <div class="signature">
+            <div>
+                {% if valoracion.profesional_nombre_mostrado %}<strong>{{ valoracion.profesional_nombre_mostrado }}</strong><br>{% endif %}
+                Nombre y firma del profesional
+                {% if valoracion.profesional_cedula_mostrada %}<br>Cédula profesional: {{ valoracion.profesional_cedula_mostrada }}{% endif %}
+            </div>
+            <div>Fecha y sello</div>
+        </div>
+        <p class="muted" style="margin-top: 18px; text-align: center; font-size: 10px;">Esta impresión corresponde a una nota clínica. La receta médica ordinaria, cuando proceda, se genera como un documento independiente.</p>
+    </main>
+</body>
+</html>

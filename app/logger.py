@@ -1,28 +1,45 @@
 import logging
+from contextlib import suppress
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
-def setup_logger(app, config):
-    """Configura el sistema de logging"""
-    formatter = logging.Formatter(config.LOG_FORMAT)
-    
-    # Configurar el logger de la aplicación
-    file_handler = RotatingFileHandler(
-        'logs/app.log',
-        maxBytes=1024 * 1024,  # 1MB
-        backupCount=10
+
+class RequestIdFilter(logging.Filter):
+    def filter(self, record):
+        try:
+            from flask import g, has_request_context
+
+            record.request_id = getattr(g, "request_id", "-") if has_request_context() else "-"
+        except Exception:
+            record.request_id = "-"
+        return True
+
+
+def setup_logger(app, target_dir: Path) -> None:
+    """Configure rotating logs without recording patient data or credentials."""
+    for previous in list(app.logger.handlers):
+        app.logger.removeHandler(previous)
+        previous.close()
+    if not app.config.get("LOG_TO_FILE", True):
+        app.logger.addHandler(logging.NullHandler())
+        app.logger.propagate = False
+        return
+
+    log_dir = target_dir / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    with suppress(OSError):
+        log_dir.chmod(0o700)
+
+    handler = RotatingFileHandler(
+        log_dir / "app.log",
+        maxBytes=app.config["LOG_MAX_BYTES"],
+        backupCount=app.config["LOG_BACKUP_COUNT"],
+        encoding="utf-8",
     )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    
-    # Configurar el logger de errores
-    error_handler = RotatingFileHandler(
-        'logs/error.log',
-        maxBytes=1024 * 1024,
-        backupCount=10
-    )
-    error_handler.setFormatter(formatter)
-    error_handler.setLevel(logging.ERROR)
-    
-    app.logger.addHandler(file_handler)
-    app.logger.addHandler(error_handler)
-    app.logger.setLevel(getattr(logging, config.LOG_LEVEL))
+    handler.addFilter(RequestIdFilter())
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s request_id=%(request_id)s %(name)s: %(message)s"))
+    handler.setLevel(getattr(logging, app.config["LOG_LEVEL"], logging.INFO))
+
+    app.logger.addHandler(handler)
+    app.logger.setLevel(handler.level)
+    app.logger.propagate = False

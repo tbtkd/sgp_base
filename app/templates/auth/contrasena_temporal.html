@@ -1,0 +1,10 @@
+{% extends "base/base.html" %}
+{% block title %}Contraseña temporal generada{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div><h1 class="text-3xl font-bold">Contraseña temporal generada</h1><p class="text-gray-600 mt-1">Cuenta: {{ usuario.username }}</p></div>
+    <div class="p-5 rounded-2xl bg-red-50 border border-red-200 text-red-900"><strong>Se muestra una sola vez.</strong> Entrégala directamente al usuario y evita enviarla por canales inseguros. No se almacena en texto legible.</div>
+    <section class="bg-white p-6 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500 mb-2">Contraseña temporal</p><div class="flex flex-col sm:flex-row gap-3"><code id="temporary-password" class="flex-1 p-4 rounded-xl bg-slate-900 text-white text-lg break-all">{{ temporary_password }}</code><button type="button" onclick="navigator.clipboard.writeText(document.getElementById('temporary-password').textContent)" class="px-5 py-3 rounded-xl bg-teal-600 text-white font-semibold">Copiar</button></div></section>
+    <a href="{{ url_for('auth.lista_usuarios') }}" class="inline-flex px-5 py-3 rounded-xl bg-gray-100 font-semibold">Terminar</a>
+</div>
+{% endblock %}

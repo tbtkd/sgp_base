@@ -1,0 +1,103 @@
+{% extends "base/base.html" %}
+{% set titulo_receta = 'Sustituir receta' if modo == 'sustitucion' else ('Receta adicional' if modo == 'adicional' else 'Nueva receta ordinaria') %}
+{% block title %}{{ titulo_receta }} - {{ paciente.nombre_completo }}{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ titulo_receta }}</h1>
+            <p class="text-gray-600 mt-1">{{ paciente.nombre_completo }} · Consulta #{{ valoracion.numero_cita }} · {{ valoracion.fecha|format_date }}</p>
+            {% if receta_origen %}<p class="text-sm text-amber-700 mt-1">Se creará un folio nuevo y el folio {{ receta_origen.folio }} quedará marcado como sustituido.</p>{% endif %}
+        </div>
+        <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=valoracion.id) }}" class="px-5 py-2.5 bg-gray-100 rounded-xl font-semibold">Volver a la nota</a>
+    </div>
+
+    <section class="bg-blue-50 border border-blue-200 text-blue-900 p-5 rounded-2xl text-sm space-y-2">
+        <h2 class="font-bold"><i class="fas fa-circle-info mr-2"></i>Alcance de este documento</h2>
+        <p>Este módulo genera únicamente una receta ordinaria. No debe utilizarse para estupefacientes, psicotrópicos u otros medicamentos sujetos a receta especial. La impresión debe revisarse y llevar firma autógrafa del profesional.</p>
+        <p>Una receta emitida no se edita: una corrección crea una sustitución trazable. Una receta adicional conserva un folio independiente y no invalida las vigentes.</p>
+    </section>
+
+    {% if requisitos_faltantes %}
+    <section class="bg-amber-50 border border-amber-300 text-amber-900 p-5 rounded-2xl">
+        <h2 class="font-bold">No es posible emitir todavía</h2>
+        <p class="mt-1">Solicita a un administrador completar en tu usuario: {{ requisitos_faltantes|join(', ') }}.</p>
+    </section>
+    {% endif %}
+
+    <form method="POST" id="form-receta" class="space-y-6" data-prescription-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if modo == 'sustitucion' %}
+        <section class="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
+            <label for="motivo_cambio" class="block text-sm font-bold text-amber-900 mb-2">Motivo de sustitución</label>
+            <textarea id="motivo_cambio" name="motivo_cambio" minlength="10" maxlength="500" rows="3" required class="w-full px-4 py-3 rounded-xl border border-amber-300" placeholder="Describe el dato que se corrige y por qué se requiere un nuevo folio.">{{ request.form.get('motivo_cambio', '') }}</textarea>
+            <p class="text-xs text-amber-800 mt-2">No incluyas contraseñas ni información ajena a la corrección clínica/administrativa.</p>
+        </section>
+        {% endif %}
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 space-y-4">
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div><span class="text-gray-500">Profesional</span><p class="font-semibold">{{ current_user.nombre_completo }}</p></div>
+                <div><span class="text-gray-500">Cédula profesional</span><p class="font-semibold">{{ current_user.cedula_profesional or 'Pendiente' }}</p></div>
+                <div><span class="text-gray-500">Área</span><p class="font-semibold">{{ current_user.perfil_profesional_etiqueta }}</p></div>
+                <div><span class="text-gray-500">Domicilio profesional</span><p class="font-semibold">{{ current_user.domicilio_profesional or 'Pendiente' }}</p></div>
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 space-y-5">
+            <div class="flex items-center justify-between gap-4">
+                <div><h2 class="text-xl font-bold">Medicamentos</h2><p class="text-sm text-gray-500">Registra la denominación genérica y las instrucciones completas.</p></div>
+                <button type="button" data-add-medicine class="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl font-semibold" {% if requisitos_faltantes %}disabled{% endif %}><i class="fas fa-plus mr-2"></i>Agregar</button>
+            </div>
+            <div class="space-y-5" data-medicine-list>
+                {% for item in medicamento_rows %}
+                <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center"><legend class="font-bold">Medicamento <span data-medicine-number>{{ loop.index }}</span></legend><button type="button" data-remove-medicine class="text-red-600 text-sm font-semibold">Quitar</button></div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        {% for field, label, required, maxlength in [
+                            ('denominacion_generica','Denominación genérica',true,160),
+                            ('denominacion_distintiva','Denominación distintiva / marca (opcional)',false,160),
+                            ('presentacion','Forma farmacéutica, presentación y concentración',true,160),
+                            ('dosis','Dosis por administración',true,160),
+                            ('via_administracion','Vía de administración',true,100),
+                            ('frecuencia','Frecuencia',true,160),
+                            ('duracion','Duración del tratamiento',true,160),
+                            ('cantidad','Cantidad a surtir (opcional)',false,100)
+                        ] %}
+                        <div><label class="block text-sm font-medium mb-2">{{ label }}</label><input type="text" name="{{ field }}[]" maxlength="{{ maxlength }}" {% if required %}required{% endif %} value="{{ item.get(field, '') }}" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500" {% if field == 'presentacion' %}placeholder="Ej. Tabletas, caja con 20, 500 mg"{% elif field == 'dosis' %}placeholder="Ej. 1 tableta (500 mg)"{% elif field == 'frecuencia' %}placeholder="Ej. Cada 8 horas"{% elif field == 'duracion' %}placeholder="Ej. Durante 3 días"{% endif %} {% if requisitos_faltantes %}disabled{% endif %}></div>
+                        {% endfor %}
+                        <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Indicaciones adicionales (opcional)</label><input type="text" name="indicaciones[]" maxlength="500" value="{{ item.get('indicaciones', '') }}" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500" {% if requisitos_faltantes %}disabled{% endif %}></div>
+                    </div>
+                </fieldset>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="bg-white p-6 rounded-2xl border border-gray-100 space-y-4">
+            <div><label for="observaciones" class="block text-sm font-medium mb-2">Observaciones generales (opcional)</label><textarea id="observaciones" name="observaciones" maxlength="1000" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-200" {% if requisitos_faltantes %}disabled{% endif %}>{{ observaciones_form }}</textarea></div>
+            <label class="flex items-start gap-3 text-sm"><input type="checkbox" name="confirmacion_competencia" class="mt-1" required {% if request.form.get('confirmacion_competencia') == 'on' %}checked{% endif %} {% if requisitos_faltantes %}disabled{% endif %}><span>Confirmo que la prescripción corresponde a mi área de competencia y que revisé alergias, medicamentos actuales y condiciones del paciente.</span></label>
+            <label class="flex items-start gap-3 text-sm"><input type="checkbox" name="confirmacion_ordinaria" class="mt-1" required {% if request.form.get('confirmacion_ordinaria') == 'on' %}checked{% endif %} {% if requisitos_faltantes %}disabled{% endif %}><span>Confirmo que ninguno de los medicamentos requiere receta especial o un control distinto a una receta ordinaria.</span></label>
+            <label class="flex items-start gap-3 text-sm"><input type="checkbox" name="confirmacion_firma" class="mt-1" required {% if request.form.get('confirmacion_firma') == 'on' %}checked{% endif %} {% if requisitos_faltantes %}disabled{% endif %}><span>Confirmo que revisaré el folio impreso, sus instrucciones y alergias, y que lo firmaré de forma autógrafa antes de entregarlo.</span></label>
+        </section>
+
+        <div class="flex justify-end gap-4">
+            <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=valoracion.id) }}" class="px-6 py-3 text-gray-600">Cancelar</a>
+            <button type="submit" class="px-8 py-3 bg-teal-600 text-white font-semibold rounded-xl disabled:opacity-50" {% if requisitos_faltantes %}disabled{% endif %}>{% if modo == 'sustitucion' %}Emitir sustitución{% elif modo == 'adicional' %}Emitir receta adicional{% else %}Emitir receta original{% endif %}</button>
+        </div>
+    </form>
+
+    <template id="medicine-row-template">
+        <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4">
+            <div class="flex justify-between items-center"><legend class="font-bold">Medicamento <span data-medicine-number></span></legend><button type="button" data-remove-medicine class="text-red-600 text-sm font-semibold">Quitar</button></div>
+            <div class="grid md:grid-cols-2 gap-4">
+                {% for field, label, required, maxlength in [
+                    ('denominacion_generica','Denominación genérica',true,160),('denominacion_distintiva','Denominación distintiva / marca (opcional)',false,160),('presentacion','Forma farmacéutica, presentación y concentración',true,160),('dosis','Dosis por administración',true,160),('via_administracion','Vía de administración',true,100),('frecuencia','Frecuencia',true,160),('duracion','Duración del tratamiento',true,160),('cantidad','Cantidad a surtir (opcional)',false,100)
+                ] %}
+                <div><label class="block text-sm font-medium mb-2">{{ label }}</label><input type="text" name="{{ field }}[]" maxlength="{{ maxlength }}" {% if required %}required{% endif %} class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500"></div>
+                {% endfor %}
+                <div class="md:col-span-2"><label class="block text-sm font-medium mb-2">Indicaciones adicionales (opcional)</label><input type="text" name="indicaciones[]" maxlength="500" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500"></div>
+            </div>
+        </fieldset>
+    </template>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{{ url_for('static', filename='js/recetas.js') }}"></script>{% endblock %}

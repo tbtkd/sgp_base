@@ -1,187 +1,149 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.models.valoracion_antropometrica import ValoracionAntropometrica
-from app.models.paciente import Paciente
-from app.models.cita import Cita
-from app.utils.helpers import safe_float, safe_int, validar_campos
-from datetime import datetime, date
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user
+from sqlalchemy.exc import IntegrityError
+
 from app import db_orm as db
+from app.core.audit import AuditLog
+from app.core.auth import login_required
+from app.core.security import roles_required
+from app.core.validators import ValidationError, assessment_payload
+from app.models.cita import Cita
+from app.models.paciente import Paciente
+from app.models.valoracion_antropometrica import ValoracionAntropometrica
 
-valoracion = Blueprint('valoracion', __name__, url_prefix='/valoraciones')
+valoracion = Blueprint("valoracion", __name__, url_prefix="/valoraciones")
 
-@valoracion.route('/paciente/<int:paciente_id>/nueva', methods=['GET', 'POST'])
+
+@valoracion.route("/paciente/<int:paciente_id>/nueva", methods=["GET", "POST"])
+@login_required
+@roles_required("admin", "medico")
 def nueva_valoracion(paciente_id):
-    paciente = Paciente.obtener_por_id(paciente_id)
-    if not paciente:
-        flash('Paciente no encontrado', 'error')
-        return redirect(url_for('pacientes.lista_pacientes'))
-
-    if request.method == 'POST':
-        # 1. Validar presencia de campos obligatorios en el Backend
-        campos_requeridos = [
-            'numero_cita', 'fecha', 'estatura', 'peso', 'cintura', 'torax', 
-            'brazo', 'cadera', 'pierna', 'pantorrilla', 'tension_arterial', 
-            'frecuencia_cardiaca', 'bicep', 'tricep', 'suprailiaco', 
-            'subescapular', 'grasa', 'imc', 'porcentaje_grasa'
-        ]
-        
-        errores = validar_campos(request.form, campos_requeridos)
-        
-        if errores:
-            for error in errores:
-                flash(error, 'error')
-            return render_template('valoraciones/nueva_valoracion.html', paciente=paciente, form_data=request.form)
-
-        # 2. Casteo seguro de tipos con manejo de excepciones detallado
+    patient = db.session.get(Paciente, paciente_id)
+    if not patient:
+        flash("Paciente no encontrado.", "error")
+        return redirect(url_for("pacientes.lista_pacientes_activos"))
+    if request.method == "POST":
         try:
-            datos = {
-                'numero_cita': safe_int(request.form['numero_cita']),
-                'fecha': request.form['fecha'].strip(),
-                'estatura': safe_float(request.form['estatura']),
-                'peso': safe_float(request.form['peso']),
-                'imc': safe_float(request.form['imc']),
-                'grasa': safe_float(request.form['grasa']),
-                'cintura': safe_float(request.form['cintura']),
-                'torax': safe_float(request.form['torax']),
-                'brazo': safe_float(request.form['brazo']),
-                'cadera': safe_float(request.form['cadera']),
-                'pierna': safe_float(request.form['pierna']),
-                'pantorrilla': safe_float(request.form['pantorrilla']),
-                'tension_arterial': request.form['tension_arterial'].strip(),
-                'frecuencia_cardiaca': safe_int(request.form['frecuencia_cardiaca']),
-                'bicep': safe_float(request.form['bicep']),
-                'tricep': safe_float(request.form['tricep']),
-                'suprailiaco': safe_float(request.form['suprailiaco']),
-                'subescapular': safe_float(request.form['subescapular']),
-                'femoral': safe_float(request.form.get('femoral'), None) if request.form.get('femoral') else None,
-                'porcentaje_grasa': safe_float(request.form['porcentaje_grasa'])
-            }
-        except ValueError as e:
-            flash(f"Error de formato: Algunos campos numéricos contienen valores inválidos.", 'error')
-            return render_template('valoraciones/nueva_valoracion.html', paciente=paciente, form_data=request.form)
-        except Exception as e:
-            flash(f"Ocurrió un error inesperado al procesar los datos: {str(e)}", 'error')
-            return render_template('valoraciones/nueva_valoracion.html', paciente=paciente, form_data=request.form)
-
-        exito, mensaje = ValoracionAntropometrica.crear(paciente_id, datos)
-        if exito:
-            # Buscar cita pendiente para el paciente en la fecha actual o en la fecha de la consulta
-            try:
-                fecha_consulta = datetime.strptime(datos['fecha'], '%Y-%m-%d').date() if isinstance(datos['fecha'], str) else datos['fecha']
-            except ValueError:
-                fecha_consulta = date.today()
-
-            cita_hoy = Cita.query.filter_by(
-                paciente_id=paciente_id,
-                fecha=fecha_consulta
-            ).filter(
-                (Cita.estado == 'pendiente') | (Cita.estatus == 'Programada') | (Cita.estatus.is_(None))
+            data = assessment_payload(
+                request.form, allow_anthropometry=current_user.puede_capturar_antropometria
+            )
+            assessment = ValoracionAntropometrica.crear(paciente_id, data, profesional=current_user)
+            appointment = Cita.query.filter_by(
+                paciente_id=paciente_id, fecha=data["fecha"], estatus="Programada"
             ).first()
+            if appointment:
+                appointment.estado, appointment.estatus = "completada", "Atendida"
+            db.session.flush()
+            AuditLog.record(
+                "valoracion.create",
+                entity_type="valoracion",
+                entity_id=assessment.id,
+                metadata={
+                    "paciente_id": paciente_id,
+                    "profesional_id": current_user.id,
+                    "perfil_profesional": current_user.perfil_profesional_clinico,
+                },
+            )
+            db.session.commit()
+            flash("Consulta clínica registrada correctamente.", "success")
+            return redirect(url_for("valoracion.lista_valoraciones", paciente_id=paciente_id))
+        except ValidationError as error:
+            flash(str(error), "error")
+        except IntegrityError:
+            db.session.rollback()
+            flash("Ya existe una consulta con el mismo paciente, número de cita y fecha.", "error")
+        return render_template("valoraciones/nueva_valoracion.html", paciente=patient, form_data=request.form)
+    return render_template("valoraciones/nueva_valoracion.html", paciente=patient)
 
-            if cita_hoy:
-                cita_hoy.estado = 'completada'
-                cita_hoy.estatus = 'Atendida'
-                db.session.commit()
 
-            flash(mensaje, 'success')
-            return redirect(url_for('valoracion.lista_valoraciones', paciente_id=paciente_id))
-        else:
-            flash(mensaje, 'error')
-
-    return render_template('valoraciones/nueva_valoracion.html', paciente=paciente)
-
-@valoracion.route('/paciente/<int:paciente_id>/lista')
+@valoracion.route("/paciente/<int:paciente_id>/lista")
+@login_required
+@roles_required("admin", "medico")
 def lista_valoraciones(paciente_id):
-    if paciente_id == 0:
-        return redirect(url_for('valoracion.todas_valoraciones'))
-    
-    paciente = Paciente.obtener_por_id(paciente_id)
-    if not paciente:
-        flash('Paciente no encontrado', 'error')
-        return redirect(url_for('pacientes.lista_pacientes'))
+    patient = db.get_or_404(Paciente, paciente_id)
+    return render_template(
+        "valoraciones/lista_valoraciones.html",
+        paciente=patient,
+        valoraciones=ValoracionAntropometrica.obtener_por_paciente(paciente_id),
+    )
 
-    valoraciones = ValoracionAntropometrica.obtener_por_paciente(paciente_id)
-    return render_template('valoraciones/lista_valoraciones.html', paciente=paciente, valoraciones=valoraciones)
 
-@valoracion.route('/')
+@valoracion.route("/")
+@login_required
+@roles_required("admin", "medico")
 def todas_valoraciones():
-    valoraciones = ValoracionAntropometrica.obtener_todas()
-    return render_template('valoraciones/todas_valoraciones.html', valoraciones=valoraciones)
+    return render_template(
+        "valoraciones/todas_valoraciones.html", valoraciones=ValoracionAntropometrica.obtener_todas()
+    )
 
-@valoracion.route('/valoraciones/<int:valoracion_id>')
+
+@valoracion.route("/valoraciones/<int:valoracion_id>")
+@login_required
+@roles_required("admin", "medico")
 def detalle_valoracion(valoracion_id):
-    valoracion = ValoracionAntropometrica.obtener_por_id(valoracion_id)
-    if not valoracion:
-        flash('Valoración no encontrada', 'error')
-        return redirect(url_for('valoracion.todas_valoraciones'))
-    
-    paciente = Paciente.obtener_por_id(valoracion.paciente_id)
-    historial_valoraciones = ValoracionAntropometrica.obtener_por_paciente(valoracion.paciente_id)
-    
-    # Encontrar la valoración anterior
-    valoracion_anterior = None
-    for i, v in enumerate(historial_valoraciones):
-        if v.id == valoracion_id and i + 1 < len(historial_valoraciones):
-            valoracion_anterior = historial_valoraciones[i + 1]
-            break
-    
-    return render_template('valoraciones/detalle_valoracion.html', 
-                            valoracion=valoracion, 
-                            valoracion_anterior=valoracion_anterior,
-                            paciente=paciente,
-                            historial_valoraciones=historial_valoraciones)
+    assessment = db.get_or_404(ValoracionAntropometrica, valoracion_id)
+    history = ValoracionAntropometrica.obtener_por_paciente(assessment.paciente_id)
+    previous = next((history[i + 1] for i, item in enumerate(history[:-1]) if item.id == assessment.id), None)
+    return render_template(
+        "valoraciones/detalle_valoracion.html",
+        valoracion=assessment,
+        valoracion_anterior=previous,
+        paciente=assessment.paciente,
+        historial_valoraciones=history,
+    )
 
-@valoracion.route('/valoraciones/<int:valoracion_id>/editar', methods=['GET', 'POST'])
+
+@valoracion.route("/valoraciones/<int:valoracion_id>/imprimir")
+@login_required
+@roles_required("admin", "medico")
+def imprimir_valoracion(valoracion_id):
+    assessment = db.get_or_404(ValoracionAntropometrica, valoracion_id)
+    return render_template(
+        "valoraciones/imprimir_valoracion.html",
+        valoracion=assessment,
+        paciente=assessment.paciente,
+    )
+
+
+@valoracion.route("/valoraciones/<int:valoracion_id>/editar", methods=["GET", "POST"])
+@login_required
+@roles_required("admin", "medico")
 def editar_valoracion(valoracion_id):
-    valoracion = ValoracionAntropometrica.obtener_por_id(valoracion_id)
-    if not valoracion:
-        flash('Valoración no encontrada', 'error')
-        return redirect(url_for('valoracion.todas_valoraciones'))
+    assessment = db.get_or_404(ValoracionAntropometrica, valoracion_id)
+    if request.method == "POST":
+        try:
+            raw = request.form.to_dict()
+            raw.setdefault("numero_cita", str(assessment.numero_cita))
+            data = assessment_payload(
+                raw, allow_anthropometry=current_user.puede_capturar_antropometria
+            )
+            for key, value in data.items():
+                setattr(assessment, key, value)
+            AuditLog.record("valoracion.update", entity_type="valoracion", entity_id=assessment.id)
+            db.session.commit()
+            flash("Consulta clínica actualizada correctamente.", "success")
+            return redirect(url_for("valoracion.detalle_valoracion", valoracion_id=assessment.id))
+        except ValidationError as error:
+            flash(str(error), "error")
+        except IntegrityError:
+            db.session.rollback()
+            flash("La actualización duplicaría otra consulta.", "error")
+    return render_template("valoraciones/editar_valoracion.html", valoracion=assessment, paciente=assessment.paciente)
 
-    paciente = Paciente.obtener_por_id(valoracion['paciente_id'])
 
-    if request.method == 'POST':
-        datos = {
-            'fecha': request.form['fecha'],
-            'estatura': request.form['estatura'],
-            'peso': request.form['peso'],
-            'imc': request.form['imc'],
-            'grasa': request.form['grasa'],
-            'cintura': request.form['cintura'],
-            'torax': request.form['torax'],
-            'brazo': request.form['brazo'],
-            'cadera': request.form['cadera'],
-            'pierna': request.form['pierna'],
-            'pantorrilla': request.form['pantorrilla'],
-            'tension_arterial': request.form['tension_arterial'],
-            'frecuencia_cardiaca': request.form['frecuencia_cardiaca'],
-            'bicep': request.form['bicep'],
-            'tricep': request.form['tricep'],
-            'suprailiaco': request.form['suprailiaco'],
-            'subescapular': request.form['subescapular'],
-            'femoral': request.form.get('femoral', ''),  # Opcional para hombres
-            'porcentaje_grasa': request.form['porcentaje_grasa']
-        }
-
-        exito, mensaje = ValoracionAntropometrica.actualizar(valoracion_id, datos)
-        if exito:
-            flash(mensaje, 'success')
-            return redirect(url_for('valoracion.detalle_valoracion', valoracion_id=valoracion_id))
-        else:
-            flash(mensaje, 'error')
-
-    return render_template('valoraciones/editar_valoracion.html', valoracion=valoracion, paciente=paciente)
-
-@valoracion.route('/valoraciones/<int:valoracion_id>/eliminar', methods=['POST'])
+@valoracion.route("/valoraciones/<int:valoracion_id>/eliminar", methods=["POST"])
+@login_required
+@roles_required("admin", "medico")
 def eliminar_valoracion(valoracion_id):
-    valoracion = ValoracionAntropometrica.obtener_por_id(valoracion_id)
-    if not valoracion:
-        flash('Valoración no encontrada', 'error')
-        return redirect(url_for('valoracion.todas_valoraciones'))
-
-    exito, mensaje = ValoracionAntropometrica.eliminar(valoracion_id)
-    if exito:
-        flash(mensaje, 'success')
-        return redirect(url_for('valoracion.lista_valoraciones', paciente_id=valoracion['paciente_id']))
-    else:
-        flash(mensaje, 'error')
-        return redirect(url_for('valoracion.detalle_valoracion', valoracion_id=valoracion_id))
+    assessment = db.get_or_404(ValoracionAntropometrica, valoracion_id)
+    if assessment.recetas:
+        flash("La consulta no puede eliminarse porque tiene recetas emitidas e inmutables.", "warning")
+        return redirect(url_for("valoracion.detalle_valoracion", valoracion_id=assessment.id))
+    patient_id = assessment.paciente_id
+    AuditLog.record(
+        "valoracion.delete", entity_type="valoracion", entity_id=assessment.id, metadata={"paciente_id": patient_id}
+    )
+    db.session.delete(assessment)
+    db.session.commit()
+    flash("Consulta clínica eliminada correctamente.", "success")
+    return redirect(url_for("valoracion.lista_valoraciones", paciente_id=patient_id))

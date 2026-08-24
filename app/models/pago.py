@@ -1,28 +1,21 @@
+from sqlalchemy import text
+
 from app import db_orm as db
-from datetime import datetime
+from app.core.time import utcnow_naive
+
 
 class Pago(db.Model):
-    __tablename__ = 'pagos'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    paciente_id = db.Column(db.Integer, db.ForeignKey('pacientes.id'), nullable=False)
-    fecha_pago = db.Column(db.Date, nullable=False)
-    
-    paciente = db.relationship('Paciente', backref=db.backref('pagos', lazy=True))
+    __tablename__ = "pagos"
 
-    @staticmethod
-    def registrar(paciente_id, fecha_pago):
-        try:
-            nuevo_pago = Pago(
-                paciente_id=paciente_id,
-                fecha_pago=datetime.strptime(fecha_pago, '%Y-%m-%d').date()
-            )
-            db.session.add(nuevo_pago)
-            db.session.commit()
-            return True, "Pago registrado exitosamente"
-        except Exception as e:
-            db.session.rollback()
-            return False, str(e)
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, db.ForeignKey("pacientes.id", ondelete="CASCADE"), nullable=False, index=True)
+    fecha_pago = db.Column(db.Date, nullable=False, index=True)
+    monto = db.Column(db.Float, nullable=True)
+    concepto = db.Column(db.String(200), nullable=True)
+    metodo_pago = db.Column(db.String(30), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow_naive, server_default=text("CURRENT_TIMESTAMP"))
+
+    paciente = db.relationship("Paciente", backref=db.backref("pagos", cascade="all, delete-orphan", lazy=True))
 
     @staticmethod
     def obtener_ultimo_pago(paciente_id):

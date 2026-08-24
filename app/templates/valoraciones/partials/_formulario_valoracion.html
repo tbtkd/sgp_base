@@ -1,140 +1,71 @@
-<form id="formValoracion" method="POST" class="space-y-6" x-data="{ activeTab: 'antropometrica' }">
-    <!-- Tabs -->
-    <div class="flex border-b border-gray-200 mb-6">
-        <button type="button" @click="activeTab = 'antropometrica'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'antropometrica' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Antropométrica</button>
-        <button type="button" @click="activeTab = 'plicometria'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'plicometria' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Plicometría</button>
-        <button type="button" @click="activeTab = 'bioimpedancia'" :class="{ 'border-teal-600 text-teal-600': activeTab === 'bioimpedancia' }" class="form-tab px-6 py-3 border-b-2 font-medium transition">Bioimpedancia</button>
+{% set registro = valoracion if valoracion is defined else none %}
+{% set field_class = 'w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition' %}
+<form id="formValoracion" method="POST" class="space-y-6" data-tabs data-tab-variant="pill" data-default-tab="consulta">
+    <div class="flex flex-wrap gap-2 border-b pb-3 no-print" role="tablist" aria-label="Secciones de la consulta clínica">
+        {% set consultation_tabs = [('consulta','Consulta'),('vitales','Signos vitales'),('evolucion','Evolución e indicaciones')] %}
+        {% if current_user.puede_capturar_antropometria %}
+            {% set consultation_tabs = consultation_tabs + [('antropometria','Antropometría opcional')] %}
+        {% endif %}
+        {% for id, label in consultation_tabs %}
+        <button type="button"
+                id="tab-{{ id }}"
+                role="tab"
+                data-tab-target="{{ id }}"
+                aria-controls="panel-{{ id }}"
+                aria-selected="{{ 'true' if id == 'consulta' else 'false' }}"
+                class="px-4 py-2 rounded-xl text-sm font-semibold {{ 'bg-teal-600 text-white' if id == 'consulta' else 'bg-gray-100 text-gray-600' }}">{{ label }}</button>
+        {% endfor %}
     </div>
 
-    <!-- Contenido de Tabs -->
-    <div x-show="activeTab === 'antropometrica'" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2 form-group">
-                <label for="numero_cita" class="block text-sm font-medium text-gray-700">Número de cita:</label>
-                <input type="number" id="numero_cita" name="numero_cita" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ingrese el número de cita">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha:</label>
-                <input type="date" id="fecha" name="fecha" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="estatura" class="block text-sm font-medium text-gray-700">Estatura (cm):</label>
-                <input type="number" id="estatura" name="estatura" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" oninput="calcularIMC()" placeholder="Ej: 170.0">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="peso" class="block text-sm font-medium text-gray-700">Peso (kg):</label>
-                <input type="number" id="peso" name="peso" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" oninput="calcularIMC()" placeholder="Ej: 70.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="cintura" class="block text-sm font-medium text-gray-700">Cintura (cm):</label>
-                <input type="number" id="cintura" name="cintura" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="torax" class="block text-sm font-medium text-gray-700">Tórax (cm):</label>
-                <input type="number" id="torax" name="torax" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="brazo" class="block text-sm font-medium text-gray-700">Brazo (cm):</label>
-                <input type="number" id="brazo" name="brazo" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="cadera" class="block text-sm font-medium text-gray-700">Cadera (cm):</label>
-                <input type="number" id="cadera" name="cadera" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="pierna" class="block text-sm font-medium text-gray-700">Pierna (cm):</label>
-                <input type="number" id="pierna" name="pierna" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="pantorrilla" class="block text-sm font-medium text-gray-700">Pantorrilla (cm):</label>
-                <input type="number" id="pantorrilla" name="pantorrilla" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="tension_arterial" class="block text-sm font-medium text-gray-700">Tensión arterial:</label>
-                <input type="text" id="tension_arterial" name="tension_arterial" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 120/80">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo es obligatorio.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="frecuencia_cardiaca" class="block text-sm font-medium text-gray-700">Frecuencia cardíaca (lpm):</label>
-                <input type="number" id="frecuencia_cardiaca" name="frecuencia_cardiaca" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 70">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
+    <section id="panel-consulta" role="tabpanel" aria-labelledby="tab-consulta" data-tab-panel="consulta" class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div><label class="block text-sm font-medium mb-2" for="numero_cita">Número de consulta</label><input class="{{ field_class }}" type="number" id="numero_cita" name="numero_cita" min="1" max="10000" required value="{{ request.form.get('numero_cita', registro.numero_cita if registro else 1) }}"></div>
+            <div><label class="block text-sm font-medium mb-2" for="fecha">Fecha</label><input class="{{ field_class }}" type="date" id="fecha" name="fecha" required value="{{ request.form.get('fecha', registro.fecha.isoformat() if registro and registro.fecha else '') }}"></div>
         </div>
-    </div>
+        <div><label class="block text-sm font-medium mb-2" for="motivo_consulta">Motivo de consulta</label><textarea class="{{ field_class }}" id="motivo_consulta" name="motivo_consulta" rows="3" maxlength="2000" required>{{ request.form.get('motivo_consulta', registro.motivo_consulta if registro and registro.motivo_consulta else '') }}</textarea></div>
+        <div><label class="block text-sm font-medium mb-2" for="sintomas">Síntomas y evolución referida</label><textarea class="{{ field_class }}" id="sintomas" name="sintomas" rows="4" maxlength="4000">{{ request.form.get('sintomas', registro.sintomas if registro and registro.sintomas else '') }}</textarea></div>
+    </section>
 
-    <div x-show="activeTab === 'plicometria'" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2 form-group">
-                <label for="bicep" class="block text-sm font-medium text-gray-700">Bícep (mm):</label>
-                <input type="number" id="bicep" name="bicep" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="tricep" class="block text-sm font-medium text-gray-700">Trícep (mm):</label>
-                <input type="number" id="tricep" name="tricep" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="suprailiaco" class="block text-sm font-medium text-gray-700">Suprailiaco (mm):</label>
-                <input type="number" id="suprailiaco" name="suprailiaco" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="subescapular" class="block text-sm font-medium text-gray-700">Subescapular (mm):</label>
-                <input type="number" id="subescapular" name="subescapular" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 30.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="femoral" class="block text-sm font-medium text-gray-700">Femoral (mm) (solo para mujeres):</label>
-                <input type="number" id="femoral" name="femoral" step="0.1" 
-                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition disabled:bg-gray-100 disabled:cursor-not-allowed" 
-                       placeholder="Ej: 30.5"
-                       {% if paciente['genero'] != 'mujer' %}disabled{% endif %}>
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo si aplica.</span>
-            </div>
+    <section id="panel-vitales" role="tabpanel" aria-labelledby="tab-vitales" data-tab-panel="vitales" class="space-y-5" hidden>
+        <p class="text-sm text-gray-500">Los signos vitales son opcionales; si se capturan, se validan fisiológicamente en el servidor.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {% for field, label, type, step, placeholder in [
+                ('tension_arterial','Tensión arterial (mmHg)','text','','120/80'),
+                ('frecuencia_cardiaca','Frecuencia cardíaca (lpm)','number','1','30–250'),
+                ('frecuencia_respiratoria','Frecuencia respiratoria (rpm)','number','1','5–80'),
+                ('temperatura','Temperatura (°C)','number','0.1','30–45'),
+                ('saturacion_oxigeno','Saturación de oxígeno (%)','number','1','50–100'),
+                ('estatura','Estatura (cm)','number','0.1','Ej. 170'),
+                ('peso','Peso (kg)','number','0.1','Ej. 70')
+            ] %}
+            <div><label class="block text-sm font-medium mb-2" for="{{ field }}">{{ label }}</label><input class="{{ field_class }}" id="{{ field }}" name="{{ field }}" type="{{ type }}" {% if step %}step="{{ step }}"{% endif %} placeholder="{{ placeholder }}" value="{{ request.form.get(field, registro|attr(field) if registro and registro|attr(field) is not none else '') }}"></div>
+            {% endfor %}
+            <div><label class="block text-sm font-medium mb-2" for="imc_display">IMC</label><input class="{{ field_class }} bg-gray-50" id="imc_display" readonly value="{{ registro.imc if registro and registro.imc is not none else 'Se calcula al guardar' }}"></div>
         </div>
-    </div>
+    </section>
 
-    <div x-show="activeTab === 'bioimpedancia'" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2 form-group">
-                <label for="grasa" class="block text-sm font-medium text-gray-700">Grasa (%):</label>
-                <input type="number" id="grasa" name="grasa" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 20.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="imc" class="block text-sm font-medium text-gray-700">IMC:</label>
-                <input type="number" id="imc" name="imc" step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" readonly placeholder="Calculado automáticamente">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Este campo se calcula automáticamente.</span>
-            </div>
-            <div class="space-y-2 form-group">
-                <label for="porcentaje_grasa" class="block text-sm font-medium text-gray-700">Grasa Total (%):</label>
-                <input type="number" id="porcentaje_grasa" name="porcentaje_grasa" step="0.1" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Ej: 20.5">
-                <span class="error-message" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">Debe ingresar un valor numérico positivo.</span>
-            </div>
+    <section id="panel-evolucion" role="tabpanel" aria-labelledby="tab-evolucion" data-tab-panel="evolucion" class="space-y-5" hidden>
+        {% for field, label in [('impresion_diagnostica','Impresión diagnóstica'),('plan_tratamiento','Plan de tratamiento'),('prescripcion',current_user.etiqueta_prescripcion)] %}
+        <div><label class="block text-sm font-medium mb-2" for="{{ field }}">{{ label }}</label><textarea class="{{ field_class }}" id="{{ field }}" name="{{ field }}" rows="5" maxlength="4000">{{ request.form.get(field, registro|attr(field) if registro and registro|attr(field) else '') }}</textarea></div>
+        {% endfor %}
+        {% if current_user.puede_prescribir_medicamentos %}
+        <p class="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-xl p-3">Este campo forma parte de la nota clínica. Después de guardar la consulta podrás generar, por separado, una receta ordinaria con medicamentos estructurados si tu cédula y domicilio profesional están completos.</p>
+        {% endif %}
+    </section>
 
+    {% if current_user.puede_capturar_antropometria %}
+    <section id="panel-antropometria" role="tabpanel" aria-labelledby="tab-antropometria" data-tab-panel="antropometria" class="space-y-5" hidden>
+        <p class="text-sm text-gray-500">Sección disponible para el perfil de Nutrición. Ningún campo es obligatorio.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {% for field, label in [('grasa','Grasa (%)'),('porcentaje_grasa','Grasa total (%)'),('cintura','Cintura (cm)'),('torax','Tórax (cm)'),('brazo','Brazo (cm)'),('cadera','Cadera (cm)'),('pierna','Pierna (cm)'),('pantorrilla','Pantorrilla (cm)'),('bicep','Pliegue bíceps (mm)'),('tricep','Pliegue tríceps (mm)'),('suprailiaco','Pliegue suprailiaco (mm)'),('subescapular','Pliegue subescapular (mm)'),('femoral','Pliegue femoral (mm)')] %}
+            <div><label class="block text-sm font-medium mb-2" for="{{ field }}">{{ label }}</label><input class="{{ field_class }}" type="number" step="0.1" min="0" id="{{ field }}" name="{{ field }}" value="{{ request.form.get(field, registro|attr(field) if registro and registro|attr(field) is not none else '') }}"></div>
+            {% endfor %}
         </div>
-    </div>
+    </section>
+    {% endif %}
 
-    <!-- Botones -->
-    <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
-        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition">Volver</a>
-        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition">Guardar Valoración</button>
+    <div class="flex items-center justify-end gap-4 pt-6 border-t no-print">
+        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-6 py-3 text-gray-600">Cancelar</a>
+        <button type="submit" class="px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl">Guardar consulta</button>
     </div>
 </form>
-
-
-
-
-
-

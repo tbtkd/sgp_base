@@ -1,0 +1,6 @@
+Modificación de mensaje de carga hacia el usuario, quitar mensaje con los errores que se presenta, evitar leer registros que no cuenten con dos o más campos vacíos, considerar 3 campos
+actualizar proceso para edición de valores antropometricos
+actualizar grid del menú para que quede separado 
+colocar en una barra superior los botones para mejor visualización del usuario, estos tendrán iconos dinamicos que hagan referencia a la acción que se va a realizar
+>Revisar generación de ejecutable
+revisar por que no se está cargando la información de valores polimetricos de forma manual, desde el formulario

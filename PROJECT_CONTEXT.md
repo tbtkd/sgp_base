@@ -1,28 +1,42 @@
-# PROJECT_CONTEXT.md: Memoria Viva del Sistema
+# Contexto vivo del proyecto
 
-## AI INSTRUCTION
-> Antes de realizar cualquier modificación al código, lee este archivo para alinearte con las decisiones arquitectónicas, reglas de UI/UX y modelos de datos ya establecidos.
+## Estado actual
 
----
+La versión 1.6.1 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios.
 
-## 1. Changelog / Historial de Logros
-- **Gestión Integral de Pacientes:** CRUD completo, listados activos/inactivos, búsqueda en tiempo real, cambio de estado asíncrono y vista de detalle modular.
-- **Valoraciones Antropométricas:** Módulo completo de registro por pestañas con validación defensiva en backend (try/except, flash) y validación en frontend (interceptación de submit, cambio automático de pestaña, `.focus()` en el campo con error y marcado visual).
-- **Importación Masiva Excel:** Procesamiento de archivos `.xls` / `.xlsx` mediante OpenPyXL para carga de valoraciones con detección de duplicados y manejo de errores.
-- **Agenda y Citas Médicas:** Programación de citas, validación de disponibilidad horaria por día y hora (9:00 AM a 7:00 PM), control de estado pendiente/completada y modales de advertencia al intentar reagendar sobre una cita pendiente existente.
-- **Control Financiero y Bitácora:** Registro de pagos de pacientes y bitácora de acompañamiento por WhatsApp con línea de tiempo y acceso directo a chat.
+## Reglas que deben preservarse
 
----
+1. El diseño actual, basado en Tailwind/Alpine y paleta esmeralda, se mantiene hasta una futura renovación.
+2. Ninguna ruta clínica funciona sin autenticación.
+3. Roles únicos: `admin`, `medico`, `recepcion`.
+4. Recepción no accede a expediente, diagnóstico, tratamiento o receta.
+5. Todo dato mutable se valida en `app/core/validators.py`.
+6. Operación y auditoría se confirman en la misma transacción.
+7. La base, secreto, logs y respaldos nunca se empaquetan.
+8. `_MEIPASS` solo contiene recursos de lectura.
+9. Las migraciones automáticas solo pueden añadir columnas nullable/default; nunca eliminan datos.
+10. Los campos antropométricos son opcionales.
+11. El modal de citas debe iniciar cerrado y su operación básica no puede depender de recursos CDN.
+12. Las pestañas clínicas y la vista de impresión deben funcionar sin recursos frontend externos.
+13. El rol de acceso y el perfil profesional son conceptos separados.
+14. Sólo un perfil de Nutrición puede capturar o importar antropometría; el servidor es autoritativo.
+15. La consulta conserva una instantánea de su autor profesional; no debe reconstruirse con el usuario que imprime.
+16. Una indicación nutricional nunca debe rotularse como receta médica.
+17. Sólo Medicina general y Odontología pueden emitir recetas ordinarias; además requieren cédula y domicilio profesional.
+18. Una receta emitida conserva instantáneas y no se edita ni elimina; una corrección genera una sustitución enlazada y una receta adicional conserva folio independiente.
+19. El módulo no debe usarse para medicamentos sujetos a receta especial.
+20. La identidad de la cuenta y el cierre de sesión viven en el top bar; el sidebar se reserva para navegación.
+21. `app/static/img/logo.png` es la identidad canónica y `logo.ico` es su derivado para Windows.
+22. Todo cambio/restablecimiento de contraseña incrementa `auth_version`; ninguna bitácora o log puede contener la credencial.
+23. La recuperación local sólo restablece administradores y siempre obliga a crear una contraseña definitiva.
+24. La cabecera compacta muestra `username`; el menú rotula por separado nombre registrado, rol de acceso, área clínica y cédula para evitar confundir identidad con permisos.
+25. Las actualizaciones sobre una carpeta existente deben ejecutar `scripts/cleanup_project.py`; la limpieza nunca debe tocar `.venv`, `instance` o `backups`.
 
-## 2. Reglas Fijas de Diseño y Desarrollo
-1. **Validación Defensiva Obligatoria:** Todo endpoint que reciba datos de formularios debe validar integridad, tipos de datos y restricciones de negocio dentro de bloques `try/except` con llamadas a `flash()` y rollback de SQLAlchemy.
-2. **Interactividad con Alpine.js:** Los formularios complejos por pestañas y modales deben utilizar Alpine.js para la gestión de estados locales, cambio de pestañas, enfoque automático (`.focus()`) y validación previa al envío.
-3. **Consistencia de Estilos:** Uso estricto de Tailwind CSS y clases modulares para tarjetas, tablas, formularios y botones.
-4. **Manejo de Citas:** Las citas activas se gestionan consultando estados `pendiente` mediante métodos estáticos en el modelo `Cita`.
+## Próximas fases
 
----
-
-## 3. Backlog y Próximos Pasos
-- **Fase 1 (Completada):** Estructura base, pacientes, valoraciones con pestañas, citas y pagos.
-- **Fase 2 (Próxima):** Reportes PDF avanzados de evolución antropométrica por paciente.
-- **Fase 3 (Futura):** Panel de estadísticas y métricas generales del consultorio nutricional para el Dashboard principal.
+- Cifrado en reposo y administración de llaves.
+- Firma electrónica jurídicamente evaluada y cierre/versionado de notas clínicas.
+- Flujos regulatorios separados para medicamentos controlados, sólo tras revisión jurídica y operativa.
+- Recursos frontend autocontenidos.
+- Reportes y métricas configurables por especialidad.
+- Multi-consultorio únicamente después de incorporar aislamiento por tenant.

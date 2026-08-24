@@ -1,4 +1,4 @@
-#!/bin/bash
-export FLASK_ENV=development
-export FLASK_DEBUG=1
-python run.py 
+#!/usr/bin/env sh
+set -eu
+export SGPN_ENV=development
+exec python run.py

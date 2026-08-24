@@ -1,7 +1,35 @@
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+// Add the CSRF token to every same-origin unsafe fetch request.
+const originalFetch = window.fetch.bind(window);
+window.fetch = function(resource, options = {}) {
+    const method = String(options.method || 'GET').toUpperCase();
+    const target = typeof resource === 'string' ? new URL(resource, window.location.href) : new URL(resource.url, window.location.href);
+    if (target.origin === window.location.origin && !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
+        const headers = new Headers(options.headers || {});
+        headers.set('X-CSRFToken', getCsrfToken());
+        options.headers = headers;
+    }
+    return originalFetch(resource, options);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Auto-cierre de alertas flash después de 5 segundos
-    const alerts = document.querySelectorAll('.flash-alert');
-    alerts.forEach(alert => {
+    const token = getCsrfToken();
+    document.querySelectorAll('form').forEach(form => {
+        const method = String(form.getAttribute('method') || 'GET').toUpperCase();
+        if (!['GET', 'HEAD'].includes(method) && !form.querySelector('input[name="csrf_token"]')) {
+            const field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = 'csrf_token';
+            field.value = token;
+            form.prepend(field);
+        }
+    });
+
+    document.querySelectorAll('.flash-alert').forEach(alert => {
         setTimeout(() => {
             alert.style.transition = 'opacity 0.5s ease';
             alert.style.opacity = '0';

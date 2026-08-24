@@ -26,20 +26,3 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script type="module">
-    import { validarFormularioHistorialClinico } from "{{ url_for('static', filename='js/validaciones/historialClinicoValidacion.js') }}";
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById("formHistorialClinico");
-        if (form) {
-            form.addEventListener("submit", (event) => {
-                if (!validarFormularioHistorialClinico()) {
-                    event.preventDefault();
-                }
-            });
-        }
-    });
-</script>
-{% endblock %}

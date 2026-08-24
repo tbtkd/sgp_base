@@ -1,5 +1,5 @@
 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-    <h3 class="text-xl font-semibold text-gray-900 mb-6">Historial de Valoraciones</h3>
+    <h3 class="text-xl font-semibold text-gray-900 mb-6">Historial de consultas</h3>
     <div class="overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left border-collapse">
             <thead class="sticky top-0 bg-white z-10 border-b border-gray-100">
@@ -22,11 +22,11 @@
                             <span class="text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full font-semibold">Actual</span>
                         {% endif %}
                     </td>
-                    <td class="py-4 text-gray-900 text-right">{{ val['peso'] }}</td>
-                    <td class="py-4 text-gray-900 text-right">{{ val['imc'] }}</td>
-                    <td class="py-4 text-gray-900 text-right max-w-[120px] truncate">{{ val['porcentaje_grasa'] }}%</td>
-                    <td class="py-4 text-gray-900 text-center">{{ val['tension_arterial'] }}</td>
-                    <td class="py-4 text-gray-900 text-right">{{ val['frecuencia_cardiaca'] }} lpm</td>
+                    <td class="py-4 text-gray-900 text-right">{{ val['peso'] if val['peso'] is not none else '—' }}</td>
+                    <td class="py-4 text-gray-900 text-right">{{ val['imc'] if val['imc'] is not none else '—' }}</td>
+                    <td class="py-4 text-gray-900 text-right max-w-[120px] truncate">{{ (val['porcentaje_grasa'] ~ '%') if val['porcentaje_grasa'] is not none else '—' }}</td>
+                    <td class="py-4 text-gray-900 text-center">{{ val['tension_arterial'] or '—' }}</td>
+                    <td class="py-4 text-gray-900 text-right">{{ (val['frecuencia_cardiaca'] ~ ' lpm') if val['frecuencia_cardiaca'] is not none else '—' }}</td>
                     <td class="py-4 text-center">
                         {% if val['id'] == valoracion['id'] %}
                             <span class="text-xs text-gray-400 font-normal">Mostrando</span>
@@ -36,6 +36,8 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% else %}
+                <tr><td colspan="7" class="py-10 text-center text-gray-500">No hay consultas previas registradas.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

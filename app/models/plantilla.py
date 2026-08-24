@@ -1,12 +1,15 @@
-from app import db_orm
+from sqlalchemy import text
 
-class PlantillaMensaje(db_orm.Model):
-    __tablename__ = 'plantillas_mensajes'
+from app import db_orm as db
 
-    id = db_orm.Column(db_orm.Integer, primary_key=True)
-    titulo = db_orm.Column(db_orm.String(100), nullable=False)
-    contenido = db_orm.Column(db_orm.Text, nullable=False)
-    esta_activa = db_orm.Column(db_orm.Boolean, default=False)
+
+class PlantillaMensaje(db.Model):
+    __tablename__ = "plantillas_mensajes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    contenido = db.Column(db.Text, nullable=False)
+    esta_activa = db.Column(db.Boolean, nullable=False, default=False, server_default=text("0"))
 
     @staticmethod
     def obtener_activa():

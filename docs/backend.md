@@ -1,26 +1,44 @@
-# Documentación del Backend - Sistema de Gestión de Pacientes y Nutrición (SGPN)
+# Backend del Sistema Clínico
 
-## 1. Arquitectura y Estructura
-El backend está desarrollado en **Python (Flask)** utilizando el patrón modular de **Blueprints**. Los controladores gestionan la lógica de negocio, validación defensiva e interacción con la base de datos mediante **Flask-SQLAlchemy**.
+## Stack
 
-### Blueprints Principales:
-- `auth`: Gestión de autenticación de usuarios (`/login`, `/logout`, registro y control de estatus).
-- `dashboard`: Indicadores, pacientes del día y métricas generales.
-- `pacientes`: CRUD de pacientes, historial clínico, agendamiento de citas, pagos y bitácora de WhatsApp.
-- `valoraciones`: Módulo de valoraciones antropométricas por pestañas con validación defensiva.
-- `plantillas`: Gestión y catálogo de plantillas predeterminadas de WhatsApp.
+- Flask 3.1 y Blueprints.
+- Flask-Login para sesiones.
+- Flask-WTF para CSRF.
+- Flask-SQLAlchemy sobre SQLite.
+- OpenPyXL y DefusedXML para XLSX.
+- Waitress ligado a `127.0.0.1`.
 
-## 2. Mecanismo de Auto-Migración en Caliente y Resiliencia
-Para garantizar la operación sin fallas en entornos empaquetados (`.exe` con PyInstaller), el sistema incluye una rutina de auto-migración en `app/__init__.py`:
-- **Inspección de Esquema**: Utiliza `sqlalchemy.inspect(db.engine)` para verificar tablas y columnas en la base de datos SQLite.
-- **Inyección Dinámica**: Si detecta campos faltantes (ej. estatus, motivos de cancelación), ejecuta sentencias `ALTER TABLE` seguras sin pérdida de datos.
-- **Respaldo Preventivo**: Genera copias de respaldo del archivo `.db` antes de realizar alteraciones estructurales.
+## Blueprints
 
-## 3. Política de Instancia Única y Prevención de Bloqueos (`database is locked`)
-- **Validación en `run.py`**: Comprueba mediante sockets si el puerto de ejecución está ocupado.
-- **Ventana de Advertencia**: Muestra una interfaz HTML estilizada (`error_inicio.html`) cuando la aplicación ya se encuentra abierta.
+- `auth`: bootstrap, login/logout, usuarios, cambio/restablecimiento de contraseña y auditoría.
+- `main`: dashboard y seguimiento.
+- `pacientes`: pacientes, citas, pagos e importación.
+- `historial_clinico`: expediente, limitado a `admin/medico`.
+- `valoracion`: consultas clínicas, limitado a `admin/medico`.
+- `recetas`: emisión de receta ordinaria por Medicina/Odontología e impresión clínica para `admin/medico`.
+- `plantillas`: mensajes, limitado a `admin/medico`.
 
-## 4. Endpoints Clave y Gestión de Estados
-- `POST /citas/<id>/cambiar-estatus`: Actualiza el estatus de las citas (`Programada`, `Asistido`, `No Asistió`, `Cancelada`).
-- Sincronización automática de citas a `'Asistido'` al registrar valoraciones antropométricas o historiales clínicos.
-- `respaldar_codigo.py`: Script automatizado para empaquetar todo el código fuente en archivos ZIP con marca temporal.
+## Solicitudes y transacciones
+
+1. Se genera un `request_id`.
+2. Se valida sesión, estado y rol.
+3. CSRF protege métodos mutables.
+4. `validators.py` normaliza y valida.
+5. La operación y su evento de auditoría se confirman en una sola transacción.
+6. Errores internos se registran, pero no se exponen.
+7. Se añaden cabeceras de seguridad y no-cache.
+
+## Perfiles profesionales
+
+El rol controla permisos (`admin`, `medico`, `recepcion`) y `perfil_profesional` describe el área de atención (`medico_general`, `dentista`, `nutricion`). Sólo `nutricion` puede enviar campos antropométricos o importar el formato XLSX; ocultarlos en HTML no es suficiente y el servidor rechaza intentos forjados.
+
+Cada consulta nueva guarda `profesional_id` y una instantánea del nombre, perfil y cédula. La impresión usa la instantánea, no al usuario que abre posteriormente la nota.
+
+La emisión de receta vuelve a verificar en servidor que el usuario sea de Medicina general u Odontología, que el paciente siga activo y que existan cédula/domicilio profesional. `prescription_payload()` exige confirmaciones de competencia, alcance ordinario y firma, valida hasta 10 medicamentos estructurados y rechaza filas exactamente duplicadas. `Receta` conserva instantáneas y no expone rutas de edición/eliminación: las correcciones crean un folio de sustitución, mientras que los documentos adicionales mantienen vigencia propia.
+
+Cada cambio o restablecimiento de contraseña incrementa `auth_version`, de modo que las sesiones y cookies de recuerdo anteriores dejan de ser válidas. El administrador debe reautenticarse para generar una credencial temporal. `run.py --reset-password` constituye la vía de contingencia local y sólo opera sobre administradores.
+
+## Datos
+
+`app/db.py` resuelve la ruta persistente, crea un respaldo consistente y ejecuta migraciones aditivas seguras. Para retirar la antigua unicidad de una receta por consulta existe una migración específica, transaccional y verificada que preserva filas e índices. El respaldo rota a 10 copias. Los cambios estructurales futuros requieren scripts versionados y una restauración probada.

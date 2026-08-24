@@ -647,6 +647,27 @@ select.form-input option {
   padding: 0.5rem;
 }
 
+/* Selector nativo de horarios: contraste estable en temas claros/oscuros. */
+[hidden] {
+  display: none !important;
+}
+
+.appointment-time-select {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  color-scheme: light;
+}
+
+.appointment-time-select option {
+  color: #0f172a;
+  background-color: #ffffff;
+}
+
+.appointment-time-select option:disabled {
+  color: #94a3b8;
+  background-color: #f1f5f9;
+}
+
 /* Estilos para campos de solo lectura */
 .form-input[readonly] {
   background-color: #f3f4f6;

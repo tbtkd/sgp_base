@@ -1,35 +1,38 @@
 {% extends "base/base.html" %}
-
-{% block title %}Detalle de Valoración - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
-
+{% block title %}Consulta clínica - {{ paciente.nombre_completo }}{% endblock %}
 {% block content %}
-<div class="max-w-8xl mx-auto">
-    <!-- Breadcrumbs -->
-    <nav class="text-sm text-gray-500 mb-4">
-        <a href="/" class="hover:text-teal-600">Inicio</a> / 
-        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="hover:text-teal-600">Pacientes</a> / 
-        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="hover:text-teal-600">{{ paciente['nombre'] }}</a> / 
-        <span class="text-gray-900 font-medium">Cita #{{ valoracion['numero_cita'] }}</span>
-    </nav>
-
-    <!-- Encabezado -->
-    <div class="mb-6 flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Detalle de Valoración</h1>
-            <p class="text-gray-600 mt-1">{{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
+<div class="max-w-7xl mx-auto space-y-6 printable-clinical-note">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div><h1 class="text-3xl font-bold text-gray-900">Nota de consulta clínica</h1><p class="text-gray-600">{{ paciente.nombre_completo }} · {{ valoracion.fecha|format_date }}</p></div>
+        <div class="flex flex-wrap gap-2 no-print">
+            <a href="{{ url_for('valoracion.imprimir_valoracion', valoracion_id=valoracion.id) }}" target="_blank" rel="noopener" class="px-4 py-2 bg-teal-600 text-white rounded-xl"><i class="fas fa-print mr-2"></i>Imprimir nota / PDF</a>
+            {% if current_user.puede_emitir_receta_ordinaria and not valoracion.recetas %}
+            <a href="{{ url_for('recetas.nueva_receta', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-xl"><i class="fas fa-prescription mr-2"></i>Generar receta</a>
+            {% elif current_user.puede_emitir_receta_ordinaria %}
+            <a href="{{ url_for('recetas.receta_adicional', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-xl"><i class="fas fa-plus mr-2"></i>Receta adicional</a>
+            {% endif %}
+            <a href="{{ url_for('valoracion.editar_valoracion', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Editar</a><a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Volver</a>
         </div>
-        <a href="{{ url_for('pacientes.detalle_paciente', id=paciente['id']) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition-colors">
-            ← Volver al Detalle del Paciente
-        </a>
     </div>
-
-    <!-- Barra Compacta de Información -->
-    {% include 'valoraciones/partials/_info_general.html' %}
-
-    <!-- Mapa Antropométrico -->
-    {% include 'valoraciones/partials/_mapa_antropometrico.html' %}
-
-    <!-- Historial -->
-    {% include 'valoraciones/partials/_historial_valoraciones.html' %}
+    <section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-3">Motivo y síntomas</h2><p class="whitespace-pre-line"><strong>Motivo:</strong> {{ valoracion.motivo_consulta }}</p><p class="whitespace-pre-line mt-3"><strong>Síntomas:</strong> {{ valoracion.sintomas or 'No registrados' }}</p></section>
+    <section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-4">Signos vitales</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        {% for label, value, unit in [('Tensión arterial',valoracion.tension_arterial,'mmHg'),('Frecuencia cardíaca',valoracion.frecuencia_cardiaca,'lpm'),('Frecuencia respiratoria',valoracion.frecuencia_respiratoria,'rpm'),('Temperatura',valoracion.temperatura,'°C'),('SpO₂',valoracion.saturacion_oxigeno,'%'),('Estatura',valoracion.estatura,'cm'),('Peso',valoracion.peso,'kg'),('IMC',valoracion.imc,'')] %}<div><p class="text-gray-500">{{ label }}</p><p class="font-semibold">{{ value if value is not none else '—' }} {{ unit if value is not none else '' }}</p></div>{% endfor %}
+    </div></section>
+    <section class="bg-white p-6 rounded-2xl border border-gray-100 space-y-4"><h2 class="text-lg font-bold">Evolución e indicaciones</h2><div><h3 class="font-semibold">Impresión diagnóstica</h3><p class="whitespace-pre-line">{{ valoracion.impresion_diagnostica or 'No registrada' }}</p></div><div><h3 class="font-semibold">Plan de tratamiento</h3><p class="whitespace-pre-line">{{ valoracion.plan_tratamiento or 'No registrado' }}</p></div><div><h3 class="font-semibold">{{ valoracion.etiqueta_prescripcion }}</h3><p class="whitespace-pre-line">{{ valoracion.prescripcion or 'No registrada' }}</p></div></section>
+    {% if valoracion.recetas %}
+    <section class="bg-white p-6 rounded-2xl border border-gray-100 no-print">
+        <div class="flex items-center justify-between gap-4 mb-4"><div><h2 class="text-lg font-bold">Recetas emitidas</h2><p class="text-sm text-gray-500">Los folios emitidos no se editan; una corrección genera una sustitución.</p></div><span class="text-sm text-gray-500">{{ valoracion.recetas|length }} documento(s)</span></div>
+        <div class="space-y-3">
+            {% for receta in valoracion.recetas|reverse %}
+            <article class="border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 {% if receta.esta_vigente %}border-teal-200 bg-teal-50/30{% else %}border-red-200 bg-red-50/40{% endif %}">
+                <div><p class="font-bold">{{ receta.folio }} <span class="text-xs font-medium px-2 py-1 rounded-full {% if receta.esta_vigente %}bg-teal-100 text-teal-800{% else %}bg-red-100 text-red-800{% endif %}">{{ receta.estado|capitalize }}</span></p><p class="text-sm text-gray-600">{{ receta.tipo_etiqueta }} · versión {{ receta.version }} · {{ receta.fecha_emision|format_date }}{% if receta.receta_sustituida %} · sustituye {{ receta.receta_sustituida.folio }}{% endif %}</p></div>
+                <div class="flex flex-wrap gap-2"><a href="{{ url_for('recetas.imprimir_receta', receta_id=receta.id) }}" target="_blank" rel="noopener" class="px-3 py-2 bg-white border rounded-lg text-sm font-semibold">Ver / imprimir</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %}<a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}" class="px-3 py-2 bg-amber-100 text-amber-900 rounded-lg text-sm font-semibold">Sustituir</a>{% endif %}</div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% if valoracion.cintura is not none or valoracion.porcentaje_grasa is not none or valoracion.bicep is not none %}<section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-4">Antropometría opcional</h2>{% include 'valoraciones/partials/_medidas_corporales.html' %}</section>{% endif %}
+    <div class="no-print">{% include 'valoraciones/partials/_historial_valoraciones.html' %}</div>
 </div>
 {% endblock %}

@@ -1,69 +1,53 @@
-# Software Requirements Specification (SRS) - Sistema de Gestión de Pacientes y Nutrición (SGPN)
+# Especificación de requisitos — Sistema de Expediente Clínico
 
-## 1. Introducción y Propósito
-### 1.1 Propósito
-Desarrollar un sistema web que permita la gestión integral de pacientes en un consultorio nutricional, facilitando el seguimiento de valoraciones antropométricas y control de historiales clínicos, agendamiento de citas, control de pagos y comunicaciones con pacientes.
+## Alcance
 
-### 1.2 Alcance
-El sistema debe permitir el registro y seguimiento de pacientes, gestión de usuarios, valoraciones antropométricas avanzadas, historial clínico, control de pagos, plantillas de mensajes de WhatsApp y una estricta máquina de estados de citas.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.6.1 no implementa multi-tenancy ni operación directa por Internet.
 
----
+## Requisitos funcionales
 
-## 2. Requerimientos Funcionales
+1. Alta, búsqueda, edición y activación/desactivación de pacientes.
+2. Datos generales, ocupación, dirección y contacto de emergencia.
+3. Expediente con antecedentes, alergias, medicación y hábitos.
+4. Consultas con signos vitales, síntomas, impresión diagnóstica, plan e indicaciones clínicas.
+5. Antropometría opcional sin bloquear consultas generales.
+6. Citas con fecha, hora, motivo y estado.
+7. Pagos con fecha, monto, concepto y método.
+8. WhatsApp directo y bitácora de contacto.
+9. Impresión limpia y separada de notas y recetas mediante `window.print()`.
+10. Administración de usuarios y consulta de auditoría.
+11. Respaldo automático y migración aditiva sin pérdida de datos.
+12. Vista de impresión A4 independiente para cada nota clínica.
+13. Navegación local y accesible entre secciones de la consulta.
+14. Perfil profesional separado del rol: Medicina general, Odontología/Dentista o Nutrición.
+15. Antropometría disponible exclusivamente para usuarios con perfil Nutrición.
+16. Instantánea de nombre, perfil y cédula del profesional en cada consulta nueva.
+17. Cédula omitida de la impresión cuando no se encuentre registrada.
+18. Receta ordinaria restringida a Medicina general/Odontología con cédula y domicilio completos.
+19. Hasta 10 medicamentos estructurados con genérico, presentación, dosis, vía, frecuencia y duración.
+20. Instantánea inmutable de los datos de paciente y profesional al emitir una receta.
+21. Rechazo explícito del módulo para recetas especiales/controladas.
+22. Identidad de cuenta en top bar sin duplicarla en sidebar e iconografía institucional unificada.
+23. Recetas originales, adicionales y sustituciones con folios independientes e historial inmutable.
+24. Folios sustituidos marcados como no vigentes y enlazados al reemplazo.
+25. Cambio propio, restablecimiento administrativo y recuperación local de contraseñas para administradores.
+26. Identidad compacta mediante nombre de usuario y detalle rotulado de nombre, rol, área clínica y cédula en el menú de cuenta.
+27. Limpieza segura y explícita de recursos obsoletos al actualizar sobre una carpeta existente.
 
-### RF-01: Gestión de Pacientes
-- Alta de nuevos pacientes con datos personales.
-- Edición de información de pacientes.
-- Cambio de estado (activo/inactivo/inhabilitación lógica).
-- Búsqueda y filtrado de pacientes.
-- Visualización separada de pacientes activos e inactivos.
-- Carga masiva de pacientes e historiales desde archivos Excel.
+## Requisitos de seguridad
 
-### RF-02: Valoraciones Antropométricas
-- Registro de medidas corporales completas (peso, estatura, perímetros, pliegues cutáneos, bioimpedancia).
-- Cálculo automático de IMC, % grasa, masa magra y somatotipo.
-- Registro de signos vitales (tensión arterial, frecuencia cardiaca).
-- Seguimiento histórico de medidas.
+- Autenticación para toda ruta funcional.
+- Roles `admin`, `medico`, `recepcion` aplicados en servidor.
+- CSRF, cookies protegidas, secreto persistente y bloqueo por intentos.
+- Validación autoritativa de todos los datos mutables.
+- Registro de eventos críticos sin contraseñas ni contenido clínico completo.
+- Invalidación de sesiones tras cambios de credencial y cambio obligatorio para contraseñas temporales.
+- Escucha exclusiva en localhost.
 
-### RF-03: Historial Clínico
-- Registro de antecedentes médicos, heredofamiliares y patológicos.
-- Control de medicamentos y suplementos.
-- Seguimiento de actividad física y recordatorio de 24 horas.
-- Registro de hábitos alimenticios.
+## Requisitos no funcionales
 
-### RF-04: Control de Pagos y Citas
-- Registro de pagos por consulta y estatus de adeudos.
-- Agendamiento de citas con validación de horarios disponibles en tiempo real.
-- Máquina de estados de citas (Programada, Asistido, No Asistió, Cancelada) con registro de motivos.
-
----
-
-## 3. Requerimientos No Funcionales
-
-### RNF-01: Usabilidad
-- Interfaz intuitiva y responsiva con Tailwind CSS y Alpine.js.
-- Mensajes de error claros y modales estilizados en lugar de alertas nativas.
-- Menús desplegables inteligentes con posicionamiento condicional anti-desborde (`top-full` / `bottom-full`).
-
-### RNF-02: Rendimiento
-- Tiempo de respuesta óptimo con SQLite y SQLAlchemy.
-- Soporte para múltiples usuarios y control de instancia única para evitar bloqueos por concurrencia (`database is locked`).
-
-### RNF-03: Seguridad
-- Validación de datos en frontend y backend.
-- Control de acceso por roles (`nutriologa`, `administrador`) y estatus de usuario (activo/inhabilitado).
-
----
-
-## 4. Reglas de Negocio
-
-### RN-01: Pacientes y Usuarios
-- Correo electrónico único por paciente; teléfono de 10 dígitos; estado inicial siempre activo.
-- Los usuarios inhabilitados tienen el acceso denegado inmediatamente mediante validaciones en `Flask-Login` y `@login_required`.
-
-### RN-02: Valoraciones y Citas
-- IMC calculado automáticamente; prohibido duplicar valoraciones en la misma fecha.
-- Al registrar una valoración antropométrica o historial clínico, el sistema actualiza automáticamente el estado de la cita asociada del día a `'Asistido'` / `'completada'`.
-
-### RN-03: Plantillas de WhatsApp
-- Restricción de **Plantilla Activa Única** (`esta_activa = True`). Al activar una plantilla, el sistema desactiva automáticamente las demás.
+- Python 3.10+.
+- SQLite y dependencias instalables mediante ruedas/paquetes Python sin Cython.
+- PyInstaller en Windows sin guardar datos en `_MEIPASS`.
+- Conservación del diseño visual existente.
+- Suite unificada ejecutable mediante `python -m pytest -q`; incluye los casos heredados de `unittest`.

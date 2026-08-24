@@ -18,6 +18,7 @@
     <!-- Encabezado -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Lista de Pacientes {{ "Activos" if tipo_lista == "activos" else "Inactivos" }}</h1>
+        <p class="mt-2 text-sm text-gray-500">{{ pacientes|length }} resultado{{ '' if pacientes|length == 1 else 's' }}{{ ' para la búsqueda actual' if busqueda else '' }}.</p>
     </div>
 
     {% include 'pacientes/partials/_buscador_y_filtros.html' %}

@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.6.1 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.6.2 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -53,6 +53,7 @@ La versión 1.6.1 es adecuada para pruebas funcionales y para un piloto en una e
 - El formulario de citas permanece cerrado al cargar, no depende de Alpine/CDN y cancela las consultas de disponibilidad al cerrarse.
 - Los horarios tienen etiquetas HTML reales, contraste explícito y revalidación autoritativa en el servidor.
 - Las pestañas de consulta y panel funcionan con JavaScript local, sin depender de Alpine/CDN.
+- El menú de cuenta inicia cerrado mediante HTML nativo y usa JavaScript local; si el script falla, el detalle permanece oculto y no expone información por defecto.
 - La vista de impresión es una ruta clínica autenticada, aislada del shell y sin recursos externos.
 - El perfil profesional se valida por separado del rol de acceso.
 - La antropometría se oculta y se rechaza en servidor salvo para perfiles de Nutrición.

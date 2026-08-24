@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.2 — Cabecera determinista y roadmap visual
+
+- El Panel Clínico muestra un título de módulo estable y deja de duplicar la identidad con el saludo “Bienvenido”.
+- El detalle de cuenta utiliza `hidden` como estado inicial nativo; permanece cerrado incluso si Alpine o un recurso CDN no carga.
+- El desplegable se controla con JavaScript local y accesible: apertura explícita, cierre por clic exterior o Escape y sincronización de `aria-expanded`.
+- El sidebar continúa reservado exclusivamente para marca y navegación.
+- Se amplió la regresión de identidad para comprobar el título, el estado cerrado y la ausencia de la dependencia Alpine en el menú de cuenta.
+- Nuevo análisis de etapa y roadmap visual priorizado en `docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md`.
+- Verificación de entrega: 65 pruebas `pytest`, 15 casos `unittest`, Ruff y Bandit sin hallazgos.
+
 ## 1.6.1 — Identidad de cuenta y actualización limpia
 
 - El top bar muestra el nombre de usuario estable en vez de construir abreviaturas ambiguas como “Administradora A.”.

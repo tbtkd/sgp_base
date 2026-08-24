@@ -17,6 +17,37 @@ window.fetch = function(resource, options = {}) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-account-menu]').forEach((menu) => {
+        const toggle = menu.querySelector('[data-account-menu-toggle]');
+        const panel = menu.querySelector('[data-account-menu-panel]');
+        if (!toggle || !panel) return;
+
+        const closeMenu = ({ restoreFocus = false } = {}) => {
+            panel.hidden = true;
+            toggle.setAttribute('aria-expanded', 'false');
+            if (restoreFocus) toggle.focus();
+        };
+
+        const openMenu = () => {
+            panel.hidden = false;
+            toggle.setAttribute('aria-expanded', 'true');
+        };
+
+        closeMenu();
+        toggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (panel.hidden) openMenu();
+            else closeMenu();
+        });
+        menu.addEventListener('click', (event) => event.stopPropagation());
+        document.addEventListener('click', () => closeMenu());
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !panel.hidden) {
+                closeMenu({ restoreFocus: true });
+            }
+        });
+    });
+
     const token = getCsrfToken();
     document.querySelectorAll('form').forEach(form => {
         const method = String(form.getAttribute('method') || 'GET').toUpperCase();

@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-La versión 1.6.1 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios.
+La versión 1.6.2 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios.
 
 ## Reglas que deben preservarse
 
@@ -31,6 +31,8 @@ La versión 1.6.1 es un expediente clínico general para servicios médicos, den
 23. La recuperación local sólo restablece administradores y siempre obliga a crear una contraseña definitiva.
 24. La cabecera compacta muestra `username`; el menú rotula por separado nombre registrado, rol de acceso, área clínica y cédula para evitar confundir identidad con permisos.
 25. Las actualizaciones sobre una carpeta existente deben ejecutar `scripts/cleanup_project.py`; la limpieza nunca debe tocar `.venv`, `instance` o `backups`.
+26. El Panel Clínico muestra un título de módulo, no un segundo nombre de cuenta; el detalle de cuenta inicia con el atributo nativo `hidden` y sólo se abre por acción explícita.
+27. La visibilidad del menú de cuenta no debe depender de Alpine o de otro recurso CDN; el fallo seguro es permanecer cerrado.
 
 ## Próximas fases
 

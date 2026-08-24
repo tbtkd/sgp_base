@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.6.1
+# Matriz de pruebas — versión 1.6.2
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -96,6 +96,7 @@ python -m pytest -q
 | RX-SUB-01 | Corrección | Motivo obligatorio, documento anterior intacto y leyenda de no surtir |
 | RX-MIG-01 | Migración | Unicidad legada retirada sin perder folios y llaves foráneas verificadas |
 | UI-ID-01 | Identidad | Cuenta sólo en top bar, sidebar sin duplicado e icono canónico en PNG/ICO |
+| UI-ID-02 | Estado de cuenta | Panel cerrado por `hidden`, sin saludo duplicado y control local con `aria-expanded` |
 
 ## Mantenimiento de la entrega (`tests/test_project_cleanup.py`)
 

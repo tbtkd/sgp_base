@@ -267,6 +267,7 @@ def test_account_identity_is_only_in_topbar_and_icon_is_canonical(app, client, l
     templates = root / "app" / "templates"
     sidebar = (templates / "components" / "_sidebar.html").read_text(encoding="utf-8")
     header = (templates / "components" / "_header.html").read_text(encoding="utf-8")
+    app_script = (root / "app" / "static" / "js" / "app.js").read_text(encoding="utf-8")
     template_sources = "\n".join(path.read_text(encoding="utf-8") for path in templates.rglob("*.html"))
     build = (root / "build_exe.bat").read_text(encoding="utf-8")
 
@@ -278,10 +279,18 @@ def test_account_identity_is_only_in_topbar_and_icon_is_canonical(app, client, l
     assert "Usuario:" in page
     assert "Rol de acceso:" in page
     assert "Área clínica:" in page
+    assert "Bienvenido," not in page
+    assert "Panel clínico" in page
     assert "Cerrar Sesión" not in sidebar
     assert "current_user.nombre" not in sidebar
     assert "current_user.nombre_corto" not in header
     assert "current_user.username" in header
+    assert "data-account-menu-toggle" in header
+    assert "data-account-menu-panel" in header
+    assert "x-show=\"open\"" not in header
+    assert "hidden>" in header
+    assert "panel.hidden = true" in app_script
+    assert "aria-expanded" in app_script
     assert "img/logo.png" in sidebar
     assert "img/logo.svg" not in template_sources
     assert 'app/static/img/logo.ico' in build

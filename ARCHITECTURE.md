@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.6.1
+# Arquitectura técnica — versión 1.6.2
 
 ## Componentes
 
@@ -10,6 +10,8 @@
 - `app/models/`: esquema SQLAlchemy.
 - `app/controllers/`: transacciones y casos de uso.
 - `app/templates/` y `app/static/`: interfaz actual preservada y adaptada al dominio clínico general.
+
+La cabecera usa HTML nativo (`hidden`) como estado seguro del menú de cuenta y JavaScript local para su interacción. Alpine sigue presente en componentes legados, pero ya no determina si el detalle de identidad aparece durante la carga.
 
 ## Persistencia portable
 

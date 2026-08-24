@@ -35,7 +35,7 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.6.1:
+Resultado esperado para la versión 1.6.2:
 
 ```text
 65 passed
@@ -55,7 +55,7 @@ Para validar perfiles profesionales, cédula, snapshot del autor y restricción 
 python -m pytest -q tests/test_professional_profiles.py
 ```
 
-Para validar recetas originales/adicionales/sustituciones, migración, impresión, top bar e icono:
+Para validar recetas originales/adicionales/sustituciones, migración, impresión, top bar, estado cerrado del menú de cuenta e icono:
 
 ```powershell
 python -m pytest -q tests/test_prescriptions.py

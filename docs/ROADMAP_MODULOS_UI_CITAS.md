@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.6.1 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. También corrige la ambigüedad visual de la cuenta y hace segura la limpieza de archivos obsoletos al actualizar una carpeta existente. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.6.2 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. También corrige la ambigüedad visual de la cuenta, garantiza que su panel permanezca cerrado al cargar y hace segura la limpieza de archivos obsoletos al actualizar una carpeta existente. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
 
 Módulos evaluados:
 
@@ -89,7 +89,7 @@ Módulos evaluados:
 #### Cabecera
 
 - Títulos y subtítulos específicos por módulo.
-- Menú del usuario protegido con `x-cloak` para evitar que aparezca abierto durante la carga.
+- Menú del usuario protegido inicialmente con `x-cloak`; en 1.6.2 se reemplazó por `hidden` nativo y control local determinista.
 - Identidad, rol/perfil y cierre de sesión concentrados en el top bar; el duplicado se retiró del sidebar.
 
 ### Fase 1.1: perfiles profesionales y autoría — completada en 1.4.0
@@ -138,6 +138,13 @@ Módulos evaluados:
 - Limpieza estándar, acotada y probada para SVG obsoleto, `__pycache__`, `.pyc`, `.pytest_cache` y `.ruff_cache`.
 - Integración de la limpieza en `build_exe.bat` sin recorrer `.venv`, `instance` o `backups`.
 
+### Fase 1.5: cabecera determinista — completada en 1.6.2
+
+- El dashboard muestra “Panel clínico” y elimina el saludo que duplicaba la identidad de cuenta.
+- El detalle de cuenta se entrega con `hidden`, por lo que el navegador lo oculta aun si Alpine o su CDN no cargan.
+- La interacción usa JavaScript local con apertura explícita, cierre por clic exterior o Escape y estado accesible mediante `aria-expanded`.
+- El comportamiento seguro ante un fallo de JavaScript es mantener el detalle cerrado.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -180,6 +187,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | SEC-PASS-01 | Recuperación de acceso | Cambio, temporal, invalidación y contingencia local |
 | UI-ID-01 | Navegación | Cuenta sólo en top bar e icono canónico |
 | UI-ID-02 | Identidad | Usuario, nombre, rol, área y cédula diferenciados |
+| UI-ID-03 | Cabecera | Título sin saludo duplicado, panel nativamente cerrado y control local accesible |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
 
 Suite oficial:
@@ -188,7 +196,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.6.1: **65 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, navegación, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.6.2: **65 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, navegación, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
@@ -206,7 +214,7 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - Compilar Tailwind localmente y retirar su CDN.
 - Empaquetar FontAwesome, Alpine y SweetAlert o reemplazar sus usos restantes con componentes locales.
 - Consolidar reglas duplicadas de tablas, formularios, pestañas y modales.
-- Sustituir el estado global del sidebar y menú de usuario por JavaScript local.
+- Sustituir el estado global restante del sidebar y menús secundarios por JavaScript local; el menú de cuenta ya fue migrado.
 - Pruebas de interfaz con navegador real para resoluciones de escritorio y móvil.
 - Pruebas visuales específicas de impresión en Chrome/Edge y ejecutable PyInstaller.
 

@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title id="title">SGPN</title>
-  <rect width="64" height="64" rx="15" fill="#0f766e"/>
-  <path d="M32 50c-10-6-17-15-17-25 0-6 4-11 10-11 3 0 6 2 7 5 2-3 5-5 8-5 6 0 10 5 10 11 0 10-8 19-18 25Z" fill="#fff" opacity=".96"/>
-  <path d="M31 40c0-11 5-18 13-21-1 9-5 16-13 21Zm0 0c-2-7-6-11-12-13 1 7 5 11 12 13Z" fill="#14b8a6"/>
-</svg>

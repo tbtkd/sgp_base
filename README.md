@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.6.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Conserva la interfaz original, pero generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.6.2**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Conserva la interfaz original, pero generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -16,6 +16,7 @@ Versión **1.6.1**. Aplicación local para consultorios médicos, dentales, nutr
 - Auditoría administrativa de accesos y operaciones críticas.
 - Enlaces directos a WhatsApp e impresión limpia de notas y recetas como PDF.
 - Identidad de cuenta concentrada en el top bar y navegación sin duplicados en el sidebar.
+- Menú de cuenta cerrado de forma nativa al cargar, con apertura explícita y cierre por Escape o clic exterior.
 - Un solo icono institucional para navegador, interfaz y ejecutable Windows.
 - Cambio propio de contraseña, restablecimiento administrativo y recuperación local para el administrador del equipo.
 - Pestañas clínicas locales, estados vacíos accionables y KPIs coherentes.
@@ -124,7 +125,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 65 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El análisis y las fases recomendadas están en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md).
+La aceptación funcional incluye 65 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional histórico está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el diagnóstico visual vigente en [docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md](docs/ROADMAP_VISUAL_Y_ANALISIS_1_6_2.md).
 
 ## Compilación para Windows
 

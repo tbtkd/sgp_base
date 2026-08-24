@@ -136,11 +136,78 @@ def test_kpi_opens_dedicated_scheduler_without_replacing_patient_modal(app, clie
     assert "Agendar una cita" in scheduler
     assert scheduler.count("data-calendar-date=") == 21
     assert 'data-availability-url="/pacientes/disponibilidad_citas"' in scheduler
+    assert 'data-patient-search-url="/pacientes/buscar_para_cita"' in scheduler
     assert 'data-patient-search' in scheduler
-    assert 'data-patient-select' in scheduler
-    assert "EXP-0001" in scheduler
+    assert 'role="combobox"' in scheduler
+    assert 'role="listbox"' in scheduler
+    assert 'data-patient-id' in scheduler
+    assert 'data-patient-select' not in scheduler
+    assert "<option" not in scheduler
+    assert "Paciente Pruebas Citas" not in scheduler
     assert 'id="modalCita"' in patient_detail
     assert "agendar_cita_rapida" not in sidebar
+
+
+def test_scheduler_patient_search_is_private_limited_and_returns_only_matches(app, client, login):
+    anonymous = client.get("/pacientes/buscar_para_cita?busqueda=Laura")
+    assert anonymous.status_code == 302
+    assert "/login" in anonymous.headers["Location"]
+
+    login()
+    target = _future_day()
+    with app.app_context():
+        selected = _patient("Laura", "5512345601")
+        unrelated = _patient("Mario", "5512345602")
+        inactive = _patient("LauraOculta", "5512345603")
+        inactive.status = "inactivo"
+        db.session.add(
+            Cita(
+                paciente_id=selected.id,
+                fecha=target,
+                hora=time(14, 30),
+                motivo="Dato que no debe exponerse en la búsqueda",
+                estatus="Programada",
+                estado="pendiente",
+            )
+        )
+        for index in range(10):
+            _patient(f"Coincide{index}", f"55200000{index:02d}")
+        db.session.commit()
+        selected_id = selected.id
+        unrelated_name = unrelated.nombre_completo
+
+    response = client.get("/pacientes/buscar_para_cita?busqueda=Laura")
+    payload = response.get_json()
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+    assert payload["success"] is True
+    assert len(payload["resultados"]) == 1
+    assert payload["resultados"][0] == {
+        "id": selected_id,
+        "nombre": "Laura Pruebas Citas",
+        "expediente": f"EXP-{selected_id:04d}",
+        "telefono": "5512345601",
+        "detalle_url": f"/pacientes/{selected_id}",
+        "cita_programada": {
+            "fecha": target.isoformat(),
+            "hora": "14:30",
+            "etiqueta": f"{target.strftime('%d/%m/%Y')} · 14:30",
+        },
+    }
+    assert unrelated_name not in response.get_data(as_text=True)
+    assert "LauraOculta" not in response.get_data(as_text=True)
+    assert "Dato que no debe exponerse" not in response.get_data(as_text=True)
+
+    by_record = client.get(f"/pacientes/buscar_para_cita?busqueda=EXP-{selected_id:04d}").get_json()
+    assert [item["id"] for item in by_record["resultados"]] == [selected_id]
+    assert len(client.get("/pacientes/buscar_para_cita?busqueda=Coincide").get_json()["resultados"]) == 8
+    assert client.get("/pacientes/buscar_para_cita?busqueda=L").get_json()["resultados"] == []
+    assert client.get("/pacientes/buscar_para_cita?busqueda=%25").get_json()["resultados"] == []
+    assert client.get(f"/pacientes/buscar_para_cita?busqueda={'x' * 101}").status_code == 400
+
+    selected_page = client.get(f"/pacientes/agendar-cita?paciente_id={selected_id}").get_data(as_text=True)
+    assert "Laura Pruebas Citas" in selected_page
+    assert unrelated_name not in selected_page
 
 
 def test_visual_availability_returns_every_slot_with_explicit_state(app, client, login):
@@ -264,8 +331,15 @@ def test_quick_scheduler_uses_safe_local_interactions():
     assert "textContent" in script
     assert ".innerHTML" not in script
     assert "aria-pressed" in script
+    assert "ArrowDown" in script
+    assert "ArrowUp" in script
+    assert "Escape" in script
+    assert "window.setTimeout(() =>" in script
+    assert "query !== selectedPatient.name" in script
+    assert "X-Requested-With" in script
     assert "submitting" in script
     assert 'html[data-theme="dark"] .appointment-time' in styles
+    assert ".appointment-selected-patient" in styles
     assert ".appointment-day.is-selected" in styles
 
 

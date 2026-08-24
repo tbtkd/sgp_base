@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.1 — Búsqueda privada en agenda y revisión funcional del Dashboard
+
+- La agenda rápida deja de renderizar el padrón completo de pacientes al abrir.
+- La búsqueda autenticada consulta bajo demanda por nombre, expediente o teléfono y devuelve como máximo ocho coincidencias activas.
+- Después de elegir una coincidencia se oculta la lista y permanece visible únicamente la ficha del paciente seleccionado.
+- Cambiar el texto invalida la selección anterior; teclado, ARIA, cancelación de solicitudes y bloqueo de doble envío permanecen cubiertos.
+- La respuesta no incluye datos clínicos ni el motivo de una cita existente y se marca como `no-store`.
+- Se documenta la diferencia entre Agenda de hoy, Próximas citas y Pacientes recientes, sin retirar módulos del Dashboard en esta versión.
+- Verificación: 75 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.7.0 — Agenda rápida desde el KPI
 
 - La acción **Agendar cita** de Citas de hoy abre un flujo dedicado, sin obligar a navegar primero al detalle del paciente.

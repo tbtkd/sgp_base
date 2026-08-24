@@ -31,7 +31,7 @@
 
 ## Agenda rápida
 
-`GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET sólo lista pacientes activos y construye un resumen de 21 días mediante una consulta acotada. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes.
+`GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET no consulta ni renderiza el padrón completo; únicamente resuelve un paciente activo cuando llega un identificador ya seleccionado y construye el resumen de 21 días. `GET /pacientes/buscar_para_cita` exige autenticación, normaliza una búsqueda de 2–100 caracteres, consulta nombre/expediente/teléfono y devuelve hasta ocho coincidencias activas sin datos clínicos. La cita programada, cuando existe, se limita a fecha y hora. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes. Ambas respuestas JSON se marcan como `no-store`.
 
 El POST no confía en el calendario del navegador: valida el identificador, confirma que el paciente siga activo, aplica los validadores comunes de fecha/hora/motivo, limita la anticipación a dos años, impide sobrescribir una cita programada y consulta nuevamente el conflicto del bloque. En el despliegue local actual, la validación final y el `commit` se serializan con el mismo bloqueo de escritura usado por las rutas previas de agendamiento. La auditoría registra `CREAR_CITA` y el origen `kpi_dashboard`, sin guardar el motivo.
 

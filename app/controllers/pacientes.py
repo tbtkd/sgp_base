@@ -8,6 +8,7 @@ from threading import Lock
 import openpyxl
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
 from app import db_orm as db
@@ -94,26 +95,46 @@ def _quick_appointment_context():
     if not selected_date:
         first_available = next((item for item in calendar if item["disponibles"]), calendar[0])
         selected_date = first_available["fecha"]
-    patients = Paciente.buscar("", status="activo", ordenar_por="nombre", orden="asc")
-    patient_ids = [patient.id for patient in patients]
-    pending_by_patient = {}
-    if patient_ids:
-        pending_appointments = (
-            Cita.query.filter(Cita.paciente_id.in_(patient_ids), Cita.estatus == "Programada")
-            .order_by(Cita.fecha.asc(), Cita.hora.asc(), Cita.id.asc())
-            .all()
-        )
-        for appointment in pending_appointments:
-            pending_by_patient.setdefault(appointment.paciente_id, appointment)
-    selected_patient = request.form.get("paciente_id") or request.args.get("paciente_id", "")
+    selected_patient = None
+    pending_appointment = None
+    raw_patient_id = request.form.get("paciente_id") or request.args.get("paciente_id", "")
+    if raw_patient_id:
+        try:
+            patient_id = integer(raw_patient_id, "Paciente", minimum=1)
+            candidate = db.session.get(Paciente, patient_id)
+            if candidate and candidate.status == "activo":
+                selected_patient = candidate
+                pending_appointment = Cita.obtener_cita_pendiente(candidate.id)
+        except ValidationError:
+            pass
     return {
-        "pacientes": patients,
-        "citas_pendientes_por_paciente": pending_by_patient,
         "calendario_citas": calendar,
         "fecha_seleccionada": selected_date,
-        "paciente_seleccionado": str(selected_patient or ""),
+        "paciente_seleccionado": selected_patient,
+        "cita_pendiente_seleccionada": pending_appointment,
         "fecha_minima": date.today(),
         "fecha_maxima": date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS),
+    }
+
+
+def _appointment_patient_result(patient, pending_appointment=None):
+    appointment_data = None
+    if pending_appointment:
+        appointment_data = {
+            "fecha": pending_appointment.fecha.isoformat(),
+            "hora": pending_appointment.hora.strftime("%H:%M"),
+            "etiqueta": (
+                f"{pending_appointment.fecha.strftime('%d/%m/%Y')} · "
+                f"{pending_appointment.hora.strftime('%H:%M')}"
+            ),
+        }
+    return {
+        "id": patient.id,
+        "nombre": patient.nombre_completo,
+        "expediente": f"EXP-{patient.id:04d}",
+        "telefono": patient.telefono,
+        "detalle_url": url_for("pacientes.detalle_paciente", id=patient.id),
+        "cita_programada": appointment_data,
     }
 
 
@@ -447,6 +468,64 @@ def _appointment_values(form):
     if moment <= datetime.now():
         raise ValidationError("La cita debe programarse en una fecha y hora futuras.")
     return data
+
+
+@pacientes.route("/buscar_para_cita", methods=["GET"])
+@login_required
+def buscar_para_cita():
+    try:
+        search = clean_text(request.args.get("busqueda"), "Búsqueda", maximum=100)
+    except ValidationError as error:
+        return jsonify({"success": False, "error": str(error)}), 400
+
+    if len(search) < 2:
+        response = jsonify({"success": True, "resultados": []})
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    lowered = search.casefold()
+    full_name = func.lower(
+        Paciente.nombre + " " + Paciente.apellido_paterno + " " + func.coalesce(Paciente.apellido_materno, "")
+    )
+    filters = [
+        full_name.contains(lowered, autoescape=True),
+        func.lower(Paciente.nombre).contains(lowered, autoescape=True),
+        func.lower(Paciente.apellido_paterno).contains(lowered, autoescape=True),
+        func.lower(func.coalesce(Paciente.apellido_materno, "")).contains(lowered, autoescape=True),
+    ]
+    phone_search = re.sub(r"\D", "", search)
+    if phone_search:
+        filters.append(Paciente.telefono.contains(phone_search, autoescape=True))
+    record_match = re.fullmatch(r"exp[\s-]*0*(\d{1,9})", lowered)
+    if record_match:
+        filters = [Paciente.id == int(record_match.group(1))]
+
+    matches = (
+        Paciente.query.filter(Paciente.status == "activo", or_(*filters))
+        .order_by(Paciente.nombre.asc(), Paciente.apellido_paterno.asc(), Paciente.id.asc())
+        .limit(8)
+        .all()
+    )
+    pending_by_patient = {}
+    if matches:
+        pending = (
+            Cita.query.filter(Cita.paciente_id.in_([patient.id for patient in matches]), Cita.estatus == "Programada")
+            .order_by(Cita.fecha.asc(), Cita.hora.asc(), Cita.id.asc())
+            .all()
+        )
+        for appointment in pending:
+            pending_by_patient.setdefault(appointment.paciente_id, appointment)
+
+    response = jsonify(
+        {
+            "success": True,
+            "resultados": [
+                _appointment_patient_result(patient, pending_by_patient.get(patient.id)) for patient in matches
+            ],
+        }
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @pacientes.route("/agendar-cita", methods=["GET", "POST"])

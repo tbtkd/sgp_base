@@ -5,9 +5,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeAppointmentScheduler(container) {
     const form = container.querySelector('[data-appointment-form]');
+    const patientFinder = container.querySelector('.appointment-patient-finder');
     const patientSearch = container.querySelector('[data-patient-search]');
-    const patientSelect = container.querySelector('[data-patient-select]');
+    const patientList = container.querySelector('[data-patient-list]');
+    const patientId = container.querySelector('[data-patient-id]');
     const patientResults = container.querySelector('[data-patient-results]');
+    const selectedPatientCard = container.querySelector('[data-selected-patient]');
+    const selectedPatientName = container.querySelector('[data-selected-patient-name]');
+    const selectedPatientRecord = container.querySelector('[data-selected-patient-record]');
+    const selectedPatientPhone = container.querySelector('[data-selected-patient-phone]');
+    const clearPatientButton = container.querySelector('[data-clear-patient]');
     const selectedDate = container.querySelector('[data-selected-date]');
     const selectedTime = container.querySelector('[data-selected-time]');
     const customDate = container.querySelector('[data-custom-date]');
@@ -25,40 +32,184 @@ function initializeAppointmentScheduler(container) {
     const reason = container.querySelector('[name="motivo"]');
     const characterCount = container.querySelector('[data-character-count]');
     const availabilityUrl = container.dataset.availabilityUrl;
+    const patientSearchUrl = container.dataset.patientSearchUrl;
 
-    if (!form || !selectedDate || !selectedTime || !timeGrid || !availabilityStatus || !submitButton) return;
+    if (!form || !patientId || !selectedDate || !selectedTime || !timeGrid || !availabilityStatus || !submitButton) return;
 
     let availabilityRequest = null;
+    let patientSearchRequest = null;
+    let patientSearchTimer = null;
+    let patientMatches = [];
+    let activePatientIndex = -1;
     let availabilityReady = false;
     let submitting = false;
     const initialTime = selectedTime.value;
-    const patientRecords = patientSelect
-        ? Array.from(patientSelect.options).filter((option) => option.value).map((option) => ({
-            value: option.value,
-            label: option.textContent,
-            search: option.dataset.search || option.textContent.toLocaleLowerCase('es-MX'),
-            name: option.dataset.name || option.textContent,
-            record: option.dataset.record || '—',
-            phone: option.dataset.phone || '',
-            detailUrl: option.dataset.detailUrl || '#',
-            existingAppointment: option.dataset.existingAppointment || '',
-            selected: option.selected,
-        }))
-        : [];
+    let selectedPatient = patientId.value && selectedPatientCard ? {
+        id: patientId.value,
+        name: selectedPatientCard.dataset.patientName || '',
+        record: selectedPatientCard.dataset.patientRecord || '—',
+        phone: selectedPatientCard.dataset.patientPhone || '',
+        detailUrl: selectedPatientCard.dataset.patientDetailUrl || '#',
+        existingAppointment: selectedPatientCard.dataset.existingAppointment || '',
+    } : null;
 
-    function selectedPatientOption() {
-        return patientSelect?.selectedOptions?.[0] || null;
+    function hidePatientResults() {
+        if (patientList) {
+            patientList.hidden = true;
+            patientList.replaceChildren();
+        }
+        if (patientSearch) {
+            patientSearch.setAttribute('aria-expanded', 'false');
+            patientSearch.removeAttribute('aria-activedescendant');
+        }
+        patientMatches = [];
+        activePatientIndex = -1;
     }
 
     function updatePatientSummary() {
-        const option = selectedPatientOption();
-        const hasExistingAppointment = Boolean(option?.dataset.existingAppointment);
-        if (summaryPatient) summaryPatient.textContent = option?.dataset.name || 'Selecciona un paciente';
-        if (summaryRecord) summaryRecord.textContent = option?.dataset.record || '—';
+        const hasExistingAppointment = Boolean(selectedPatient?.existingAppointment);
+        if (summaryPatient) summaryPatient.textContent = selectedPatient?.name || 'Selecciona un paciente';
+        if (summaryRecord) summaryRecord.textContent = selectedPatient?.record || '—';
         if (existingWarning) existingWarning.hidden = !hasExistingAppointment;
-        if (existingCopy) existingCopy.textContent = hasExistingAppointment ? option.dataset.existingAppointment : '';
-        if (existingLink && option) existingLink.href = option.dataset.detailUrl || '#';
+        if (existingCopy) existingCopy.textContent = selectedPatient?.existingAppointment || '';
+        if (existingLink) existingLink.href = selectedPatient?.detailUrl || '#';
         updateSubmitState();
+    }
+
+    function renderSelectedPatient() {
+        if (selectedPatientCard) selectedPatientCard.hidden = !selectedPatient;
+        if (selectedPatientName) selectedPatientName.textContent = selectedPatient?.name || '';
+        if (selectedPatientRecord) selectedPatientRecord.textContent = selectedPatient?.record || '';
+        if (selectedPatientPhone) selectedPatientPhone.textContent = selectedPatient?.phone || '';
+        patientId.value = selectedPatient?.id || '';
+        updatePatientSummary();
+    }
+
+    function selectPatient(record) {
+        selectedPatient = record;
+        if (patientSearch) patientSearch.value = record.name;
+        if (patientResults) patientResults.textContent = 'Paciente seleccionado.';
+        hidePatientResults();
+        renderSelectedPatient();
+    }
+
+    function setActivePatient(index) {
+        if (!patientList || !patientMatches.length) return;
+        activePatientIndex = (index + patientMatches.length) % patientMatches.length;
+        patientList.querySelectorAll('[role="option"]').forEach((option, optionIndex) => {
+            const active = optionIndex === activePatientIndex;
+            option.classList.toggle('is-active', active);
+            option.setAttribute('aria-selected', String(active));
+            if (active) {
+                patientSearch?.setAttribute('aria-activedescendant', option.id);
+                option.scrollIntoView({ block: 'nearest' });
+            }
+        });
+    }
+
+    function renderPatientResults(records) {
+        if (!patientList || !patientSearch) return;
+        patientList.replaceChildren();
+        patientMatches = records;
+        activePatientIndex = -1;
+        if (!records.length) {
+            patientList.hidden = true;
+            patientSearch.setAttribute('aria-expanded', 'false');
+            if (patientResults) patientResults.textContent = 'No se encontraron pacientes activos con esos datos.';
+            return;
+        }
+
+        records.forEach((record, index) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.id = `appointment-patient-result-${record.id}`;
+            option.className = 'appointment-search-result';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', 'false');
+
+            const identity = document.createElement('span');
+            identity.className = 'appointment-search-result-copy';
+            const name = document.createElement('strong');
+            name.textContent = record.name;
+            const detail = document.createElement('small');
+            detail.textContent = `${record.record} · ${record.phone}`;
+            identity.append(name, detail);
+            option.appendChild(identity);
+
+            if (record.existingAppointment) {
+                const badge = document.createElement('span');
+                badge.className = 'appointment-search-result-badge';
+                badge.textContent = 'Cita programada';
+                option.appendChild(badge);
+            }
+            option.addEventListener('pointermove', () => setActivePatient(index));
+            option.addEventListener('click', () => selectPatient(record));
+            patientList.appendChild(option);
+        });
+        patientList.hidden = false;
+        patientSearch.setAttribute('aria-expanded', 'true');
+        if (patientResults) {
+            patientResults.textContent = `${records.length} ${records.length === 1 ? 'paciente encontrado' : 'pacientes encontrados'}. Selecciona uno para continuar.`;
+        }
+    }
+
+    async function searchPatients(query) {
+        if (!patientSearchUrl) return;
+        if (patientSearchRequest) patientSearchRequest.abort();
+        const controller = new AbortController();
+        patientSearchRequest = controller;
+        if (patientResults) patientResults.textContent = 'Buscando paciente…';
+        patientSearch?.setAttribute('aria-busy', 'true');
+        try {
+            const url = new URL(patientSearchUrl, window.location.origin);
+            url.searchParams.set('busqueda', query);
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success || !Array.isArray(data.resultados)) {
+                throw new Error(data.error || 'No fue posible buscar pacientes.');
+            }
+            const records = data.resultados.map((item) => ({
+                id: String(item.id),
+                name: item.nombre,
+                record: item.expediente,
+                phone: item.telefono,
+                detailUrl: item.detalle_url,
+                existingAppointment: item.cita_programada?.etiqueta || '',
+            }));
+            renderPatientResults(records);
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            hidePatientResults();
+            if (patientResults) patientResults.textContent = error.message || 'No fue posible buscar pacientes.';
+        } finally {
+            if (patientSearchRequest === controller) {
+                patientSearchRequest = null;
+                patientSearch?.removeAttribute('aria-busy');
+            }
+        }
+    }
+
+    function schedulePatientSearch() {
+        if (patientSearchTimer) window.clearTimeout(patientSearchTimer);
+        if (patientSearchRequest) patientSearchRequest.abort();
+        const query = String(patientSearch?.value || '').trim();
+        if (selectedPatient && query !== selectedPatient.name) {
+            selectedPatient = null;
+            renderSelectedPatient();
+        }
+        if (query.length < 2) {
+            hidePatientResults();
+            if (patientResults) patientResults.textContent = 'Escribe al menos 2 caracteres para buscar.';
+            return;
+        }
+        patientSearchTimer = window.setTimeout(() => {
+            patientSearchTimer = null;
+            searchPatients(query);
+        }, 250);
     }
 
     function updateDateSummary() {
@@ -78,8 +229,7 @@ function initializeAppointmentScheduler(container) {
     }
 
     function updateSubmitState() {
-        const option = selectedPatientOption();
-        const patientReady = Boolean(option?.value) && !option?.dataset.existingAppointment;
+        const patientReady = Boolean(patientId.value) && !selectedPatient?.existingAppointment;
         submitButton.disabled = !(patientReady && selectedDate.value && selectedTime.value && availabilityReady) || submitting;
     }
 
@@ -180,33 +330,34 @@ function initializeAppointmentScheduler(container) {
         }
     }
 
-    function filterPatients() {
-        if (!patientSelect) return;
-        const query = String(patientSearch?.value || '').trim().toLocaleLowerCase('es-MX');
-        const previousValue = patientSelect.value;
-        const matches = patientRecords.filter((record) => !query || record.search.includes(query));
-        patientSelect.replaceChildren();
-        const placeholder = new Option('Selecciona un paciente registrado', '', false, !matches.some((record) => record.value === previousValue));
-        placeholder.disabled = true;
-        patientSelect.appendChild(placeholder);
-        matches.forEach((record) => {
-            const option = new Option(record.label, record.value, false, record.value === previousValue);
-            option.dataset.search = record.search;
-            option.dataset.name = record.name;
-            option.dataset.record = record.record;
-            option.dataset.phone = record.phone;
-            option.dataset.detailUrl = record.detailUrl;
-            if (record.existingAppointment) option.dataset.existingAppointment = record.existingAppointment;
-            patientSelect.appendChild(option);
-        });
-        if (patientResults) {
-            patientResults.textContent = `${matches.length} ${matches.length === 1 ? 'paciente encontrado' : 'pacientes encontrados'}`;
+    patientSearch?.addEventListener('input', schedulePatientSearch);
+    patientSearch?.addEventListener('keydown', (event) => {
+        if (patientList?.hidden || !patientMatches.length) return;
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setActivePatient(activePatientIndex + 1);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setActivePatient(activePatientIndex - 1);
+        } else if (event.key === 'Enter' && activePatientIndex >= 0) {
+            event.preventDefault();
+            selectPatient(patientMatches[activePatientIndex]);
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            hidePatientResults();
         }
-        updatePatientSummary();
-    }
-
-    patientSearch?.addEventListener('input', filterPatients);
-    patientSelect?.addEventListener('change', updatePatientSummary);
+    });
+    clearPatientButton?.addEventListener('click', () => {
+        selectedPatient = null;
+        if (patientSearch) patientSearch.value = '';
+        if (patientResults) patientResults.textContent = 'Escribe al menos 2 caracteres para buscar.';
+        hidePatientResults();
+        renderSelectedPatient();
+        patientSearch?.focus();
+    });
+    document.addEventListener('pointerdown', (event) => {
+        if (patientFinder && !patientFinder.contains(event.target)) hidePatientResults();
+    });
     calendarButtons.forEach((button) => button.addEventListener('click', () => selectDate(button.dataset.calendarDate)));
     customDate?.addEventListener('change', () => selectDate(customDate.value));
     reason?.addEventListener('input', () => {
@@ -224,10 +375,15 @@ function initializeAppointmentScheduler(container) {
         const label = submitButton.querySelector('span');
         if (label) label.textContent = 'Agendando…';
     });
-    window.addEventListener('pagehide', () => availabilityRequest?.abort());
+    window.addEventListener('pagehide', () => {
+        availabilityRequest?.abort();
+        patientSearchRequest?.abort();
+        if (patientSearchTimer) window.clearTimeout(patientSearchTimer);
+    });
 
     if (reason && characterCount) characterCount.textContent = `${reason.value.length} / 500`;
-    updatePatientSummary();
+    renderSelectedPatient();
+    if (selectedPatient && patientResults) patientResults.textContent = 'Paciente seleccionado.';
     updateDateSummary();
     updateTimeSummary();
     selectDate(selectedDate.value);

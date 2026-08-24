@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.7.0
+# Matriz de pruebas — versión 1.7.1
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -28,6 +28,8 @@ Estos 15 casos permanecen por compatibilidad y son recolectados por la suite uni
 | --- | --- | --- |
 | CITA-UI-01 | Estado inicial | Modal y advertencia cerrados al cargar el detalle |
 | CITA-UI-02 | Contrato local | Cierres, Escape, `pageshow`, cancelación de red y doble envío |
+| CITA-SEARCH-01 | Privacidad de búsqueda | La agenda no renderiza el padrón; el endpoint exige sesión, limita resultados y omite datos clínicos |
+| CITA-SEARCH-02 | Selección accesible | Combobox/listbox, flechas, Enter, Escape, cancelación y ficha única seleccionada |
 | CITA-UI-03 | Horarios | 21 etiquetas literales de 09:00 a 19:00 y estilos de contraste |
 | CITA-SEC-01 | Autenticación | Disponibilidad redirige al login sin sesión |
 | CITA-API-01 | Disponibilidad | Respuesta ordenada, sin caché y exclusión al reagendar |
@@ -123,7 +125,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 74/74 (incluye 15 casos unittest)
+pytest: 75/75 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

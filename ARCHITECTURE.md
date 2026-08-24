@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.0
+# Arquitectura técnica — versión 1.7.1
 
 ## Componentes
 
@@ -13,7 +13,7 @@
 
 El dashboard agrega consultas de lectura acotadas para altas de seis meses, actividad de siete días, próximas citas, pacientes recientes y expedientes pendientes. La consulta de pacientes sin atención reciente se ejecuta únicamente para el perfil profesional de Nutrición; Medicina general y Odontología no reciben ese dato en el contexto de la plantilla. Las gráficas se generan como SVG local a partir de series construidas en servidor; no incorporan bibliotecas de visualización ni servicios externos.
 
-La acción de agenda del KPI reutiliza el blueprint `pacientes` mediante `GET/POST /pacientes/agendar-cita`. La interfaz consulta `GET /pacientes/disponibilidad_citas` para obtener los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido`. La respuesta no contiene datos de pacientes y usa `Cache-Control: no-store`. El POST vuelve a validar paciente activo, fecha, rango, hora, cita previa y conflicto; la comprobación y escritura se serializan dentro del proceso local de Waitress antes del `commit` y la auditoría.
+La acción de agenda del KPI reutiliza el blueprint `pacientes` mediante `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido`. Ambas respuestas usan `Cache-Control: no-store`. El POST vuelve a validar paciente activo, fecha, rango, hora, cita previa y conflicto; la comprobación y escritura se serializan dentro del proceso local de Waitress antes del `commit` y la auditoría.
 
 Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
 

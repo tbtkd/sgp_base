@@ -7,7 +7,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="appointment-scheduler" data-appointment-scheduler data-availability-url="{{ url_for('pacientes.disponibilidad_citas') }}">
+<div class="appointment-scheduler"
+     data-appointment-scheduler
+     data-availability-url="{{ url_for('pacientes.disponibilidad_citas') }}"
+     data-patient-search-url="{{ url_for('pacientes.buscar_para_cita') }}">
     <header class="appointment-scheduler-header">
         <div>
             <p>Agenda rápida</p>
@@ -26,45 +29,59 @@
             <section class="appointment-step" aria-labelledby="appointment-patient-title">
                 <div class="appointment-step-heading">
                     <span>1</span>
-                    <div><h3 id="appointment-patient-title">Selecciona al paciente</h3><p>Sólo se muestran pacientes activos registrados.</p></div>
+                    <div><h3 id="appointment-patient-title">Busca al paciente</h3><p>Los datos se muestran únicamente al encontrar y seleccionar un paciente activo.</p></div>
                 </div>
-                {% if pacientes %}
                 <label for="appointment-patient-search" class="appointment-label">Buscar por nombre, expediente o teléfono</label>
+                <div class="appointment-patient-finder">
                 <div class="appointment-search-box">
                     <i class="fas fa-search" aria-hidden="true"></i>
-                    <input id="appointment-patient-search" type="search" maxlength="100" autocomplete="off" placeholder="Ej. Laura García o 5512345678" data-patient-search>
+                    <input id="appointment-patient-search"
+                           type="search"
+                           maxlength="100"
+                           autocomplete="off"
+                           placeholder="Ej. Laura García, EXP-0001 o 5512345678"
+                           role="combobox"
+                           aria-autocomplete="list"
+                           aria-expanded="false"
+                           aria-controls="appointment-patient-results"
+                           aria-describedby="appointment-patient-status"
+                           data-patient-search>
                 </div>
-                <label for="appointment-patient" class="sr-only">Paciente registrado</label>
-                <select id="appointment-patient" name="paciente_id" size="6" required data-patient-select>
-                    <option value="" disabled{% if not paciente_seleccionado %} selected{% endif %}>Selecciona un paciente registrado</option>
-                    {% for paciente in pacientes %}
-                    {% set cita_pendiente = citas_pendientes_por_paciente.get(paciente.id) %}
-                    <option value="{{ paciente.id }}"
-                            data-search="{{ (paciente.nombre_completo ~ ' ' ~ paciente.telefono ~ ' EXP-' ~ '%04d'|format(paciente.id))|lower }}"
-                            data-name="{{ paciente.nombre_completo }}"
-                            data-record="EXP-{{ '%04d'|format(paciente.id) }}"
-                            data-phone="{{ paciente.telefono }}"
-                            data-detail-url="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}"
-                            {% if cita_pendiente %}data-existing-appointment="{{ cita_pendiente.fecha|format_date }} · {{ cita_pendiente.hora.strftime('%H:%M') }}"{% endif %}
-                            {% if paciente_seleccionado == paciente.id|string %}selected{% endif %}>
-                        {{ paciente.nombre_completo }} · EXP-{{ '%04d'|format(paciente.id) }} · {{ paciente.telefono }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <p class="appointment-results" data-patient-results aria-live="polite">{{ pacientes|length }} pacientes disponibles</p>
-                <div class="appointment-existing" data-existing-warning hidden>
+                <div id="appointment-patient-results"
+                     class="appointment-search-results"
+                     role="listbox"
+                     aria-label="Pacientes encontrados"
+                     data-patient-list
+                     hidden></div>
+                </div>
+                <input type="hidden"
+                       id="appointment-patient"
+                       name="paciente_id"
+                       value="{{ paciente_seleccionado.id if paciente_seleccionado else '' }}"
+                       data-patient-id>
+                <p id="appointment-patient-status" class="appointment-results" data-patient-results aria-live="polite">Escribe al menos 2 caracteres para buscar.</p>
+
+                <div class="appointment-selected-patient"
+                     data-selected-patient
+                     data-patient-name="{{ paciente_seleccionado.nombre_completo if paciente_seleccionado else '' }}"
+                     data-patient-record="{{ 'EXP-%04d'|format(paciente_seleccionado.id) if paciente_seleccionado else '' }}"
+                     data-patient-phone="{{ paciente_seleccionado.telefono if paciente_seleccionado else '' }}"
+                     data-patient-detail-url="{{ url_for('pacientes.detalle_paciente', id=paciente_seleccionado.id) if paciente_seleccionado else '' }}"
+                     data-existing-appointment="{% if cita_pendiente_seleccionada %}{{ cita_pendiente_seleccionada.fecha|format_date }} · {{ cita_pendiente_seleccionada.hora.strftime('%H:%M') }}{% endif %}"
+                     {% if not paciente_seleccionado %}hidden{% endif %}>
+                    <span class="appointment-selected-avatar" aria-hidden="true"><i class="fas fa-user-check"></i></span>
+                    <span class="appointment-selected-copy">
+                        <strong data-selected-patient-name>{{ paciente_seleccionado.nombre_completo if paciente_seleccionado else '' }}</strong>
+                        <small><span data-selected-patient-record>{{ 'EXP-%04d'|format(paciente_seleccionado.id) if paciente_seleccionado else '' }}</span><span aria-hidden="true"> · </span><span data-selected-patient-phone>{{ paciente_seleccionado.telefono if paciente_seleccionado else '' }}</span></small>
+                    </span>
+                    <button type="button" class="appointment-change-patient" data-clear-patient aria-label="Cambiar paciente">Cambiar</button>
+                </div>
+
+                <div class="appointment-existing" data-existing-warning {% if not cita_pendiente_seleccionada %}hidden{% endif %}>
                     <i class="fas fa-calendar-check" aria-hidden="true"></i>
-                    <span><strong>Este paciente ya tiene una cita programada.</strong><small data-existing-copy></small></span>
-                    <a href="#" data-existing-link>Ver o reagendar</a>
+                    <span><strong>Este paciente ya tiene una cita programada.</strong><small data-existing-copy>{% if cita_pendiente_seleccionada %}{{ cita_pendiente_seleccionada.fecha|format_date }} · {{ cita_pendiente_seleccionada.hora.strftime('%H:%M') }}{% endif %}</small></span>
+                    <a href="{{ url_for('pacientes.detalle_paciente', id=paciente_seleccionado.id) if paciente_seleccionado else '#' }}" data-existing-link>Ver o reagendar</a>
                 </div>
-                {% else %}
-                <div class="appointment-empty-patients">
-                    <i class="fas fa-user-plus" aria-hidden="true"></i>
-                    <strong>No hay pacientes activos registrados</strong>
-                    <p>Registra primero al paciente para poder asignarle una cita.</p>
-                    <a href="{{ url_for('pacientes.nuevo_paciente') }}">Registrar paciente</a>
-                </div>
-                {% endif %}
             </section>
 
             <section class="appointment-step" aria-labelledby="appointment-date-title">

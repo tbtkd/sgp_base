@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">{{ titulo_receta }}</h1>
-            <p class="text-gray-600 mt-1">{{ paciente.nombre_completo }} · Consulta #{{ valoracion.numero_cita }} · {{ valoracion.fecha|format_date }}</p>
+            <p class="text-gray-600 mt-1">{{ paciente.nombre_completo }} · Turno diario #{{ valoracion.numero_cita }} · {{ valoracion.fecha|format_date }}</p>
             {% if receta_origen %}<p class="text-sm text-amber-700 mt-1">Se creará un folio nuevo y el folio {{ receta_origen.folio }} quedará marcado como sustituido.</p>{% endif %}
         </div>
         <a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=valoracion.id) }}" class="px-5 py-2.5 bg-gray-100 rounded-xl font-semibold">Volver a la nota</a>
@@ -45,13 +45,14 @@
 
         <section class="bg-white p-6 rounded-2xl border border-gray-100 space-y-5">
             <div class="flex items-center justify-between gap-4">
-                <div><h2 class="text-xl font-bold">Medicamentos</h2><p class="text-sm text-gray-500">Registra la denominación genérica y las instrucciones completas.</p></div>
+                <div><h2 class="text-xl font-bold">Medicamentos</h2><p class="text-sm text-gray-500">Registra la denominación genérica y las instrucciones completas. Los nuevos se agregan arriba; la receta final conserva el orden de captura.</p></div>
                 <button type="button" data-add-medicine class="px-4 py-2 bg-teal-50 text-teal-700 rounded-xl font-semibold" {% if requisitos_faltantes %}disabled{% endif %}><i class="fas fa-plus mr-2"></i>Agregar</button>
             </div>
             <div class="space-y-5" data-medicine-list>
                 {% for item in medicamento_rows %}
-                <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4">
-                    <div class="flex justify-between items-center"><legend class="font-bold">Medicamento <span data-medicine-number>{{ loop.index }}</span></legend><button type="button" data-remove-medicine class="text-red-600 text-sm font-semibold">Quitar</button></div>
+                <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4" data-medicine-order="{{ item.get('_capture_order', loop.index) }}">
+                    <input type="hidden" name="orden_medicamento[]" value="{{ item.get('_capture_order', loop.index) }}" data-medicine-order-input>
+                    <div class="flex justify-between items-center"><legend class="font-bold">Medicamento <span data-medicine-number>{{ item.get('_capture_order', loop.index) }}</span></legend><button type="button" data-remove-medicine class="text-red-600 text-sm font-semibold">Quitar</button></div>
                     <div class="grid md:grid-cols-2 gap-4">
                         {% for field, label, required, maxlength in [
                             ('denominacion_generica','Denominación genérica',true,160),
@@ -86,7 +87,8 @@
     </form>
 
     <template id="medicine-row-template">
-        <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4">
+        <fieldset class="medicine-row border border-gray-200 rounded-2xl p-5 space-y-4" data-medicine-order="">
+            <input type="hidden" name="orden_medicamento[]" value="" data-medicine-order-input>
             <div class="flex justify-between items-center"><legend class="font-bold">Medicamento <span data-medicine-number></span></legend><button type="button" data-remove-medicine class="text-red-600 text-sm font-semibold">Quitar</button></div>
             <div class="grid md:grid-cols-2 gap-4">
                 {% for field, label, required, maxlength in [

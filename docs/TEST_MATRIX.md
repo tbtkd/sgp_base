@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.7.1
+# Matriz de pruebas — versión 1.7.2
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -113,6 +113,8 @@ python -m pytest -q
 | RX-HIS-01 | Historial | Original, adicional y sustitución conservan folios/versiones y vigencia independiente |
 | RX-SUB-01 | Corrección | Motivo obligatorio, documento anterior intacto y leyenda de no surtir |
 | RX-MIG-01 | Migración | Unicidad legada retirada sin perder folios y llaves foráneas verificadas |
+| RX-ORDER-01 | Captura | Agregar usa inserción superior, foco inicial y orden oculto consecutivo |
+| RX-ORDER-02 | Persistencia/impresión | Filas visuales `3,2,1` se guardan y muestran como `1,2,3` |
 | UI-ID-01 | Identidad | Cuenta sólo en sidebar, topbar sin identidad e icono canónico PNG/ICO |
 | UI-ID-02 | Estado de cuenta | Panel cerrado por `hidden`, sin saludo duplicado y control local con `aria-expanded` |
 
@@ -122,10 +124,18 @@ python -m pytest -q
 | --- | --- | --- |
 | PKG-CLEAN-01 | Limpieza segura | Retira SVG/cachés obsoletos y conserva logo vigente, entorno virtual y base local |
 
+## Turno diario (`tests/test_daily_consultation_sequence.py`)
+
+| ID | Control | Cobertura |
+| --- | --- | --- |
+| CONS-DAY-01 | Asignación | El servidor ignora el número enviado, asigna `1,2…` global y reinicia en otra fecha |
+| CONS-DAY-02 | Proyección | Requiere sesión, valida fecha futura y responde sin caché |
+| CONS-DAY-03 | Migración | Filas legadas se conservan, renumeran determinísticamente y reciben unicidad diaria |
+
 Resultados esperados:
 
 ```text
-pytest: 75/75 (incluye 15 casos unittest)
+pytest: 80/80 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

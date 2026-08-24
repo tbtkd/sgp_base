@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.7.1:
+Resultado esperado para la versión 1.7.2:
 
 ```text
-75 passed
+80 passed
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -65,6 +65,12 @@ Para validar recetas originales/adicionales/sustituciones, migración, impresió
 
 ```powershell
 python -m pytest -q tests/test_prescriptions.py
+```
+
+Para validar el turno diario global, su API sin caché y la migración de consultas legadas:
+
+```powershell
+python -m pytest -q tests/test_daily_consultation_sequence.py
 ```
 
 Para validar login, cambio/restablecimiento de contraseña, invalidación de sesiones y recuperación local:

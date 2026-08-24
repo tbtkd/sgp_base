@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.1
+# Arquitectura técnica — versión 1.7.2
 
 ## Componentes
 
@@ -45,11 +45,19 @@ La denominación interna `valoracion_antropometrica` se conserva para compatibil
 
 Cada receta ordinaria emitida es un documento independiente e inmutable. La consulta admite un original, recetas adicionales y sustituciones versionadas. Una sustitución marca el folio anterior como no vigente sin reescribirlo y enlaza ambos documentos. Los snapshots almacenan nombre, nacimiento y alergias del paciente, además de nombre, cédula, perfil, establecimiento y domicilio del profesional. La bitácora sólo conserva identificadores, tipo, versión y conteos, nunca el contenido farmacológico.
 
+La interfaz de receta inserta visualmente cada medicamento nuevo al inicio para mantener accesible el botón de alta. Cada fila transporta `orden_medicamento[]`; el validador exige una permutación exacta `1..n`, ordena los datos antes de crear los modelos y la relación los recupera por ID. De este modo, la conveniencia visual no altera el orden clínico persistido o impreso.
+
+## Turno diario de atención
+
+`ValoracionAntropometrica.numero_cita` es el turno ordinal global de una fecha, no un consecutivo por paciente. La restricción `(fecha, numero_cita)` impide duplicados. El GET autenticado `/valoraciones/siguiente-numero` ofrece sólo una proyección sin caché; el POST ignora el valor enviado por el navegador, toma un bloqueo local compartido por los hilos de Waitress, consulta `MAX + 1`, persiste y audita dentro de la misma sección crítica. SQLite aporta una segunda defensa mediante el índice único.
+
+La importación XLSX utiliza el mismo bloqueo y asigna secuencias por fecha. Cambiar una nota a otra fecha reserva el siguiente turno de destino y conserva el evento anterior/nuevo en auditoría. No se renumeran documentos históricos tras eliminaciones o cambios; los reportes de volumen deben usar un conteo de filas.
+
 ## Migraciones compatibles
 
 `init_db()` crea tablas faltantes y compara cada tabla conocida mediante `PRAGMA table_info`. Solo ejecuta `ALTER TABLE ... ADD COLUMN` cuando la columna nueva es nullable o posee un valor predeterminado. Si falta una llave primaria o una columna nueva no puede añadirse sin inventar datos, el arranque se detiene.
 
-Este mecanismo no elimina ni renombra columnas. La versión 1.6.0 incorpora una excepción controlada y versionada para retirar la restricción única legada `recetas.valoracion_id`: reconstruye sólo esa tabla dentro de una transacción, conserva todas sus filas, recrea llaves/índices y ejecuta `foreign_key_check` e `integrity_check`. El respaldo de arranque ocurre antes de la migración. Cualquier cambio estructural futuro requiere el mismo nivel de copia, prueba y verificación.
+Este mecanismo no elimina ni renombra columnas. La versión 1.6.0 incorpora una excepción controlada y versionada para retirar la restricción única legada `recetas.valoracion_id`: reconstruye sólo esa tabla dentro de una transacción, conserva todas sus filas, recrea llaves/índices y ejecuta `foreign_key_check` e `integrity_check`. La versión 1.7.2 incorpora otra migración transaccional que normaliza los turnos legados por fecha, `created_at` e ID, y crea el índice único diario después de `integrity_check`. El respaldo de arranque ocurre antes de las migraciones. Cualquier cambio estructural futuro requiere el mismo nivel de copia, prueba y verificación.
 
 Las bases legadas con roles `Admin/Nutricionista/Asistente` se interpretan como `admin/medico/recepcion` sin modificar su restricción histórica; las instalaciones nuevas almacenan exclusivamente el catálogo actual.
 

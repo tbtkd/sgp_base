@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.7.1 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. Las columnas nuevas se incorporan mediante migración aditiva y la restricción legada de recetas se actualiza mediante una migración transaccional específica que conserva y verifica los datos.
+La versión 1.7.2 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final y las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
 
 Módulos evaluados:
 
@@ -219,12 +219,21 @@ Módulos evaluados:
 - El combobox admite flechas, Enter y Escape; cambiar el texto invalida el identificador previamente seleccionado.
 - Agenda de hoy, Próximas citas y Pacientes recientes fueron analizados, pero no retirados ni reinterpretados en esta entrega.
 
+### Fase 1.14: orden de receta y turno diario — completada en 1.7.2
+
+- Agregar medicamento inserta la tarjeta nueva arriba y traslada el foco al primer campo requerido.
+- Un identificador oculto conserva el orden real de captura; el servidor exige `1..n`, reordena antes de guardar y la receta imprime esa misma secuencia.
+- El número editable de consulta se reemplaza por un turno diario de sólo lectura, global entre pacientes y reiniciado por fecha.
+- La proyección al cambiar de fecha es accesible y no se almacena en caché; el servidor asigna el valor definitivo bajo bloqueo.
+- SQLite impone unicidad `(fecha, numero_cita)` y una migración no destructiva normaliza filas existentes.
+- La importación XLSX y el cambio de fecha de una consulta aplican la misma secuencia y generan trazabilidad.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
 | --- | --- | --- | --- |
 | Diseño | Paleta teal/esmeralda, tarjetas, sidebar y tablas | Estados vacíos, jerarquía, top bar e icono unificado | Identidad/cierre duplicados del sidebar |
-| Base de datos | Relaciones y todos los datos existentes | Columnas aditivas y restricción de múltiples recetas migrada transaccionalmente | Ninguna fila ni dato clínico |
+| Base de datos | Relaciones y todos los datos existentes | Columnas aditivas, múltiples recetas y turno diario migrados transaccionalmente | Ninguna fila ni dato clínico |
 | Historial | Expediente individual y permisos | Lista con campos actuales | Campos de nutrición legados inexistentes |
 | Pestañas | Tres secciones generales | Cuarta sección sólo para Nutrición | Estado `activeTab` dependiente de Alpine |
 | Impresión | Botón desde la nota clínica | Vistas A4 separadas para nota y receta | Nota rotulada implícitamente como receta |
@@ -259,6 +268,9 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | RX-CRUD-01 | Emitir receta | Datos obligatorios, snapshot, auditoría e inmutabilidad |
 | RX-PRINT-01 | Imprimir receta | Documento A4 completo y sin shell/CDN |
 | RX-HIS-01 | Adicional/sustitución | Folios y versiones conservados; documento anterior no vigente |
+| RX-ORDER-01 | Orden de receta | Alta visual superior y salida persistida/impresa `1..n` |
+| CONS-DAY-01 | Turno diario | Asignación en servidor, reinicio por fecha y cliente ignorado |
+| CONS-DAY-02 | Migración diaria | Consultas legadas preservadas y unicidad por fecha verificada |
 | RX-MIG-01 | Esquema legado | Datos preservados y nueva relación 1:N verificada |
 | SEC-PASS-01 | Recuperación de acceso | Cambio, temporal, invalidación y contingencia local |
 | UI-ID-01 | Navegación | Identidad y logout sólo en sidebar, topbar limpio e icono canónico |
@@ -279,7 +291,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.7.1: **75 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.7.2: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden de medicamentos, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

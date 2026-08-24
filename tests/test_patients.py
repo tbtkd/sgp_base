@@ -104,8 +104,28 @@ def test_excel_import_accepts_valid_workbook(app, client, login):
             status="activo",
         )
         db.session.add(patient)
-        db.session.commit()
+        db.session.flush()
         patient_id = patient.id
+        previous_patient = Paciente(
+            nombre="Paciente",
+            apellido_paterno="Anterior",
+            genero="otro",
+            fecha_nacimiento=date(1985, 1, 1),
+            telefono="5598765432",
+            ciudad="México",
+            status="activo",
+        )
+        db.session.add(previous_patient)
+        db.session.flush()
+        ValoracionAntropometrica.crear(
+            previous_patient.id,
+            {
+                "numero_cita": 1,
+                "fecha": date(2026, 1, 1),
+                "motivo_consulta": "Atención previa del día",
+            },
+        )
+        db.session.commit()
     token = csrf_from(client.get(f"/pacientes/{patient_id}"))
     response = client.post(
         f"/pacientes/{patient_id}/cargar-excel",
@@ -115,4 +135,6 @@ def test_excel_import_accepts_valid_workbook(app, client, login):
     assert response.status_code == 200
     assert response.get_json()["registros_procesados"] == 1
     with app.app_context():
-        assert ValoracionAntropometrica.query.count() == 1
+        assert ValoracionAntropometrica.query.count() == 2
+        imported = ValoracionAntropometrica.query.filter_by(paciente_id=patient_id).one()
+        assert imported.numero_cita == 2

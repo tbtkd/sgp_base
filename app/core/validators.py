@@ -294,6 +294,20 @@ def prescription_payload(form):
     if row_count > 10:
         raise ValidationError("Una receta puede contener como máximo 10 medicamentos.")
 
+    submitted_orders = _form_values(form, "orden_medicamento[]")
+    if submitted_orders:
+        if len(submitted_orders) != row_count:
+            raise ValidationError("El orden de los medicamentos está incompleto o no coincide.")
+        orders = [
+            integer(value, "Orden de medicamento", minimum=1, maximum=10)
+            for value in submitted_orders
+        ]
+        if sorted(orders) != list(range(1, row_count + 1)):
+            raise ValidationError("El orden de los medicamentos debe ser consecutivo y no puede repetirse.")
+    else:
+        # Compatibilidad con formularios y clientes anteriores a la versión 1.7.2.
+        orders = list(range(1, row_count + 1))
+
     medicines = []
     fingerprints = set()
     required = {
@@ -309,23 +323,34 @@ def prescription_payload(form):
         "cantidad": ("Cantidad a surtir", 100),
         "indicaciones": ("Indicaciones adicionales", 500),
     }
-    for index in range(row_count):
+    for index in sorted(range(row_count), key=lambda position: orders[position]):
+        capture_order = orders[index]
         raw = {field: columns[field][index] for field in PRESCRIPTION_ITEM_FIELDS}
         if not any(str(value or "").strip() for value in raw.values()):
             continue
         item = {
-            field: clean_text(raw[field], f"{label} del medicamento {index + 1}", maximum=maximum, required=True)
+            field: clean_text(
+                raw[field],
+                f"{label} del medicamento {capture_order}",
+                maximum=maximum,
+                required=True,
+            )
             for field, (label, maximum) in required.items()
         }
         item.update(
             {
-                field: clean_text(raw[field], f"{label} del medicamento {index + 1}", maximum=maximum) or None
+                field: clean_text(
+                    raw[field],
+                    f"{label} del medicamento {capture_order}",
+                    maximum=maximum,
+                )
+                or None
                 for field, (label, maximum) in optional.items()
             }
         )
         fingerprint = tuple(str(item.get(field) or "").casefold() for field in PRESCRIPTION_ITEM_FIELDS)
         if fingerprint in fingerprints:
-            raise ValidationError(f"El medicamento {index + 1} duplica exactamente otra fila.")
+            raise ValidationError(f"El medicamento {capture_order} duplica exactamente otra fila.")
         fingerprints.add(fingerprint)
         medicines.append(item)
 

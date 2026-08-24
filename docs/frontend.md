@@ -20,7 +20,11 @@ La impresión genera una nota limpia que el navegador puede guardar como PDF. Mu
 
 ## Receta ordinaria
 
-La receta se genera después de guardar una consulta y nunca comparte la plantilla de la nota. Su formulario permite agregar o quitar hasta 10 medicamentos y su vista A4 es autocontenida. La acción sólo aparece para Medicina general u Odontología; una pantalla de requisitos impide emitir cuando falta cédula o domicilio. El detalle lista todos los folios, permite emitir una receta adicional y ofrece **Sustituir** sólo sobre documentos vigentes. El folio sustituido se conserva y su impresión muestra una advertencia roja.
+La receta se genera después de guardar una consulta y nunca comparte la plantilla de la nota. Su formulario permite agregar o quitar hasta 10 medicamentos y su vista A4 es autocontenida. Cada alta aparece en la parte superior y recibe foco en el primer campo requerido; la etiqueta conserva su orden de captura y la impresión se ordena `1..n`. La acción sólo aparece para Medicina general u Odontología; una pantalla de requisitos impide emitir cuando falta cédula o domicilio. El detalle lista todos los folios, permite emitir una receta adicional y ofrece **Sustituir** sólo sobre documentos vigentes. El folio sustituido se conserva y su impresión muestra una advertencia roja.
+
+## Turno diario de consulta
+
+El campo **Turno diario** es de sólo lectura. Al cambiar la fecha, `consulta_diaria.js` cancela la solicitud anterior, consulta una proyección autenticada y anuncia el resultado mediante `aria-live`. Si la red falla, el formulario continúa disponible porque el servidor asigna el valor definitivo al guardar. La interfaz nunca presenta la proyección como una reserva confirmada.
 
 ## Navegación, identidad y tema
 

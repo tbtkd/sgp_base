@@ -24,16 +24,23 @@ def _medication_rows(form=None, prescription=None):
     if form:
         columns = {field: form.getlist(f"{field}[]") for field in PRESCRIPTION_ITEM_FIELDS}
         count = max((len(values) for values in columns.values()), default=0)
+        orders = form.getlist("orden_medicamento[]")
         return [
-            {field: columns[field][index] if index < len(columns[field]) else "" for field in columns}
+            {
+                **{field: columns[field][index] if index < len(columns[field]) else "" for field in columns},
+                "_capture_order": orders[index] if index < len(orders) else index + 1,
+            }
             for index in range(count)
-        ] or [{}]
+        ] or [{"_capture_order": 1}]
     if prescription:
         return [
-            {field: getattr(item, field) or "" for field in PRESCRIPTION_ITEM_FIELDS}
-            for item in prescription.medicamentos
-        ] or [{}]
-    return [{}]
+            {
+                **{field: getattr(item, field) or "" for field in PRESCRIPTION_ITEM_FIELDS},
+                "_capture_order": index,
+            }
+            for index, item in enumerate(prescription.medicamentos, start=1)
+        ] or [{"_capture_order": 1}]
+    return [{"_capture_order": 1}]
 
 
 def _known_allergies(patient_id):

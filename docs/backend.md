@@ -48,3 +48,11 @@ Cada cambio o restablecimiento de contraseña incrementa `auth_version`, de modo
 ## Datos
 
 `app/db.py` resuelve la ruta persistente, crea un respaldo consistente y ejecuta migraciones aditivas seguras. Para retirar la antigua unicidad de una receta por consulta existe una migración específica, transaccional y verificada que preserva filas e índices. El respaldo rota a 10 copias. Los cambios estructurales futuros requieren scripts versionados y una restauración probada.
+
+## Turno diario y orden de receta
+
+La consulta usa `(fecha, numero_cita)` como clave única operativa. `numero_cita` se calcula en el servidor dentro de `ValoracionAntropometrica.bloqueo_numeracion_diaria()`; el valor del formulario se reemplaza antes de validar/persistir. El endpoint de proyección es autenticado, valida fecha no futura y responde `no-store`. La importación XLSX reserva de igual forma una secuencia por cada fecha presente.
+
+La migración `consultation_daily_sequence` reasigna filas legadas por `fecha`, `created_at` e `id`, crea un índice único y ejecuta `integrity_check`. No elimina ni fusiona consultas. Los huecos posteriores por eliminación o cambio de fecha se conservan para no mutar referencias históricas.
+
+Las recetas reciben `orden_medicamento[]`. `prescription_payload()` exige una secuencia única y consecutiva, reordena las columnas paralelas antes de construir cada medicamento y mantiene compatibilidad con clientes 1.7.1 que no envían el nuevo campo.

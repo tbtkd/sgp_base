@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.2 — Orden de receta y turno diario de consultas
+
+- **Agregar medicamento** inserta la tarjeta nueva en la parte superior y enfoca su primer campo obligatorio.
+- Cada fila conserva un orden de captura oculto, consecutivo, único y validado por el servidor; la receta persistida e impresa mantiene `1, 2, 3…` aunque el formulario muestre primero la captura más reciente.
+- El número de consulta deja de aceptar valores del navegador y se convierte en **Turno diario**, global para todos los pacientes y reiniciado por fecha.
+- La proyección del siguiente turno se actualiza al cambiar la fecha, exige autenticación y usa `Cache-Control: no-store`; la asignación definitiva ocurre dentro de la transacción.
+- La restricción única `(fecha, numero_cita)`, el bloqueo local de asignación y el manejo de conflictos evitan duplicados bajo los hilos de Waitress.
+- Las importaciones XLSX también reciben turnos diarios en servidor; los valores del archivo no pueden forzar el consecutivo persistido.
+- Migración no destructiva para renumerar consultas legadas por fecha/creación/ID y crear el índice diario tras `integrity_check`.
+- Verificación: 80 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.7.1 — Búsqueda privada en agenda y revisión funcional del Dashboard
 
 - La agenda rápida deja de renderizar el padrón completo de pacientes al abrir.

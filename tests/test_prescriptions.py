@@ -260,6 +260,65 @@ def test_prescription_server_validation_rejects_incomplete_or_excess_items():
         prescription_payload(duplicated)
 
 
+def test_prescription_preserves_capture_order_when_new_rows_are_visually_prepended(app):
+    data = _prescription_data("unused", count=3)
+    data.pop("csrf_token")
+    data["orden_medicamento[]"] = ["3", "2", "1"]
+    data["denominacion_generica[]"] = ["Tercero", "Segundo", "Primero"]
+
+    parsed = prescription_payload(data)
+    assert [item["denominacion_generica"] for item in parsed["medicamentos"]] == [
+        "Primero",
+        "Segundo",
+        "Tercero",
+    ]
+
+    invalid = dict(data)
+    invalid["orden_medicamento[]"] = ["1", "1", "2"]
+    with pytest.raises(ValidationError, match="consecutivo"):
+        prescription_payload(invalid)
+
+    root = Path(__file__).parents[1]
+    script = (root / "app" / "static" / "js" / "recetas.js").read_text(encoding="utf-8")
+    template = (root / "app" / "templates" / "recetas" / "nueva_receta.html").read_text(
+        encoding="utf-8"
+    )
+    assert "list.prepend(fragment)" in script
+    assert "list.appendChild" not in script
+    assert "firstRequired.focus()" in script
+    assert 'name="orden_medicamento[]"' in template
+
+
+def test_prescription_print_uses_capture_order_one_to_n(app):
+    address = "Av. Salud 123, Col. Centro, C.P. 06000, Ciudad de México"
+    with app.app_context():
+        doctor = _professional("doctor-order", "medico_general", address=address)
+        _, assessment = _patient_and_assessment(doctor)
+        assessment_id = assessment.id
+
+    client = app.test_client()
+    _login(client, "doctor-order")
+    page = client.get(f"/recetas/valoracion/{assessment_id}/nueva")
+    data = _prescription_data(csrf_from(page), count=3)
+    data["orden_medicamento[]"] = ["3", "2", "1"]
+    data["denominacion_generica[]"] = ["Medicamento tercero", "Medicamento segundo", "Medicamento primero"]
+    response = client.post(f"/recetas/valoracion/{assessment_id}/nueva", data=data)
+    assert response.status_code == 302
+
+    with app.app_context():
+        prescription = Receta.query.one()
+        prescription_id = prescription.id
+        assert [item.denominacion_generica for item in prescription.medicamentos] == [
+            "Medicamento primero",
+            "Medicamento segundo",
+            "Medicamento tercero",
+        ]
+
+    printable = client.get(f"/recetas/{prescription_id}/imprimir").get_data(as_text=True)
+    assert printable.index("1. Medicamento primero") < printable.index("2. Medicamento segundo")
+    assert printable.index("2. Medicamento segundo") < printable.index("3. Medicamento tercero")
+
+
 def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login):
     login()
     page = client.get("/").get_data(as_text=True)

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from threading import Lock
 
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
@@ -6,11 +7,13 @@ from sqlalchemy.orm import joinedload
 from app import db_orm as db
 from app.core.time import utcnow_naive
 
+_DAILY_CONSULTATION_SEQUENCE_LOCK = Lock()
+
 
 class ValoracionAntropometrica(db.Model):
     __tablename__ = "valoracion_antropometrica"
     __table_args__ = (
-        db.UniqueConstraint("paciente_id", "numero_cita", "fecha", name="uq_valoracion_paciente_cita_fecha"),
+        db.UniqueConstraint("fecha", "numero_cita", name="uq_valoracion_fecha_numero_cita"),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -73,6 +76,21 @@ class ValoracionAntropometrica(db.Model):
         db.session.add(assessment)
         return assessment
 
+    @staticmethod
+    def bloqueo_numeracion_diaria():
+        """Serializa la asignación del consecutivo en la instancia local."""
+        return _DAILY_CONSULTATION_SEQUENCE_LOCK
+
+    @staticmethod
+    def siguiente_numero_diario(fecha_consulta):
+        """Obtiene el siguiente turno global de la fecha indicada."""
+        current = (
+            db.session.query(db.func.max(ValoracionAntropometrica.numero_cita))
+            .filter(ValoracionAntropometrica.fecha == fecha_consulta)
+            .scalar()
+        )
+        return int(current or 0) + 1
+
     @property
     def profesional_nombre_mostrado(self):
         return self.profesional_nombre or (self.profesional.nombre_completo if self.profesional else "")
@@ -114,13 +132,19 @@ class ValoracionAntropometrica(db.Model):
     def obtener_por_paciente(paciente_id):
         return (
             ValoracionAntropometrica.query.filter_by(paciente_id=paciente_id)
-            .order_by(ValoracionAntropometrica.fecha.desc())
+            .order_by(ValoracionAntropometrica.fecha.desc(), ValoracionAntropometrica.numero_cita.desc())
             .all()
         )
 
     @staticmethod
     def obtener_todas():
-        return ValoracionAntropometrica.query.order_by(ValoracionAntropometrica.fecha.desc()).limit(1000).all()
+        return (
+            ValoracionAntropometrica.query.order_by(
+                ValoracionAntropometrica.fecha.desc(), ValoracionAntropometrica.numero_cita.desc()
+            )
+            .limit(1000)
+            .all()
+        )
 
     @staticmethod
     def contar_mes_vigente():

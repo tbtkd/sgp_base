@@ -275,6 +275,84 @@ def _migrate_prescription_versions(db, *, logger=None) -> bool:
     return True
 
 
+def _has_daily_consultation_sequence(db) -> bool:
+    """Comprueba la unicidad global de ``(fecha, numero_cita)`` en SQLite."""
+    with db.engine.connect() as connection:
+        tables = set(
+            connection.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").scalars()
+        )
+        if "valoracion_antropometrica" not in tables:
+            return False
+        indexes = connection.exec_driver_sql(
+            "PRAGMA index_list('valoracion_antropometrica')"
+        ).mappings().all()
+        for index in indexes:
+            if not index["unique"]:
+                continue
+            columns = connection.exec_driver_sql(
+                f"PRAGMA index_info({_quote_identifier(index['name'])})"
+            ).mappings().all()
+            if [column["name"] for column in columns] == ["fecha", "numero_cita"]:
+                return True
+    return False
+
+
+def _migrate_daily_consultation_sequence(db, *, logger=None) -> bool:
+    """Normaliza turnos legados y garantiza un consecutivo único para cada fecha.
+
+    El orden histórico se determina por fecha, momento de creación e identificador.
+    No se elimina ninguna consulta ni se modifica su fecha.
+    """
+    if _has_daily_consultation_sequence(db):
+        return False
+
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor()
+    try:
+        table = cursor.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='valoracion_antropometrica'"
+        ).fetchone()
+        if not table:
+            return False
+        cursor.execute("BEGIN IMMEDIATE")
+        rows = cursor.execute(
+            """
+            SELECT id, fecha
+            FROM valoracion_antropometrica
+            ORDER BY fecha ASC, COALESCE(created_at, '') ASC, id ASC
+            """
+        ).fetchall()
+        # Los valores temporales negativos evitan colisiones con la restricción
+        # legada por paciente mientras se reconstruye cada secuencia diaria.
+        cursor.execute("UPDATE valoracion_antropometrica SET numero_cita = -(ABS(id) + 1)")
+        counters = {}
+        for assessment_id, assessment_date in rows:
+            counters[assessment_date] = counters.get(assessment_date, 0) + 1
+            cursor.execute(
+                "UPDATE valoracion_antropometrica SET numero_cita=? WHERE id=?",
+                (counters[assessment_date], assessment_id),
+            )
+        cursor.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS uq_valoracion_fecha_numero_cita
+            ON valoracion_antropometrica (fecha, numero_cita)
+            """
+        )
+        integrity = cursor.execute("PRAGMA integrity_check").fetchone()
+        if not integrity or integrity[0] != "ok":
+            raise sqlite3.DatabaseError("La migración de turnos diarios no superó la comprobación de integridad.")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        cursor.close()
+        connection.close()
+    if logger:
+        logger.info("Migración controlada aplicada; constraint=consultation_daily_sequence")
+    return True
+
+
 def init_db(db, *, logger=None) -> list[str]:
     """Crea tablas, añade columnas y ejecuta migraciones de restricciones versionadas."""
     db.create_all()
@@ -305,4 +383,6 @@ def init_db(db, *, logger=None) -> list[str]:
         logger.info("Migración aditiva aplicada; columns=%s", ",".join(applied))
     if _migrate_prescription_versions(db, logger=logger):
         applied.append("recetas.constraint.multiple_versions")
+    if _migrate_daily_consultation_sequence(db, logger=logger):
+        applied.append("valoracion.constraint.daily_sequence")
     return applied

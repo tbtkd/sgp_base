@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.7.1 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.7.2 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -34,12 +34,12 @@ La versión 1.7.1 es adecuada para pruebas funcionales y para un piloto en una e
 | Paciente | nombres normalizados, género enumerado, nacimiento ≥1900 y no futuro, teléfono de 10 dígitos, correo, longitudes, contacto de emergencia |
 | Usuario | usuario normalizado, correo único, rol/estado enumerados, contraseña fuerte |
 | Profesional | perfil enumerado, cédula numérica de 5–12 dígitos, establecimiento y domicilio con longitudes limitadas |
-| Consulta | fecha no futura, motivo obligatorio, textos limitados, IMC recalculado |
+| Consulta | fecha no futura, motivo obligatorio, textos limitados, IMC recalculado y turno diario ignorado del cliente/asignado en servidor |
 | Signos vitales | TA estructurada, FC 30–250, FR 5–80, temperatura 30–45, SpO₂ 50–100, peso/estatura positivos |
 | Antropometría | todos los campos opcionales; cuando existen se validan como números finitos y con rangos |
 | Cita | fecha/hora futura, intervalos permitidos, motivo limitado y horario no duplicado |
 | Pago | monto 0–10,000,000, concepto obligatorio y método enumerado |
-| Receta ordinaria | emisor autorizado, paciente activo, cédula/domicilio, máximo 10 medicamentos, filas completas/no duplicadas y confirmaciones de competencia, alcance y firma |
+| Receta ordinaria | emisor autorizado, paciente activo, cédula/domicilio, máximo 10 medicamentos, filas completas/no duplicadas, orden exacto `1..n` y confirmaciones de competencia, alcance y firma |
 | XLSX | extensión, tamaño, ZIP válido, rutas internas, ratio de compresión, componentes, dimensiones, filas y transacción atómica |
 
 ### Trazabilidad y mensajes
@@ -75,13 +75,16 @@ La versión 1.7.1 es adecuada para pruebas funcionales y para un piloto en una e
 - Un folio sustituido imprime “NO ENTREGAR NI SURTIR” y enlaza al reemplazo.
 - La consulta asociada no puede eliminarse una vez emitida cualquier receta.
 - Los restablecimientos registran sólo IDs, método y resultado; la credencial nunca se escribe en bitácora o log técnico.
+- El turno diario mostrado por JavaScript es orientativo, se entrega sin caché y nunca se acepta como autoridad; el servidor lo recalcula bajo bloqueo y la base rechaza duplicados por fecha.
+- La bitácora de consulta conserva fecha y turno asignado, pero no diagnósticos, síntomas o contenido de la receta.
+- El orden de medicamentos se valida como una secuencia única y consecutiva antes de persistir; no se confía en la posición visual ni en valores manipulados del navegador.
 
 ### Persistencia y entrega
 
 - Base `pacientes.db` fuera de `_MEIPASS`.
 - Respaldos consistentes mediante `sqlite3.Connection.backup()` y verificación de integridad.
 - Retención automática de 10 respaldos.
-- Migración aditiva guardada y migración transaccional específica para retirar la unicidad legada de recetas, con `foreign_key_check` e `integrity_check`.
+- Migración aditiva guardada, migración transaccional para retirar la unicidad legada de recetas y migración transaccional para el turno diario, con comprobaciones de integridad.
 - ZIP y compilación excluyen bases, secretos, logs, cachés, entorno virtual y respaldos.
 - La limpieza de actualizaciones sólo elimina el recurso SVG obsoleto y cachés conocidas dentro del código; no recorre el entorno virtual ni los directorios de datos.
 
@@ -105,7 +108,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 75 pruebas totales.
+- `python -m pytest -q`: 80 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

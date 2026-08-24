@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.1 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.2 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -49,6 +49,11 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 40. El calendario rápido debe mostrar 21 días, permitir una fecha posterior y distinguir horarios disponibles, ocupados y transcurridos.
 41. La disponibilidad mostrada debe revalidarse al confirmar; el flujo rápido no puede sobrescribir una cita programada existente.
 42. La agenda rápida no debe duplicarse en el sidebar ni retirar el agendamiento/reagendamiento existente en el detalle del paciente.
+43. Cada consulta debe recibir en servidor un turno global consecutivo por fecha; el primer turno de cada día es `1`.
+44. El turno enviado por el navegador no debe aceptarse como autoridad y `(fecha, turno)` debe ser único en SQLite.
+45. La migración debe preservar todas las consultas legadas y normalizar su turno de forma determinista.
+46. Agregar un medicamento debe insertar la nueva tarjeta arriba sin alterar el orden de captura persistido e impreso `1..n`.
+47. El servidor debe rechazar órdenes de medicamentos incompletos, repetidos o no consecutivos.
 
 ## Requisitos de seguridad
 

@@ -1,13 +1,15 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.7.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.7.2**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
 - Expediente con datos personales, ocupación, dirección y contacto de emergencia.
 - Antecedentes patológicos, heredofamiliares, alergias, medicación, hábitos y notas.
 - Consultas con síntomas, signos vitales, diagnóstico, plan e indicaciones clínicas.
+- Turno diario global de consultas, asignado por el servidor en secuencia `1..n` y reiniciado para cada fecha.
 - Receta médica ordinaria independiente para Medicina/Odontología, con folios originales, adicionales y sustituciones trazables.
+- Captura de medicamentos con altas nuevas en la parte superior y orden clínico final estable `1, 2, 3…`.
 - Antropometría y pliegues opcionales, habilitados exclusivamente para perfiles de Nutrición.
 - Citas con motivo y estado; pagos con monto, concepto y método.
 - Usuarios con roles `admin`, `medico` y `recepcion`, separados de su perfil profesional.
@@ -102,13 +104,15 @@ Para una inicialización automatizada se admiten `SGPN_ADMIN_USERNAME`, `SGPN_AD
 
 Si una base muy antigua no contiene el correo de sus usuarios, la migración conserva las cuentas y asigna valores únicos `usuario-migrado-<id>@local.invalid`. Son marcadores locales que no reciben mensajes y deben reemplazarse desde el panel **Usuarios**.
 
+Al actualizar a 1.7.2, las consultas existentes se numeran de forma determinista por fecha, momento de creación e identificador. Se crea una restricción única sobre `(fecha, numero_cita)` sin borrar consultas. El turno es una referencia histórica: si una nota se elimina o cambia de fecha puede quedar un hueco, por lo que los reportes deben contar registros y no usar el turno máximo como total definitivo.
+
 El directorio que contiene el ejecutable debe ser escribible. Los datos, respaldos y secretos están excluidos del paquete y del control de versiones.
 
 ## Impresión de notas clínicas y recetas
 
 Desde el detalle de una consulta selecciona **Imprimir nota / PDF**. La aplicación abre una hoja A4 independiente; después pulsa **Imprimir / guardar PDF**, elige **Guardar como PDF** y desactiva **Encabezados y pies de página** en las opciones del navegador. La nota imprimible no depende de Tailwind, Alpine ni recursos CDN.
 
-La nota clínica y la receta son documentos distintos. Cuando el usuario tiene perfil de Medicina general u Odontología, cédula y domicilio profesional, el detalle ofrece **Generar receta**. El formulario exige por medicamento denominación genérica, presentación, dosis, vía, frecuencia y duración; la salida conserva una instantánea del paciente y del profesional.
+La nota clínica y la receta son documentos distintos. Cuando el usuario tiene perfil de Medicina general u Odontología, cédula y domicilio profesional, el detalle ofrece **Generar receta**. El formulario exige por medicamento denominación genérica, presentación, dosis, vía, frecuencia y duración. **Agregar** inserta la nueva tarjeta arriba para no obligar a regresar al inicio; un orden de captura oculto, validado por el servidor, hace que la receta emitida siempre se muestre en secuencia `1, 2, 3…`. La salida conserva una instantánea del paciente y del profesional.
 
 La receta implementada es únicamente **ordinaria**: debe revisarse, imprimirse y llevar firma autógrafa. Una receta emitida no se edita; una corrección crea un folio de sustitución y marca el anterior como no vigente. Desde una misma consulta pueden emitirse recetas adicionales con folio independiente. No admite estupefacientes, psicotrópicos ni otros flujos sujetos a receta especial. Consulta [docs/RECETA_MEDICA_MEXICO.md](docs/RECETA_MEDICA_MEXICO.md) antes de usarla con datos reales.
 
@@ -134,7 +138,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 75 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md), la base histórica del panel en [docs/DASHBOARD_VISUAL_1_6_3.md](docs/DASHBOARD_VISUAL_1_6_3.md), el shell base en [docs/SHELL_NAVEGACION_1_6_4.md](docs/SHELL_NAVEGACION_1_6_4.md) y el ajuste vigente en [docs/BUSQUEDA_PACIENTE_AGENDA_1_7_1.md](docs/BUSQUEDA_PACIENTE_AGENDA_1_7_1.md).
+La aceptación funcional incluye 80 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el cambio vigente se documenta en [docs/ORDEN_RECETA_TURNO_DIARIO_1_7_2.md](docs/ORDEN_RECETA_TURNO_DIARIO_1_7_2.md).
 
 ## Compilación para Windows
 

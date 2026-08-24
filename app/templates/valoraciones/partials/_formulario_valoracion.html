@@ -1,6 +1,6 @@
 {% set registro = valoracion if valoracion is defined else none %}
 {% set field_class = 'w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition' %}
-<form id="formValoracion" method="POST" class="space-y-6" data-tabs data-tab-variant="pill" data-default-tab="consulta">
+<form id="formValoracion" method="POST" class="space-y-6" data-tabs data-tab-variant="pill" data-default-tab="consulta" data-daily-consultation-form data-daily-number-url="{{ url_for('valoracion.siguiente_numero_diario') }}" data-current-date="{{ registro.fecha.isoformat() if registro and registro.fecha else '' }}" data-current-number="{{ registro.numero_cita if registro else '' }}">
     <div class="clinical-tablist flex flex-wrap gap-2 border-b pb-3 no-print" role="tablist" aria-label="Secciones de la consulta clínica">
         {% set consultation_tabs = [('consulta','Consulta'),('vitales','Signos vitales'),('evolucion','Evolución e indicaciones')] %}
         {% if current_user.puede_capturar_antropometria %}
@@ -19,8 +19,13 @@
 
     <section id="panel-consulta" role="tabpanel" aria-labelledby="tab-consulta" data-tab-panel="consulta" class="space-y-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div><label class="block text-sm font-medium mb-2" for="numero_cita">Número de consulta</label><input class="{{ field_class }}" type="number" id="numero_cita" name="numero_cita" min="1" max="10000" required value="{{ request.form.get('numero_cita', registro.numero_cita if registro else 1) }}"></div>
-            <div><label class="block text-sm font-medium mb-2" for="fecha">Fecha</label><input class="{{ field_class }}" type="date" id="fecha" name="fecha" required value="{{ request.form.get('fecha', registro.fecha.isoformat() if registro and registro.fecha else '') }}"></div>
+            <div>
+                <label class="block text-sm font-medium mb-2" for="numero_cita">Turno diario</label>
+                <input class="{{ field_class }} bg-gray-50" type="number" id="numero_cita" name="numero_cita" min="1" max="10000" required readonly aria-describedby="numero-cita-ayuda numero-cita-estado" value="{{ numero_diario }}">
+                <p id="numero-cita-ayuda" class="text-xs text-gray-500 mt-2">Consecutivo global de atención para la fecha. El servidor confirma el valor definitivo al guardar.</p>
+                <p id="numero-cita-estado" class="text-xs text-teal-700 mt-1" data-daily-number-status aria-live="polite"></p>
+            </div>
+            <div><label class="block text-sm font-medium mb-2" for="fecha">Fecha</label><input class="{{ field_class }}" type="date" id="fecha" name="fecha" required max="{{ fecha_consulta_default or registro.fecha.isoformat() }}" value="{{ request.form.get('fecha', registro.fecha.isoformat() if registro and registro.fecha else fecha_consulta_default) }}"></div>
         </div>
         <div><label class="block text-sm font-medium mb-2" for="motivo_consulta">Motivo de consulta</label><textarea class="{{ field_class }}" id="motivo_consulta" name="motivo_consulta" rows="3" maxlength="2000" required>{{ request.form.get('motivo_consulta', registro.motivo_consulta if registro and registro.motivo_consulta else '') }}</textarea></div>
         <div><label class="block text-sm font-medium mb-2" for="sintomas">Síntomas y evolución referida</label><textarea class="{{ field_class }}" id="sintomas" name="sintomas" rows="4" maxlength="4000">{{ request.form.get('sintomas', registro.sintomas if registro and registro.sintomas else '') }}</textarea></div>

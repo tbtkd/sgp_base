@@ -70,7 +70,7 @@
                 {% endif %}
             </div>
             <div class="note-meta">
-                <p><strong>Consulta:</strong> #{{ valoracion.numero_cita }}</p>
+                <p><strong>Turno diario:</strong> #{{ valoracion.numero_cita }}</p>
                 <p><strong>Fecha:</strong> {{ valoracion.fecha|format_date }}</p>
                 {% if valoracion.created_at %}<p><strong>Elaboración:</strong> {{ valoracion.created_at.strftime('%d/%m/%Y %H:%M') }}</p>{% endif %}
                 <p><strong>Expediente:</strong> #{{ paciente.id }}</p>

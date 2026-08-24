@@ -436,15 +436,28 @@ def cargar_excel(id):
                     "errores": errors[:20],
                 }
             ), 400
-        for data in pending:
-            ValoracionAntropometrica.crear(id, data, profesional=current_user)
-        AuditLog.record(
-            "valoracion.import",
-            entity_type="paciente",
-            entity_id=id,
-            metadata={"created": len(pending), "duplicates": duplicates},
-        )
-        db.session.commit()
+        with ValoracionAntropometrica.bloqueo_numeracion_diaria():
+            next_by_date = {}
+            for data in pending:
+                assessment_date = data["fecha"]
+                if assessment_date not in next_by_date:
+                    next_by_date[assessment_date] = ValoracionAntropometrica.siguiente_numero_diario(
+                        assessment_date
+                    )
+                data["numero_cita"] = next_by_date[assessment_date]
+                next_by_date[assessment_date] += 1
+                ValoracionAntropometrica.crear(id, data, profesional=current_user)
+            AuditLog.record(
+                "valoracion.import",
+                entity_type="paciente",
+                entity_id=id,
+                metadata={
+                    "created": len(pending),
+                    "duplicates": duplicates,
+                    "daily_sequence": True,
+                },
+            )
+            db.session.commit()
         return jsonify(
             {
                 "success": True,
@@ -457,6 +470,14 @@ def cargar_excel(id):
     except (ValidationError, zipfile.BadZipFile, KeyError) as error:
         db.session.rollback()
         return jsonify({"success": False, "message": str(error)}), 400
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify(
+            {
+                "success": False,
+                "message": "No fue posible reservar los turnos diarios de la importación. Inténtalo nuevamente.",
+            }
+        ), 409
     except (OSError, ValueError, TypeError):
         db.session.rollback()
         return jsonify({"success": False, "message": "No fue posible procesar el archivo XLSX."}), 400

@@ -10,7 +10,7 @@ Un médico o administrador registra antecedentes, alergias, medicación y hábit
 
 ## UC-03 — Registrar una consulta
 
-El profesional captura el motivo, síntomas, signos vitales, diagnóstico, plan e indicaciones. El IMC se calcula en el servidor. Sólo el perfil Nutrición puede capturar antropometría.
+El profesional captura el motivo, síntomas, signos vitales, diagnóstico, plan e indicaciones. El IMC se calcula en el servidor. Al guardar, el sistema asigna el siguiente turno global de la fecha e ignora cualquier número alterado en el navegador. Sólo el perfil Nutrición puede capturar antropometría.
 
 ## UC-04 — Agendar una cita
 
@@ -30,7 +30,7 @@ El profesional abre la consulta y usa “Imprimir nota / PDF”. La hoja conserv
 
 ## UC-08 — Emitir receta ordinaria
 
-Un usuario de Medicina general u Odontología abre una consulta, verifica paciente y datos profesionales, estructura uno o más medicamentos y confirma competencia y alcance ordinario. El sistema bloquea cédula/domicilio faltantes, conserva una instantánea, audita la emisión y genera una hoja A4 que debe firmarse de forma autógrafa.
+Un usuario de Medicina general u Odontología abre una consulta, verifica paciente y datos profesionales, estructura uno o más medicamentos y confirma competencia y alcance ordinario. Cada alta de medicamento aparece arriba para mantener accesible el control, pero el sistema valida y conserva el orden real de captura antes de generar la receta `1..n`. El sistema bloquea cédula/domicilio faltantes, conserva una instantánea, audita la emisión y genera una hoja A4 que debe firmarse de forma autógrafa.
 
 ## UC-08A — Emitir receta adicional
 

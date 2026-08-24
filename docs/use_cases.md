@@ -30,7 +30,7 @@ El profesional abre la consulta y usa “Imprimir nota / PDF”. La hoja conserv
 
 ## UC-08 — Emitir receta ordinaria
 
-Un usuario de Medicina general u Odontología abre una consulta, verifica paciente y datos profesionales, estructura uno o más medicamentos y confirma competencia y alcance ordinario. Cada alta de medicamento aparece arriba para mantener accesible el control, pero el sistema valida y conserva el orden real de captura antes de generar la receta `1..n`. El sistema bloquea cédula/domicilio faltantes, conserva una instantánea, audita la emisión y genera una hoja A4 que debe firmarse de forma autógrafa.
+Un usuario de Medicina general u Odontología abre una consulta, verifica paciente y datos profesionales, estructura uno o más medicamentos y confirma competencia y alcance ordinario. Cada alta de medicamento aparece arriba para mantener accesible el control, pero el sistema valida y conserva el orden real de captura antes de generar la receta `1..n`. El sistema bloquea cédula/domicilio faltantes, conserva una instantánea, audita la emisión y genera una hoja A4 con la identidad profesional completa en el encabezado y una única línea centrada que debe firmarse de forma autógrafa.
 
 ## UC-08A — Emitir receta adicional
 

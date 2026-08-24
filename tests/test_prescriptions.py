@@ -212,6 +212,11 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
     assert "Domicilio modificado" not in printable
     assert "Cerrar Sesión" not in printable
     assert "cdn.tailwindcss.com" not in printable
+    assert printable.count("Elena Profesional") == 1
+    assert printable.count("12345678") == 1
+    assert "Fecha y sello" not in printable
+    assert "data-prescriber-signature" in printable
+    assert "/static/img/logo.png?v=1.7.4" in printable
 
     repeated = client.get(f"/recetas/valoracion/{assessment_id}/nueva")
     assert repeated.status_code == 302
@@ -373,6 +378,8 @@ def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
     assert favicon.mimetype == "image/vnd.microsoft.icon"
+    assert favicon.headers["Cache-Control"] == "no-cache, max-age=0, must-revalidate"
+    assert "/static/img/logo.png?v=1.7.4" in page
 
 
 def test_additional_and_replacement_prescriptions_preserve_every_folio(app):

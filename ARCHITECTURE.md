@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.3
+# Arquitectura técnica — versión 1.7.4
 
 ## Componentes
 
@@ -48,6 +48,8 @@ Cada receta ordinaria emitida es un documento independiente e inmutable. La cons
 La interfaz de receta inserta visualmente cada medicamento nuevo al inicio para mantener accesible el botón de alta. Cada fila transporta `orden_medicamento[]`; el validador exige una permutación exacta `1..n`, ordena los datos antes de crear los modelos y la relación los recupera por ID. De este modo, la conveniencia visual no altera el orden clínico persistido o impreso.
 
 La plantilla imprimible representa cada medicamento como un bloque semántico `article` de tres líneas, sin cuadrículas ni contenedores decorativos repetidos. La cantidad e indicaciones sólo se renderizan cuando existen; presentación, dosis, vía, frecuencia y duración permanecen siempre visibles. CSS aplica `break-inside: avoid` a cada medicamento y una clase de mayor densidad cuando la receta supera cinco elementos, reduciendo páginas sin mezclar instrucciones entre medicamentos.
+
+La identificación del prescriptor vive exclusivamente en el encabezado de la receta; el pie contiene un único bloque centrado de firma autógrafa con separación propia. `APP_VERSION` y `ASSET_VERSION` centralizan la versión vigente. Las páginas normales y la vista independiente de receta agregan esa versión al favicon; la ruta legada `/favicon.ico` exige revalidación para desplazar copias antiguas del navegador.
 
 ## Turno diario de atención
 

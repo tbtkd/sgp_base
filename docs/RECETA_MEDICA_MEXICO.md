@@ -2,7 +2,7 @@
 
 Revisión funcional y normativa al 23 de agosto de 2026. Este documento sirve como guía de producto y no sustituye la revisión de un responsable sanitario o asesor jurídico del consultorio.
 
-## Dictamen funcional de la versión 1.7.3
+## Dictamen funcional de la versión 1.7.4
 
 El sistema maneja dos documentos distintos:
 
@@ -11,14 +11,14 @@ El sistema maneja dos documentos distintos:
 
 La receta ordinaria implementa controles alineados con los artículos 28 a 31 del Reglamento de Insumos para la Salud: emisor autorizado, nombre y domicilio completos, cédula, fecha, espacio de firma y posología estructurada. El sistema también conserva paciente, edad al emitir, expediente y alergias conocidas como datos de seguridad clínica.
 
-| Elemento | Estado en 1.7.3 | Control operativo pendiente |
+| Elemento | Estado en 1.7.4 | Control operativo pendiente |
 | --- | --- | --- |
 | Profesional autorizado | Sólo Medicina general u Odontología | El consultorio debe verificar título, cédula y competencia real |
 | Nombre completo y área | Snapshot obligatorio | Revisar antes de imprimir |
 | Cédula profesional | Obligatoria para emitir | Verificar vigencia/autenticidad fuera del sistema |
 | Domicilio completo | Obligatorio para emitir | El administrador debe capturarlo completo y mantenerlo actualizado |
 | Fecha de emisión | Generada por el servidor | Verificar fecha/hora y zona del equipo |
-| Firma | Línea para firma autógrafa | La impresión debe firmarse físicamente antes de entregarse |
+| Firma | Línea única y centrada para firma autógrafa | La impresión debe firmarse físicamente antes de entregarse |
 | Medicamento | Genérico obligatorio; marca opcional | El prescriptor debe verificar denominación y presentación correctas |
 | Posología | Presentación, dosis, vía, frecuencia y duración obligatorias | Revisión clínica antes de emitir |
 | Cantidad e indicaciones | Campos disponibles | Completar cuando corresponda |
@@ -38,6 +38,7 @@ La aplicación **no certifica por sí sola la validez jurídica** de una receta,
 - Se admiten hasta 10 medicamentos; se rechazan filas incompletas, manipuladas, exactamente duplicadas o con orden repetido/no consecutivo.
 - Las tarjetas nuevas se insertan arriba por usabilidad, pero la receta persistida e impresa conserva el orden real de captura `1..n`.
 - La salida impresa compacta conserva denominación, presentación, dosis, vía, frecuencia y duración; sólo omite cantidad e indicaciones cuando no fueron capturadas.
+- Nombre, perfil, cédula, domicilio y fecha se imprimen una vez en el encabezado; el pie reserva exclusivamente una línea centrada para la firma autógrafa.
 - La receta queda asociada a una consulta y no expone edición o eliminación. Una receta adicional obtiene folio propio.
 - Una corrección exige motivo, genera una sustitución y conserva intacto el folio anterior con la leyenda “NO ENTREGAR NI SURTIR”.
 - La consulta no puede eliminarse si ya originó cualquier receta.

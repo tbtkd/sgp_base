@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.7.3 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta y las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
+La versión 1.7.4 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado y reserva una firma centrada. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
 
 Módulos evaluados:
 
@@ -235,6 +235,13 @@ Módulos evaluados:
 - A partir de seis medicamentos se activa una densidad moderada y cada bloque evita saltos internos de página.
 - Folio, vigencia, datos profesionales, paciente, alergias, firma y orden `1..n` permanecen intactos.
 
+### Fase 1.16: firma única y favicon vigente — completada en 1.7.4
+
+- La identificación profesional completa permanece una sola vez en el encabezado.
+- El pie elimina el nombre, la cédula y “Fecha y sello” duplicados; conserva una línea centrada para firma autógrafa.
+- Se amplía el espacio entre el tratamiento y la firma sin romper el modo denso.
+- El shell y la receta independiente declaran el mismo favicon con versión; la ruta legada exige revalidación.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -298,7 +305,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.7.3: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.7.4: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

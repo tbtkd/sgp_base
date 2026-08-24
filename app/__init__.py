@@ -146,7 +146,10 @@ def create_app(config_name=None, test_config=None):
     @app.route("/favicon.ico")
     def favicon():
         images_dir = Path(app.static_folder) / "img"
-        return send_from_directory(images_dir, "logo.ico", mimetype="image/vnd.microsoft.icon")
+        response = send_from_directory(images_dir, "logo.ico", mimetype="image/vnd.microsoft.icon")
+        response.headers["Cache-Control"] = "no-cache, max-age=0, must-revalidate"
+        response.headers["Expires"] = "0"
+        return response
 
     @app.template_filter("format_date")
     def format_date(value):

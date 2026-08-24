@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.3 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.4 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -55,6 +55,7 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 46. Agregar un medicamento debe insertar la nueva tarjeta arriba sin alterar el orden de captura persistido e impreso `1..n`.
 47. El servidor debe rechazar órdenes de medicamentos incompletos, repetidos o no consecutivos.
 48. La receta impresa debe usar una lista compacta sin tarjetas por medicamento, omitir sólo campos opcionales vacíos, mantener juntos los datos de cada medicamento al paginar y conservar todos los datos obligatorios.
+49. La receta debe imprimir la identidad profesional completa una sola vez en el encabezado, reservar una línea centrada para la firma autógrafa y declarar el favicon institucional vigente con invalidación de caché.
 
 ## Requisitos de seguridad
 

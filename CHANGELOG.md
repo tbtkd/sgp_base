@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.4 — Firma simplificada y favicon vigente
+
+- La receta declara explícitamente el favicon sanitario vigente y versiona la URL del recurso para evitar que el navegador conserve el icono anterior.
+- La ruta de compatibilidad `/favicon.ico` obliga a revalidar el archivo en lugar de reutilizar una copia obsoleta.
+- Se incrementa la separación entre el último medicamento y la firma, incluso en recetas con modo denso.
+- La firma queda como una sola línea centrada, rotulada “Firma autógrafa del profesional”.
+- Nombre, perfil, cédula y domicilio del profesional permanecen una sola vez en el encabezado; se elimina su duplicación al pie y el segundo segmento “Fecha y sello”.
+- No cambian folios, medicamentos, snapshots, vigencia, permisos ni datos persistidos.
+- Verificación: 80 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.7.3 — Receta impresa compacta
 
 - La impresión de medicamentos deja de usar tarjetas con borde y cuadrículas repetidas.

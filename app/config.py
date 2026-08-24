@@ -39,6 +39,8 @@ def _load_or_create_secret(target_directory=None) -> str:
 
 
 class Config:
+    APP_VERSION = "1.7.4"
+    ASSET_VERSION = "1.7.4"
     SECRET_KEY = None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024

@@ -6,31 +6,42 @@
     <title>Receta {{ receta.folio }} - {{ receta.paciente_nombre }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; background: #e5e7eb; color: #0f172a; font: 12px/1.45 Arial, sans-serif; }
+        body { margin: 0; background: #e5e7eb; color: #0f172a; font: 11px/1.35 Arial, sans-serif; }
         .toolbar { display: flex; justify-content: space-between; gap: 20px; padding: 12px 20px; background: #0f766e; color: white; }
         .toolbar p { margin: 0; }
         .toolbar a, .toolbar button { border-radius: 8px; padding: 9px 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
         .toolbar a { color: white; border: 1px solid #fff; } .toolbar button { border: 0; color: #0f766e; background: white; }
-        .sheet { width: min(210mm, calc(100% - 32px)); min-height: 270mm; margin: 18px auto; padding: 15mm; background: white; box-shadow: 0 8px 28px #0f172a24; }
-        .brand { display: flex; gap: 12px; align-items: center; } .brand img { width: 46px; height: 46px; }
-        .header { display: grid; grid-template-columns: 1fr auto; gap: 24px; padding-bottom: 12px; border-bottom: 2px solid #0f766e; }
-        h1 { margin: 0; color: #0f766e; font-size: 22px; } h2 { font-size: 14px; color: #0f766e; margin: 0 0 8px; }
-        p { margin: 2px 0; } .meta { text-align: right; } .muted { color: #475569; }
-        .professional { margin-top: 12px; padding: 10px 12px; background: #f0fdfa; border: 1px solid #99f6e4; }
-        .patient { margin-top: 14px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #cbd5e1; }
-        .allergies { margin-top: 10px; padding: 8px 10px; color: #991b1b; border: 1px solid #fecaca; background: #fef2f2; }
-        .medicine { margin-top: 15px; padding: 12px; border: 1px solid #cbd5e1; break-inside: avoid; }
-        .medicine-title { font-size: 14px; font-weight: 700; } .grid { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 14px; }
+        .sheet { width: min(210mm, calc(100% - 32px)); min-height: 270mm; margin: 18px auto; padding: 11mm; background: white; box-shadow: 0 8px 28px #0f172a24; }
+        .brand { display: flex; gap: 9px; align-items: center; } .brand img { width: 38px; height: 38px; }
+        .header { display: grid; grid-template-columns: 1fr auto; gap: 18px; padding-bottom: 8px; border-bottom: 1.5px solid #0f766e; }
+        h1 { margin: 0; color: #0f766e; font-size: 19px; } h2 { font-size: 12.5px; color: #0f766e; margin: 0 0 6px; }
+        p { margin: 1px 0; } .meta { text-align: right; font-size: 10px; } .muted { color: #475569; }
+        .professional { margin-top: 7px; padding: 6px 8px; background: #f0fdfa; border: 1px solid #99f6e4; }
+        .patient { margin-top: 9px; display: grid; grid-template-columns: 2fr 1fr 1.25fr; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #cbd5e1; }
+        .allergies { margin-top: 7px; padding: 6px 8px; color: #991b1b; border: 1px solid #fecaca; background: #fef2f2; }
+        .medicine-section { margin-top: 10px; }
+        .medicine-list { margin-top: 2px; }
+        .medicine { margin: 0 0 8px; padding: 0; break-inside: avoid; page-break-inside: avoid; }
+        .medicine:last-child { margin-bottom: 0; }
+        .medicine-title { color: #0f172a; font-size: 11.5px; font-weight: 700; line-height: 1.3; }
+        .medicine-presentation { font-weight: 700; }
+        .medicine-line { margin: 1px 0 0; color: #334155; font-size: 10.2px; line-height: 1.3; }
+        .medicine-directions { color: #0f172a; }
+        .medicine-notes { color: #475569; font-style: italic; }
         .label { display: block; color: #475569; font-size: 10px; text-transform: uppercase; }
-        .observations { margin-top: 15px; padding-top: 12px; border-top: 1px solid #cbd5e1; white-space: pre-wrap; }
-        .signature { margin-top: 42px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; text-align: center; }
-        .signature > div { padding-top: 8px; border-top: 1px solid #334155; }
-        .warning { margin-top: 22px; color: #475569; font-size: 10px; text-align: center; }
-        .status { margin: 12px 0 0; padding: 10px 12px; border: 2px solid #b45309; background: #fffbeb; color: #78350f; font-weight: 700; }
+        .observations { margin-top: 10px; padding-top: 8px; border-top: 1px solid #cbd5e1; white-space: pre-wrap; break-inside: avoid; }
+        .signature { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; text-align: center; break-inside: avoid; }
+        .signature > div { padding-top: 6px; border-top: 1px solid #334155; }
+        .warning { margin-top: 13px; color: #475569; font-size: 8.5px; line-height: 1.25; text-align: center; }
+        .status { margin: 8px 0 0; padding: 7px 9px; border: 2px solid #b45309; background: #fffbeb; color: #78350f; font-weight: 700; }
         .status.danger { border-color: #dc2626; background: #fef2f2; color: #991b1b; }
-        @page { size: A4; margin: 11mm; }
+        .sheet--dense .medicine { margin-bottom: 5px; }
+        .sheet--dense .medicine-title { font-size: 10.7px; }
+        .sheet--dense .medicine-line { font-size: 9.5px; line-height: 1.23; }
+        .sheet--dense .signature { margin-top: 22px; }
+        @page { size: A4; margin: 9mm; }
         @media print { body { background: white; } .toolbar { display: none; } .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; } }
-        @media (max-width: 700px) { .sheet { width: 100%; margin: 0; padding: 20px; } .header, .patient, .grid { grid-template-columns: 1fr; } .meta { text-align: left; } }
+        @media (max-width: 700px) { .sheet { width: 100%; margin: 0; padding: 18px; } .header, .patient { grid-template-columns: 1fr; } .meta { text-align: left; } }
     </style>
 </head>
 <body>
@@ -38,7 +49,7 @@
         <p>Revisa la información, imprime y firma de forma autógrafa. En el diálogo puedes elegir “Guardar como PDF”.</p>
         <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" onclick="window.print()">Imprimir / PDF</button></div>
     </div>
-    <main class="sheet">
+    <main class="sheet{% if receta.medicamentos|length > 5 %} sheet--dense{% endif %}">
         <header class="header">
             <div>
                 <div class="brand"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Sistema Clínico"><div><h1>Receta médica ordinaria</h1><p class="muted">{{ receta.nombre_establecimiento or 'Consultorio profesional' }}</p></div></div>
@@ -60,22 +71,18 @@
         </section>
         {% if receta.alergias_conocidas %}<div class="allergies"><strong>Alergias registradas:</strong> {{ receta.alergias_conocidas }}</div>{% endif %}
 
-        <section style="margin-top: 16px">
+        <section class="medicine-section" data-compact-medication-list>
             <h2>Medicamentos e instrucciones</h2>
+            <div class="medicine-list">
             {% for item in receta.medicamentos %}
             <article class="medicine">
-                <div class="medicine-title">{{ loop.index }}. {{ item.denominacion_generica }}{% if item.denominacion_distintiva %} ({{ item.denominacion_distintiva }}){% endif %}</div>
-                <div class="grid">
-                    <div><span class="label">Forma, presentación y concentración</span>{{ item.presentacion }}</div>
-                    <div><span class="label">Dosis por administración</span>{{ item.dosis }}</div>
-                    <div><span class="label">Vía</span>{{ item.via_administracion }}</div>
-                    <div><span class="label">Frecuencia</span>{{ item.frecuencia }}</div>
-                    <div><span class="label">Duración</span>{{ item.duracion }}</div>
-                    <div><span class="label">Cantidad a surtir</span>{{ item.cantidad or 'No especificada' }}</div>
-                </div>
-                {% if item.indicaciones %}<p style="margin-top: 9px"><strong>Indicaciones adicionales:</strong> {{ item.indicaciones }}</p>{% endif %}
+                <div class="medicine-title">{{ loop.index }}. {{ item.denominacion_generica }}{% if item.denominacion_distintiva %} ({{ item.denominacion_distintiva }}){% endif %} · <span class="medicine-presentation">{{ item.presentacion }}</span></div>
+                <p class="medicine-line">Vía {{ item.via_administracion }}{% if item.cantidad %} · {{ item.cantidad }}{% endif %}</p>
+                <p class="medicine-line medicine-directions">{{ item.dosis }} · {{ item.frecuencia }} · {{ item.duracion }}</p>
+                {% if item.indicaciones %}<p class="medicine-line medicine-notes">{{ item.indicaciones }}</p>{% endif %}
             </article>
             {% endfor %}
+            </div>
         </section>
 
         {% if receta.observaciones %}<section class="observations"><h2>Observaciones</h2>{{ receta.observaciones }}</section>{% endif %}

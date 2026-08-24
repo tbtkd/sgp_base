@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.2
+# Arquitectura técnica — versión 1.7.3
 
 ## Componentes
 
@@ -46,6 +46,8 @@ La denominación interna `valoracion_antropometrica` se conserva para compatibil
 Cada receta ordinaria emitida es un documento independiente e inmutable. La consulta admite un original, recetas adicionales y sustituciones versionadas. Una sustitución marca el folio anterior como no vigente sin reescribirlo y enlaza ambos documentos. Los snapshots almacenan nombre, nacimiento y alergias del paciente, además de nombre, cédula, perfil, establecimiento y domicilio del profesional. La bitácora sólo conserva identificadores, tipo, versión y conteos, nunca el contenido farmacológico.
 
 La interfaz de receta inserta visualmente cada medicamento nuevo al inicio para mantener accesible el botón de alta. Cada fila transporta `orden_medicamento[]`; el validador exige una permutación exacta `1..n`, ordena los datos antes de crear los modelos y la relación los recupera por ID. De este modo, la conveniencia visual no altera el orden clínico persistido o impreso.
+
+La plantilla imprimible representa cada medicamento como un bloque semántico `article` de tres líneas, sin cuadrículas ni contenedores decorativos repetidos. La cantidad e indicaciones sólo se renderizan cuando existen; presentación, dosis, vía, frecuencia y duración permanecen siempre visibles. CSS aplica `break-inside: avoid` a cada medicamento y una clase de mayor densidad cuando la receta supera cinco elementos, reduciendo páginas sin mezclar instrucciones entre medicamentos.
 
 ## Turno diario de atención
 

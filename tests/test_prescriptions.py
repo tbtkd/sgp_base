@@ -299,9 +299,16 @@ def test_prescription_print_uses_capture_order_one_to_n(app):
     client = app.test_client()
     _login(client, "doctor-order")
     page = client.get(f"/recetas/valoracion/{assessment_id}/nueva")
-    data = _prescription_data(csrf_from(page), count=3)
-    data["orden_medicamento[]"] = ["3", "2", "1"]
-    data["denominacion_generica[]"] = ["Medicamento tercero", "Medicamento segundo", "Medicamento primero"]
+    data = _prescription_data(csrf_from(page), count=6)
+    data["orden_medicamento[]"] = ["6", "5", "4", "3", "2", "1"]
+    data["denominacion_generica[]"] = [
+        "Medicamento sexto",
+        "Medicamento quinto",
+        "Medicamento cuarto",
+        "Medicamento tercero",
+        "Medicamento segundo",
+        "Medicamento primero",
+    ]
     response = client.post(f"/recetas/valoracion/{assessment_id}/nueva", data=data)
     assert response.status_code == 302
 
@@ -312,11 +319,20 @@ def test_prescription_print_uses_capture_order_one_to_n(app):
             "Medicamento primero",
             "Medicamento segundo",
             "Medicamento tercero",
+            "Medicamento cuarto",
+            "Medicamento quinto",
+            "Medicamento sexto",
         ]
 
     printable = client.get(f"/recetas/{prescription_id}/imprimir").get_data(as_text=True)
     assert printable.index("1. Medicamento primero") < printable.index("2. Medicamento segundo")
     assert printable.index("2. Medicamento segundo") < printable.index("3. Medicamento tercero")
+    assert printable.index("3. Medicamento tercero") < printable.index("6. Medicamento sexto")
+    assert 'class="sheet sheet--dense"' in printable
+    assert "data-compact-medication-list" in printable
+    assert 'class="medicine-list"' in printable
+    assert "Forma, presentación y concentración" not in printable
+    assert 'class="grid"' not in printable
 
 
 def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login):

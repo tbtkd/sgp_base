@@ -2,11 +2,11 @@
 
 ## Estado actual
 
-La versión 1.7.2 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios.
+La versión 1.7.3 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios.
 
 ## Reglas que deben preservarse
 
-1. El diseño actual conserva Tailwind; el shell 1.7.2 combina azul petróleo/teal, JavaScript local y tema claro/oscuro persistente. Alpine queda sólo por compatibilidad con vistas legadas.
+1. El diseño actual conserva Tailwind; el shell 1.7.3 combina azul petróleo/teal, JavaScript local y tema claro/oscuro persistente. Alpine queda sólo por compatibilidad con vistas legadas.
 2. Ninguna ruta clínica funciona sin autenticación.
 3. Roles únicos: `admin`, `medico`, `recepcion`.
 4. Recepción no accede a expediente, diagnóstico, tratamiento o receta.
@@ -34,7 +34,7 @@ La versión 1.7.2 es un expediente clínico general para servicios médicos, den
 26. El Panel Clínico muestra un título de módulo, no un segundo nombre de cuenta; el detalle de cuenta inicia con el atributo nativo `hidden` y sólo se abre por acción explícita.
 27. La visibilidad del menú de cuenta no debe depender de Alpine o de otro recurso CDN; el fallo seguro es permanecer cerrado.
 28. El dashboard sólo presenta métricas derivadas de la base: pacientes registrados, citas de hoy, consultas pendientes, series de actividad y próximas citas; **Pendientes de atención** es la única vista de alertas operativas y no muestra ingresos.
-29. El top bar y sidebar 1.7.2 usan control local accesible; `logo.png` y `logo.ico` permanecen como recursos canónicos sin modificación.
+29. El top bar y sidebar 1.7.3 usan control local accesible; `logo.png` y `logo.ico` permanecen como recursos canónicos sin modificación.
 30. Recepción puede ver la operación de citas y pacientes, pero no conteos, pendientes, actividad o acciones clínicas.
 31. Recetas se abre desde el sidebar como contexto de la lista de consultas; no se inventa un índice clínico nuevo.
 32. Plantillas, usuarios, auditoría y configuración pertenecen al grupo desplegable Administración; Configuración permanece planificada.
@@ -47,11 +47,12 @@ La versión 1.7.2 es un expediente clínico general para servicios médicos, den
 39. El flujo rápido sólo crea citas para pacientes activos sin cita programada; reagendar continúa siendo responsabilidad del detalle del paciente.
 40. La disponibilidad visual es orientativa y siempre se revalida dentro de la operación protegida del servidor antes de confirmar.
 41. La agenda rápida no precarga ni renderiza el padrón de pacientes: exige una búsqueda de al menos dos caracteres, limita las coincidencias y mantiene visible sólo la ficha elegida.
-42. Agenda de hoy, Próximas citas y Pacientes recientes permanecen sin cambios funcionales en 1.7.2; cualquier simplificación propuesta requiere una decisión posterior y pruebas de Dashboard.
+42. Agenda de hoy, Próximas citas y Pacientes recientes permanecen sin cambios funcionales en 1.7.3; cualquier simplificación propuesta requiere una decisión posterior y pruebas de Dashboard.
 43. `numero_cita` representa un turno diario global: el navegador nunca lo decide, `(fecha, numero_cita)` es único y la secuencia se reinicia para cada fecha.
 44. La proyección visual del turno no constituye una reserva. El servidor vuelve a calcularlo dentro del bloqueo de escritura inmediatamente antes de guardar.
 45. Un turno asignado es una referencia histórica. No se renumeran notas posteriores al eliminar o mover una consulta; los totales diarios se calculan mediante `COUNT`, nunca mediante `MAX(numero_cita)`.
 46. En receta, la tarjeta nueva aparece arriba por usabilidad, pero `orden_medicamento[]` debe ser consecutivo, único y autoritativamente ordenado por el servidor antes de persistir e imprimir.
+47. La receta impresa presenta medicamentos como una lista compacta sin tarjetas; no omite datos obligatorios, oculta sólo opcionales vacíos, preserva `1..n` y evita partir un medicamento entre páginas.
 
 ## Próximas fases
 

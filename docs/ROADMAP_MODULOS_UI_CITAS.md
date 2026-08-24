@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.7.2 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final y las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
+La versión 1.7.3 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta y las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
 
 Módulos evaluados:
 
@@ -228,6 +228,13 @@ Módulos evaluados:
 - SQLite impone unicidad `(fecha, numero_cita)` y una migración no destructiva normaliza filas existentes.
 - La importación XLSX y el cambio de fecha de una consulta aplican la misma secuencia y generan trazabilidad.
 
+### Fase 1.15: receta impresa compacta — completada en 1.7.3
+
+- Los medicamentos dejan de usar cajas y cuadrículas repetidas en la hoja A4.
+- Cada elemento conserva denominación, presentación, vía, dosis, frecuencia y duración en tres líneas; cantidad e indicaciones sólo aparecen cuando existen.
+- A partir de seis medicamentos se activa una densidad moderada y cada bloque evita saltos internos de página.
+- Folio, vigencia, datos profesionales, paciente, alergias, firma y orden `1..n` permanecen intactos.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -266,7 +273,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | UI-TAB-01 | Formulario de consulta | Tres pestañas generales y cuarta sólo para Nutrición |
 | UI-PRINT-01 | Vista de impresión | Nota completa, independiente y autenticada |
 | RX-CRUD-01 | Emitir receta | Datos obligatorios, snapshot, auditoría e inmutabilidad |
-| RX-PRINT-01 | Imprimir receta | Documento A4 completo y sin shell/CDN |
+| RX-PRINT-01 | Imprimir receta | Documento A4 completo, compacto, sin tarjetas repetidas y sin shell/CDN |
 | RX-HIS-01 | Adicional/sustitución | Folios y versiones conservados; documento anterior no vigente |
 | RX-ORDER-01 | Orden de receta | Alta visual superior y salida persistida/impresa `1..n` |
 | CONS-DAY-01 | Turno diario | Asignación en servidor, reinicio por fecha y cliente ignorado |
@@ -291,7 +298,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.7.2: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden de medicamentos, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.7.3: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.3 — Receta impresa compacta
+
+- La impresión de medicamentos deja de usar tarjetas con borde y cuadrículas repetidas.
+- Cada medicamento se presenta en tres líneas compactas: denominación/presentación, vía/cantidad y posología; las indicaciones adicionales aparecen sólo cuando existen.
+- La cantidad opcional ya no imprime un marcador vacío y los datos farmacológicos obligatorios permanecen completos.
+- A partir de seis medicamentos se activa una densidad tipográfica adicional para aprovechar mejor la hoja A4.
+- Cada bloque usa reglas de salto de página para evitar que un medicamento quede dividido entre dos hojas.
+- Se reducen márgenes, espacios de cabecera y firma sin modificar folios, vigencia, alergias, snapshots ni orden clínico.
+- Verificación: 80 pruebas pytest; 15 casos heredados compatibles con unittest.
+
 ## 1.7.2 — Orden de receta y turno diario de consultas
 
 - **Agregar medicamento** inserta la tarjeta nueva en la parte superior y enfoca su primer campo obligatorio.

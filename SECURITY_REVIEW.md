@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.7.2 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.7.3 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -78,6 +78,7 @@ La versión 1.7.2 es adecuada para pruebas funcionales y para un piloto en una e
 - El turno diario mostrado por JavaScript es orientativo, se entrega sin caché y nunca se acepta como autoridad; el servidor lo recalcula bajo bloqueo y la base rechaza duplicados por fecha.
 - La bitácora de consulta conserva fecha y turno asignado, pero no diagnósticos, síntomas o contenido de la receta.
 - El orden de medicamentos se valida como una secuencia única y consecutiva antes de persistir; no se confía en la posición visual ni en valores manipulados del navegador.
+- La compactación de la receta es exclusivamente de presentación: conserva todos los campos farmacológicos obligatorios, omite sólo opcionales vacíos y mantiene cada medicamento unido al paginar.
 
 ### Persistencia y entrega
 

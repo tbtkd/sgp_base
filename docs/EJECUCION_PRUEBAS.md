@@ -35,7 +35,7 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.7.2:
+Resultado esperado para la versión 1.7.3:
 
 ```text
 80 passed
@@ -61,7 +61,7 @@ Para validar perfiles profesionales, cédula, snapshot del autor y restricción 
 python -m pytest -q tests/test_professional_profiles.py
 ```
 
-Para validar recetas originales/adicionales/sustituciones, migración, impresión, cuenta en sidebar, estado cerrado del menú e icono:
+Para validar recetas originales/adicionales/sustituciones, migración, impresión compacta, orden, cuenta en sidebar, estado cerrado del menú e icono:
 
 ```powershell
 python -m pytest -q tests/test_prescriptions.py

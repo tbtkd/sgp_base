@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.7.2
+# Matriz de pruebas — versión 1.7.3
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -107,14 +107,14 @@ python -m pytest -q
 | --- | --- | --- |
 | RX-SEC-01 | Acceso | Anónimo redirigido, Nutrición rechazada y profesional incompleto bloqueado |
 | RX-CRUD-01 | Emisión | Folio, medicamento, alergias, snapshots y evento `CREAR_RECETA` |
-| RX-PRINT-01 | Documento | A4 independiente con nombre, cédula, domicilio, fecha, posología y firma pendiente |
+| RX-PRINT-01 | Documento | A4 independiente y compacto, sin cuadrícula repetida, con nombre, cédula, domicilio, fecha, posología, orden `1..n` y firma pendiente |
 | RX-IMM-01 | Inmutabilidad | Cambios al usuario no reescriben la receta y la consulta asociada no se elimina |
 | RX-VAL-01 | Servidor | Filas desalineadas, más de 10 medicamentos y receta especial rechazados |
 | RX-HIS-01 | Historial | Original, adicional y sustitución conservan folios/versiones y vigencia independiente |
 | RX-SUB-01 | Corrección | Motivo obligatorio, documento anterior intacto y leyenda de no surtir |
 | RX-MIG-01 | Migración | Unicidad legada retirada sin perder folios y llaves foráneas verificadas |
 | RX-ORDER-01 | Captura | Agregar usa inserción superior, foco inicial y orden oculto consecutivo |
-| RX-ORDER-02 | Persistencia/impresión | Filas visuales `3,2,1` se guardan y muestran como `1,2,3` |
+| RX-ORDER-02 | Persistencia/impresión | Filas visuales `3,2,1` se guardan y muestran como `1,2,3` en una lista compacta sin tarjetas |
 | UI-ID-01 | Identidad | Cuenta sólo en sidebar, topbar sin identidad e icono canónico PNG/ICO |
 | UI-ID-02 | Estado de cuenta | Panel cerrado por `hidden`, sin saludo duplicado y control local con `aria-expanded` |
 

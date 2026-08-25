@@ -13,7 +13,8 @@
 
 - `auth`: bootstrap, login/logout, usuarios, cambio/restablecimiento de contraseña y auditoría.
 - `main`: dashboard y seguimiento.
-- `pacientes`: pacientes, citas, pagos e importación.
+- `pacientes`: pacientes, citas, alta contextual de pagos e importación.
+- `pagos`: listado global, agregados filtrados y cancelación administrativa.
 - `agenda`: vista operativa Día/Semana y reagenda; comparte validaciones de citas con `pacientes`.
 - `historial_clinico`: expediente, limitado a `admin/medico`.
 - `valoracion`: consultas clínicas, limitado a `admin/medico`.
@@ -52,7 +53,19 @@ Cada cambio o restablecimiento de contraseña incrementa `auth_version`, de modo
 
 ## Datos
 
-`app/db.py` resuelve la ruta persistente, crea un respaldo consistente y ejecuta migraciones aditivas seguras. Para retirar la antigua unicidad de una receta por consulta existe una migración específica, transaccional y verificada que preserva filas e índices. El respaldo rota a 10 copias. Los cambios estructurales futuros requieren scripts versionados y una restauración probada.
+`app/db.py` resuelve la ruta persistente, crea un respaldo consistente y ejecuta migraciones aditivas seguras. Para retirar la antigua unicidad de una receta por consulta, normalizar turnos y reconstruir pagos 1.10.0 existen migraciones específicas, transaccionales y verificadas que preservan filas e índices. El respaldo rota a 10 copias. Los cambios estructurales futuros requieren scripts versionados y una restauración probada.
+
+## Pagos operativos
+
+`POST /pacientes/<id>/pago` utiliza `payment_payload()`, convierte el importe a centavos, valida una cita opcional del mismo paciente y delega la construcción a `Pago.crear()`. El pago recibe folio, moneda MXN, UUID v4 de operación y usuario. `operation_key` posee unicidad de base: un segundo POST del mismo formulario no inserta otra fila y genera `RECHAZAR_PAGO_DUPLICADO`.
+
+`GET /pagos/` requiere rol Administración o Recepción. La consulta acepta paciente/folio/concepto, fechas, método, estado y página; normaliza Unicode y divide el texto en términos, de modo que nombre y apellidos pueden coincidir en columnas separadas. Limita el rango a 366 días y pagina 25 filas. `SUM` opera sólo sobre `monto_centavos` con estado `vigente`. `POST /pagos/<id>/cancelar` requiere Administración, motivo de 5–500 caracteres y conserva la fila original. El destino de retorno acepta exclusivamente rutas internas de Pagos/Pacientes; añade un ancla al movimiento y sustituye filtros incompatibles por el folio cancelado.
+
+La relación `cita_id` es opcional y nunca se infiere por la sola existencia de una cita: el operador selecciona el evento que originó el cobro. `metodo_pago` alimenta el desglose operativo y no contiene ninguna decisión de facturación.
+
+Administración recibe además agrupación `dia|mes`. `GET /pagos/exportar.csv` reaplica los filtros y `GET /pagos/paciente/<id>/historial.csv` genera el historial individual. `_export_rows()` limita ambas salidas a 10,000 filas; `_csv_safe()` neutraliza `=`, `+`, `-`, `@`, tabulador y retorno de carro al inicio de una celda. La respuesta usa BOM UTF-8, `Cache-Control: no-store` y genera `EXPORTAR_PAGOS`.
+
+`payments_v110` reconstruye `pagos` antes de la migración aditiva general. Las filas válidas se convierten mediante `Decimal`; las incompletas pasan a `requiere_revision`. La migración cambia Paciente a `ON DELETE RESTRICT`, usa `SET NULL` para usuarios/cita, recrea unicidad e índices y ejecuta `foreign_key_check`/`integrity_check`.
 
 ## Turno diario y orden de receta
 

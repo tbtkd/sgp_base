@@ -3,6 +3,7 @@
 {% set agenda_activa = 'agenda.' in endpoint_actual or request.path == '/pacientes/agendar-cita' %}
 {% set recetas_activa = 'recetas.' in endpoint_actual or (endpoint_actual == 'valoracion.todas_valoraciones' and request.args.get('origen') == 'recetas') %}
 {% set consultas_activa = 'valoracion.' in endpoint_actual and not recetas_activa %}
+{% set pagos_activa = 'pagos.' in endpoint_actual %}
 {% set administracion_activa = 'plantillas.' in endpoint_actual or endpoint_actual == 'auth.auditoria' or endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %}
 <!-- Navegación principal. Los módulos aún no implementados se exponen como estado planificado, sin rutas ficticias. -->
 <aside id="application-sidebar" data-sidebar aria-label="Navegación principal" class="shell-sidebar">
@@ -26,10 +27,12 @@
         <a href="{{ url_for('historial_clinico.lista_historiales') }}" class="{{ nav_link }}{% if 'historial_clinico.' in endpoint_actual %} is-active{% endif %}"{% if 'historial_clinico.' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-file-medical" aria-hidden="true"></i><span>Expedientes clínicos</span></a>
         <a href="{{ url_for('valoracion.todas_valoraciones', origen='recetas') }}" class="{{ nav_link }}{% if recetas_activa %} is-active{% endif %}"{% if recetas_activa %} aria-current="page"{% endif %}><i class="fas fa-prescription" aria-hidden="true"></i><span>Recetas</span><small>Desde consulta</small></a>
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Laboratorio" aria-disabled="true"><i class="fas fa-flask" aria-hidden="true"></i><span>Laboratorio</span><small>Próximamente</small></button>
-        <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Hospitalización" aria-disabled="true"><i class="fas fa-hospital" aria-hidden="true"></i><span>Hospitalización</span><small>Próximamente</small></button>
         {% endif %}
 
         <p class="shell-nav-section">Gestión</p>
+        {% if current_user.rol_clinico in ['admin', 'recepcion'] %}
+        <a href="{{ url_for('pagos.index') }}" class="{{ nav_link }}{% if pagos_activa %} is-active{% endif %}"{% if pagos_activa %} aria-current="page"{% endif %}><i class="fas fa-receipt" aria-hidden="true"></i><span>Pagos</span><small>Operación local</small></a>
+        {% endif %}
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Facturación" aria-disabled="true"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Facturación</span><small>Próximamente</small></button>
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Inventario" aria-disabled="true"><i class="fas fa-boxes" aria-hidden="true"></i><span>Inventario</span><small>Próximamente</small></button>
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Reportes" aria-disabled="true"><i class="fas fa-chart-bar" aria-hidden="true"></i><span>Reportes</span><small>Próximamente</small></button>

@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.9.1
+# Matriz de pruebas — versión 1.10.0
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -10,7 +10,7 @@
 | SYS-04 | Pacientes | Alta, lectura, búsqueda, actualización y cambio de estado |
 | SYS-05 | Historial | Antecedentes y alergias persistidos |
 | SYS-06 | Consulta | Signos vitales, indicaciones e IMC calculado por servidor |
-| SYS-07 | Citas/pagos | Motivo, monto, concepto y método persistidos |
+| SYS-07 | Citas/pagos | Cita y pago exacto con folio, responsable, concepto y método persistidos |
 | SYS-08 | Auditoría | Acción normalizada, módulo, usuario e IP |
 | SYS-09 | Respaldos | Copia legible y rotación exacta a 10 archivos |
 | SYS-10 | Acceso | Rutas clínicas redirigen a login |
@@ -135,7 +135,7 @@ python -m pytest -q
 
 | ID | Control | Cobertura |
 | --- | --- | --- |
-| PKG-CLEAN-01 | Limpieza segura | Retira SVG/cachés obsoletos y conserva logo vigente, entorno virtual y base local |
+| PKG-CLEAN-01 | Limpieza segura | Retira SVG/estilos legados/cachés obsoletos y conserva logo vigente, entorno virtual y base local |
 
 ## Turno diario (`tests/test_daily_consultation_sequence.py`)
 
@@ -155,13 +155,31 @@ python -m pytest -q
 | CONS-RX-01 | Compatibilidad | El contexto Recetas conserva todas las consultas específicas e históricas |
 | XLS-RBAC-01 | Visibilidad | Botón, formulario y resultado de importación sólo se renderizan para Nutrición |
 | XLS-RBAC-02 | Autorización | Solicitud forjada se rechaza antes de consultar al paciente y queda auditada como denegada |
-| DEMO-01 | Datos de prueba | Carga idempotente, perfiles, pacientes, consultas, receta ordenada y XLSX demostrativo |
+| DEMO-01 | Datos de prueba | Carga idempotente de cinco cuentas, seis pacientes, siete citas, dieciocho pagos con todos los estados, consultas, receta ordenada y XLSX demostrativo |
 | DEMO-02 | XLSX demostrativo | El archivo incluido es aceptado por el flujo real de importación de Nutrición |
+
+## Pagos operativos (`tests/test_payments.py`)
+
+| ID | Control | Cobertura |
+| --- | --- | --- |
+| PAY-VAL-01 | Importe exacto | Centavos, coma decimal y rechazo de cero, negativos, notación científica o más de dos decimales |
+| PAY-CRUD-01 | Registro | Folio, usuario, cita del paciente, moneda, auditoría y espejo legado |
+| PAY-IDEM-01 | Doble envío | UUID/restricción única impiden un segundo movimiento y auditan el rechazo |
+| PAY-FK-01 | Cita | Una cita perteneciente a otro paciente se rechaza |
+| PAY-HIS-01 | Historial | Último pago vigente, historial, monto/folio y conservación del original cancelado |
+| PAY-RBAC-01 | Roles | Global para Administración/Recepción; cancelación sólo Administración; Medicina contextual |
+| PAY-QRY-01 | Consultas | Búsqueda Unicode y por nombre completo distribuido en varias columnas, filtros, sumas vigentes y desglose por método |
+| PAY-REP-01 | Reportes | Agrupación diaria/mensual, CSV global/individual, auditoría, límite y neutralización de fórmulas |
+| PAY-CAN-01 | Cancelación | Motivo obligatorio, segundo intento denegado, responsable, auditoría y retorno visible por folio/ancla |
+| PAY-RANGE-01 | Fechas | Rangos invertidos o mayores de 366 días rechazados |
+| PAY-MIG-01 | Migración | Conversión a centavos, cuarentena de incompletos, unicidad, `RESTRICT` e integridad |
+| PAY-UI-01 | Interfaz | Historial, cita opcional explícita, método no fiscal, cancelación dentro del flujo, resaltado, idempotencia visual y tema oscuro |
 
 Resultados esperados:
 
 ```text
-pytest: 97/97 (incluye 15 casos unittest)
+pytest: 109/109 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
+pip-audit: 0 vulnerabilidades conocidas
 ```

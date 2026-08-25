@@ -1,6 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block title %}Detalle del Paciente - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css', v=config['ASSET_VERSION']) }}">{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
@@ -15,6 +16,7 @@
 
     {% include 'pacientes/partials/_info_principal.html' %}
     {% include 'pacientes/partials/_acciones_y_formularios.html' %}
+    {% include 'pacientes/partials/_historial_pagos.html' %}
     {% include 'pacientes/partials/_historial_clinico.html' %}
 </div>
 
@@ -218,4 +220,5 @@
 
 <script src="{{ url_for('static', filename='js/detalle_paciente.js') }}"></script>
 <script src="{{ url_for('static', filename='js/detalle_paciente_extra.js') }}"></script>
+<script src="{{ url_for('static', filename='js/payments.js', v=config['ASSET_VERSION']) }}"></script>
 {% endblock %}

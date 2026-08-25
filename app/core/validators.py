@@ -2,7 +2,9 @@ import math
 import re
 import unicodedata
 from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from email.utils import parseaddr
+from uuid import UUID
 
 
 class ValidationError(ValueError):
@@ -16,6 +18,7 @@ ALLOWED_PATIENT_STATUS = {"activo", "inactivo"}
 ALLOWED_GENDERS = {"hombre", "mujer", "otro", "prefiero_no_decir"}
 ALLOWED_APPOINTMENT_STATUS = {"Programada", "Atendida", "No Asistió", "Cancelada"}
 ALLOWED_PAYMENT_METHODS = {"efectivo", "tarjeta", "transferencia", "otro"}
+ALLOWED_PAYMENT_STATUS = {"vigente", "cancelado", "requiere_revision"}
 ANTHROPOMETRY_FIELDS = (
     "grasa",
     "porcentaje_grasa",
@@ -144,6 +147,32 @@ def number(value, field, *, minimum=None, maximum=None, required=True):
     if (minimum is not None and parsed < minimum) or (maximum is not None and parsed > maximum):
         raise ValidationError(f"{field} está fuera del rango permitido.")
     return parsed
+
+
+def money_centavos(value, field="Monto", *, maximum=10_000_000):
+    text = unicodedata.normalize("NFKC", str(value or "")).strip().replace(",", ".")
+    if not text:
+        raise ValidationError(f"{field} es obligatorio.")
+    if not re.fullmatch(r"\d{1,8}(?:\.\d{1,2})?", text):
+        raise ValidationError(f"{field} debe ser un importe positivo con máximo dos decimales.")
+    try:
+        amount = Decimal(text).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except InvalidOperation:
+        raise ValidationError(f"{field} debe ser un importe monetario válido.") from None
+    if amount <= 0 or amount > Decimal(str(maximum)):
+        raise ValidationError(f"{field} debe ser mayor que cero y no exceder {maximum:,.2f}.")
+    return int(amount * 100)
+
+
+def operation_key(value):
+    text = clean_text(value, "Identificador de operación", maximum=36, required=True)
+    try:
+        parsed = UUID(text)
+    except (ValueError, AttributeError):
+        raise ValidationError("El identificador de la operación no es válido. Recarga el formulario.") from None
+    if parsed.version != 4:
+        raise ValidationError("El identificador de la operación no es válido. Recarga el formulario.")
+    return str(parsed)
 
 
 def username(value):
@@ -504,7 +533,20 @@ def appointment_payload(form):
 def payment_payload(form):
     return {
         "fecha_pago": date_value(form.get("fecha_pago"), "Fecha de pago"),
-        "monto": number(form.get("monto"), "Monto", minimum=0, maximum=10_000_000),
+        "monto_centavos": money_centavos(form.get("monto")),
         "concepto": clean_text(form.get("concepto"), "Concepto", maximum=200, required=True),
         "metodo_pago": enum_value(form.get("metodo_pago"), "Método de pago", ALLOWED_PAYMENT_METHODS),
+        "operation_key": operation_key(form.get("operation_key")),
+    }
+
+
+def payment_cancellation_payload(form):
+    return {
+        "motivo_cancelacion": clean_text(
+            form.get("motivo_cancelacion"),
+            "Motivo de cancelación",
+            minimum=5,
+            maximum=500,
+            required=True,
+        )
     }

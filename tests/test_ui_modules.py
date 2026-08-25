@@ -197,6 +197,7 @@ def test_shell_navigation_theme_and_planned_modules_are_accessible(client, login
     assert "Administración" in sidebar
     assert "Usuarios y permisos" in sidebar
     assert "Portal del paciente" in sidebar
+    assert "Hospitalización" not in sidebar
     assert sidebar.count('data-planned-module=') >= 7
     assert 'aria-disabled="true"' in sidebar
     assert "sgpn-theme" in theme_init

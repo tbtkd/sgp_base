@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+from uuid import uuid4
 
 from app import create_app
 from app import db_orm as db
@@ -190,14 +191,18 @@ class SistemaClinicoTest(unittest.TestCase):
             estatus="Programada",
             estado="pendiente",
         )
-        payment = Pago(
-            paciente_id=patient.id,
-            fecha_pago=date.today(),
-            monto=500.0,
-            concepto="Consulta",
-            metodo_pago="tarjeta",
+        Pago.crear(
+            patient.id,
+            {
+                "fecha_pago": date.today(),
+                "monto_centavos": 50000,
+                "concepto": "Consulta",
+                "metodo_pago": "tarjeta",
+                "operation_key": str(uuid4()),
+            },
+            usuario_id=self.admin.id,
         )
-        db.session.add_all([appointment, payment])
+        db.session.add(appointment)
         db.session.commit()
         self.assertEqual(Cita.obtener_siguiente_cita(patient.id).motivo, "Seguimiento")
         self.assertEqual(Pago.obtener_ultimo_pago(patient.id).monto, 500.0)

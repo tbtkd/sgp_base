@@ -28,6 +28,16 @@ La salida de receta define seis cajas de margen `@page` vacías para sustituir f
 
 El campo **Turno diario** es de sólo lectura. Al cambiar la fecha, `consulta_diaria.js` cancela la solicitud anterior, consulta una proyección autenticada y anuncia el resultado mediante `aria-live`. Si la red falla, el formulario continúa disponible porque el servidor asigna el valor definitivo al guardar. La interfaz nunca presenta la proyección como una reserva confirmada.
 
+## Pagos
+
+El detalle del paciente contiene un formulario con fecha no futura, monto MXN positivo, concepto, método y cita opcional. La ayuda explica que la cita se selecciona explícitamente y que el método sirve para caja, no para decidir facturación. `payments.js` bloquea el botón después de una validación exitosa, mientras el UUID oculto aporta la defensa definitiva en servidor. El historial muestra folio, fecha, concepto, método, importe, responsable, estado y cita, sin permitir edición o eliminación.
+
+Administración y Recepción disponen del enlace **Pagos** bajo Gestión. La pantalla global inicia con el día actual, presenta cuatro KPI, desglose por método, filtros y una tabla paginada. La búsqueda por nombre completo funciona aunque sus términos estén almacenados en campos separados. Sólo Administración ve el control de cancelación; éste exige motivo y confirmación explícita, se despliega dentro del flujo de la tabla y después conserva el renglón visible/resaltado. `payments.css` define superficies, tablas, estados, menús, responsive y equivalentes oscuros propios.
+
+Sólo Administración ve la agrupación diaria/mensual, **Exportar filtro CSV** y **Exportar historial CSV**. El resumen reutiliza el periodo filtrado; los archivos son reportes de cobros y no se rotulan como estado de cuenta porque no existen cargos ni saldos.
+
+Los estados usan texto y color: Vigente, Cancelado y Requiere revisión. Los importes no disponibles se rotulan de forma explícita y nunca aparecen como cero cobrado. La nota de alcance aclara que el módulo no constituye CFDI, contabilidad, estado de cuenta o corte formal de caja.
+
 ## Navegación, identidad y tema
 
 El sidebar contiene marca, navegación y la identidad del usuario en su footer. La fila compacta muestra avatar, nombre completo, rol/perfil y un botón `...`. El desplegable abre hacia arriba y presenta nombre legal, rol, área clínica, cédula cuando existe, cambio de contraseña y cierre de sesión. El topbar queda libre de identidad y se dedica a contexto, búsqueda, sede, notificaciones y tema.

@@ -1,0 +1,106 @@
+{% extends "base/base.html" %}
+
+{% block title %}Pagos - Sistema Clínico{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/payments.css', v=config['ASSET_VERSION']) }}">{% endblock %}
+
+{% block content %}
+{% set method_labels = {'efectivo': 'Efectivo', 'tarjeta': 'Tarjeta', 'transferencia': 'Transferencia', 'otro': 'Otro'} %}
+{% set status_labels = {'vigente': 'Vigente', 'cancelado': 'Cancelado', 'requiere_revision': 'Requiere revisión'} %}
+<div class="payments-page">
+    <header class="payments-page-heading">
+        <div><p class="payment-eyebrow">Operación local</p><h1>Pagos</h1><p>Consulta movimientos íntegros por paciente, folio, fecha, método y estado.</p></div>
+        <div class="payment-heading-actions">
+            {% if current_user.rol_clinico == 'admin' %}<a href="{{ url_for('pagos.exportar_csv', q=filtros.q, desde=filtros.desde.isoformat(), hasta=filtros.hasta.isoformat(), metodo=filtros.metodo, estatus=filtros.estatus, agrupacion=filtros.agrupacion) }}" class="payment-secondary-action"><i class="fas fa-file-csv" aria-hidden="true"></i>Exportar filtro CSV</a>{% endif %}
+            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="payment-primary-action"><i class="fas fa-user-plus" aria-hidden="true"></i>Registrar desde un paciente</a>
+        </div>
+    </header>
+
+    <section class="payments-kpi-grid" aria-label="Resumen del periodo filtrado">
+        <article><span><i class="fas fa-money-bill-wave" aria-hidden="true"></i>Total vigente</span><strong>{{ resumen.monto_centavos|money_cents }} MXN</strong><small>Excluye cancelados y pendientes de revisión</small></article>
+        <article><span><i class="fas fa-receipt" aria-hidden="true"></i>Movimientos</span><strong>{{ resumen.movimientos }}</strong><small>Resultados del filtro actual</small></article>
+        <article><span><i class="fas fa-ban" aria-hidden="true"></i>Cancelados</span><strong>{{ resumen.cancelados }}</strong><small>Originales conservados</small></article>
+        <article class="{% if resumen.requieren_revision %}has-warning{% endif %}"><span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Requieren revisión</span><strong>{{ resumen.requieren_revision }}</strong><small>Registros legados no sumados</small></article>
+    </section>
+
+    <section class="payment-filter-panel" aria-labelledby="payment-filters-title">
+        <div class="payment-panel-heading"><div><p class="payment-eyebrow">Consulta operativa</p><h2 id="payment-filters-title">Filtros</h2></div><a href="{{ url_for('pagos.index') }}">Restablecer</a></div>
+        <form method="GET" action="{{ url_for('pagos.index') }}" class="payment-filter-grid">
+            <div class="payment-filter-search"><label for="payment-search">Paciente, folio o concepto</label><input id="payment-search" name="q" type="search" maxlength="100" value="{{ filtros.q }}" placeholder="Ej. García o PAG-2026…"></div>
+            <div><label for="payment-from">Desde</label><input id="payment-from" name="desde" type="date" value="{{ filtros.desde.isoformat() }}" required></div>
+            <div><label for="payment-to">Hasta</label><input id="payment-to" name="hasta" type="date" value="{{ filtros.hasta.isoformat() }}" required></div>
+            <div><label for="payment-method">Método</label><select id="payment-method" name="metodo"><option value="">Todos</option>{% for method in metodos %}<option value="{{ method }}"{% if filtros.metodo == method %} selected{% endif %}>{{ method_labels[method] }}</option>{% endfor %}</select></div>
+            <div><label for="payment-status">Estado</label><select id="payment-status" name="estatus"><option value="">Todos</option>{% for status in estatus_disponibles %}<option value="{{ status }}"{% if filtros.estatus == status %} selected{% endif %}>{{ status_labels[status] }}</option>{% endfor %}</select></div>
+            {% if current_user.rol_clinico == 'admin' %}<div><label for="payment-grouping">Resumen</label><select id="payment-grouping" name="agrupacion"><option value="dia"{% if filtros.agrupacion == 'dia' %} selected{% endif %}>Por día</option><option value="mes"{% if filtros.agrupacion == 'mes' %} selected{% endif %}>Por mes</option></select></div>{% endif %}
+            <button type="submit"><i class="fas fa-filter" aria-hidden="true"></i>Aplicar filtros</button>
+        </form>
+        <p class="payment-filter-help">El rango máximo permitido es de 366 días. La vista inicia con los movimientos del día.</p>
+    </section>
+
+    <section class="payment-breakdown" aria-labelledby="payment-breakdown-title">
+        <div><p class="payment-eyebrow">Total vigente</p><h2 id="payment-breakdown-title">Desglose por método</h2></div>
+        <ul>{% for method in metodos %}<li><span>{{ method_labels[method] }}</span><strong>{{ desglose.get(method, 0)|money_cents }} MXN</strong></li>{% endfor %}</ul>
+    </section>
+
+    {% if current_user.rol_clinico == 'admin' %}
+    <section class="payment-report-panel" aria-labelledby="payment-report-title">
+        <div class="payment-panel-heading">
+            <div><p class="payment-eyebrow">Reporte administrativo</p><h2 id="payment-report-title">Resumen por {{ 'mes' if filtros.agrupacion == 'mes' else 'día' }}</h2><p>Importes vigentes y movimientos del filtro actual.</p></div>
+        </div>
+        {% if serie_reporte %}
+        <div class="payment-table-wrap"><table class="payment-table payment-report-table"><thead><tr><th>Periodo</th><th>Movimientos</th><th>Cancelados</th><th>Total vigente</th></tr></thead><tbody>{% for fila in serie_reporte %}<tr><td><strong>{{ fila.periodo }}</strong></td><td>{{ fila.movimientos }}</td><td>{{ fila.cancelados }}</td><td class="payment-amount">{{ fila.monto_centavos|money_cents }} MXN</td></tr>{% endfor %}</tbody></table></div>
+        {% else %}<div class="payment-empty-state payment-empty-state--compact"><strong>Sin periodos para resumir</strong><p>El filtro actual no contiene movimientos.</p></div>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="payment-list-panel" aria-labelledby="payment-list-title">
+        <div class="payment-panel-heading"><div><p class="payment-eyebrow">Trazabilidad</p><h2 id="payment-list-title">Movimientos</h2><p>{{ paginacion.total }} resultado{% if paginacion.total != 1 %}s{% endif %}</p></div></div>
+        {% if pagos %}
+        <div class="payment-table-wrap">
+            <table class="payment-table">
+                <thead><tr><th>Folio</th><th>Fecha</th><th>Paciente</th><th>Concepto</th><th>Método</th><th>Monto</th><th>Registró</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr></thead>
+                <tbody>
+                    {% for pago in pagos %}
+                    <tr id="pago-{{ pago.id }}">
+                        <td><strong>{{ pago.folio }}</strong><small>{% if pago.cita %}Cita {{ pago.cita.fecha|format_date }} · {{ pago.cita.hora.strftime('%H:%M') }}{% else %}Sin cita relacionada{% endif %}</small></td>
+                        <td>{{ pago.fecha_pago|format_date }}</td>
+                        <td><a href="{{ url_for('pacientes.detalle_paciente', id=pago.paciente_id) }}">{{ pago.paciente.nombre_completo }}</a><small>EXP-{{ '%04d'|format(pago.paciente_id) }}</small></td>
+                        <td class="payment-concept">{{ pago.concepto }}</td>
+                        <td>{{ method_labels.get(pago.metodo_pago, pago.metodo_pago|capitalize) }}</td>
+                        <td class="payment-amount">{% if pago.monto_centavos > 0 %}{{ pago.monto_centavos|money_cents }} {{ pago.moneda }}{% else %}No disponible{% endif %}</td>
+                        <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Registro migrado' }}</td>
+                        <td><span class="payment-status payment-status--{{ pago.estatus|replace('_', '-') }}">{{ pago.estatus_etiqueta }}</span>{% if pago.estatus == 'cancelado' %}<small>{{ pago.motivo_cancelacion }}</small>{% endif %}</td>
+                        <td>
+                            {% if current_user.rol_clinico == 'admin' and pago.estatus != 'cancelado' %}
+                            <details class="payment-cancel-menu">
+                                <summary aria-label="Cancelar pago {{ pago.folio }}"><i class="fas fa-ban" aria-hidden="true"></i></summary>
+                                <form action="{{ url_for('pagos.cancelar', pago_id=pago.id) }}" method="POST" data-payment-cancel-form>
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                    <label for="cancel-reason-global-{{ pago.id }}">Motivo de cancelación</label><textarea id="cancel-reason-global-{{ pago.id }}" name="motivo_cancelacion" minlength="5" maxlength="500" required></textarea>
+                                    <button type="submit">Conservar original y cancelar</button>
+                                </form>
+                            </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="payment-empty-state"><i class="fas fa-magnifying-glass-dollar" aria-hidden="true"></i><strong>No se encontraron movimientos</strong><p>Ajusta los filtros o registra un pago desde el detalle de un paciente.</p></div>
+        {% endif %}
+
+        {% if paginacion.pages > 1 %}
+        <nav class="payment-pagination" aria-label="Páginas de pagos">
+            {% if paginacion.has_prev %}<a href="{{ url_for('pagos.index', q=filtros.q, desde=filtros.desde.isoformat(), hasta=filtros.hasta.isoformat(), metodo=filtros.metodo, estatus=filtros.estatus, agrupacion=filtros.agrupacion, page=paginacion.prev_num) }}">Anterior</a>{% endif %}
+            <span>Página {{ paginacion.page }} de {{ paginacion.pages }}</span>
+            {% if paginacion.has_next %}<a href="{{ url_for('pagos.index', q=filtros.q, desde=filtros.desde.isoformat(), hasta=filtros.hasta.isoformat(), metodo=filtros.metodo, estatus=filtros.estatus, agrupacion=filtros.agrupacion, page=paginacion.next_num) }}">Siguiente</a>{% endif %}
+        </nav>
+        {% endif %}
+    </section>
+
+    <aside class="payment-scope-note"><i class="fas fa-circle-info" aria-hidden="true"></i><p><strong>Alcance:</strong> este módulo es un control operativo local de cobros. No constituye facturación CFDI, contabilidad, estado de cuenta, corte de caja formal ni control de adeudos.</p></aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script src="{{ url_for('static', filename='js/payments.js', v=config['ASSET_VERSION']) }}"></script>{% endblock %}

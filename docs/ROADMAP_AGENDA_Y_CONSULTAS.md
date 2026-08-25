@@ -2,7 +2,7 @@
 
 ## 1. Alcance de esta revisión
 
-La versión 1.9.0 conserva la Agenda operativa 1.8.0, implementa el índice simplificado de Consultas y mantiene la columna **% Grasa** del grid **Historial de consultas** exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones.
+La versión 1.10.0 conserva sin cambios funcionales la Agenda operativa 1.8.0 y el índice simplificado de Consultas 1.9.0. La columna **% Grasa** del grid **Historial de consultas** permanece exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones. El nuevo módulo de Pagos no altera estos contratos.
 
 La regla se basa en el perfil autenticado, no en el autor de la consulta, y se aplica tanto al encabezado como a todas las celdas para no dejar una columna vacía. No se modifican los datos almacenados, la impresión de notas ni la captura antropométrica existente.
 

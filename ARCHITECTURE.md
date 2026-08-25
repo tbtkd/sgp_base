@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.9.1
+# Arquitectura técnica — versión 1.10.0
 
 ## Componentes
 
@@ -9,11 +9,14 @@
 - `app/core/auth.py`, `app/core/security.py` y `app/core/password_recovery.py`: sesión, RBAC, limitación de intentos y recuperación local.
 - `app/models/`: esquema SQLAlchemy.
 - `app/controllers/`: transacciones y casos de uso.
+- `app/controllers/pagos.py`: consulta operativa, agregados filtrados y cancelación administrativa de pagos.
 - `app/templates/` y `app/static/`: interfaz actual preservada y adaptada al dominio clínico general.
 
 El dashboard agrega consultas de lectura acotadas para altas de seis meses, actividad de siete días, próximas citas, pacientes recientes y expedientes pendientes. La consulta de pacientes sin atención reciente se ejecuta únicamente para el perfil profesional de Nutrición; Medicina general y Odontología no reciben ese dato en el contexto de la plantilla. Las gráficas se generan como SVG local a partir de series construidas en servidor; no incorporan bibliotecas de visualización ni servicios externos.
 
 La Agenda operativa vive en el blueprint `agenda`: `GET /agenda` ofrece vistas diaria y semanal; `GET/POST /agenda/citas/<id>/reagendar` modifica una cita programada sin cambiar su identidad o paciente. La creación rápida reutiliza `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido` y puede excluir la cita actual durante una reagenda. Estas respuestas usan `Cache-Control: no-store`.
+
+El módulo `pagos` expone `GET /pagos/` para Administración/Recepción y `POST /pagos/<id>/cancelar` exclusivamente para Administración. La consulta une Paciente, normaliza búsqueda Unicode, limita rangos a 366 días, pagina 25 filas y agrega únicamente `monto_centavos` de pagos vigentes. El alta permanece contextual en `POST /pacientes/<id>/pago`, valida la cita opcional contra el paciente y persiste pago/auditoría dentro de una transacción. `operation_key` aporta idempotencia de formulario y la unicidad de base evita duplicados incluso si falla el bloqueo visual.
 
 Toda creación o reagenda vuelve a validar paciente activo, fecha, rango, hora y conflicto dentro del bloqueo local de escritura antes del `commit`. Las transiciones administrativas son unidireccionales: una cita `Programada` puede terminar como `Atendida`, `No Asistió` o `Cancelada`; los cierres de atención sólo se admiten cuando el horario ya transcurrió y una cita terminal no se reabre. Cada éxito o rechazo relevante queda en auditoría sin copiar el motivo clínico completo.
 
@@ -43,7 +46,9 @@ flowchart TD
 
 - `Paciente` 1:1 `HistorialClinico`.
 - `Paciente` 1:N `ValoracionAntropometrica` (consulta clínica general conservando la tabla histórica).
-- `Paciente` 1:N `Cita`, `Pago` y `BitacoraContacto`.
+- `Paciente` 1:N `Cita`, `Pago` y `BitacoraContacto`; Pago restringe la eliminación del paciente.
+- `Usuario` 1:N `Pago` como registrador y como responsable opcional de cancelación.
+- `Cita` 1:N `Pago` como referencia operativa opcional, con `ON DELETE SET NULL`.
 - `ValoracionAntropometrica` 1:N `Receta`; `Receta` 1:N `RecetaMedicamento`.
 - `Receta` 0..1:0..1 `Receta` como documento sustituido/reemplazo.
 - `Usuario` 1:N `Receta` como emisor, conservando además una instantánea profesional.
@@ -52,6 +57,10 @@ flowchart TD
 La denominación interna `valoracion_antropometrica` se conserva para compatibilidad; en la interfaz representa una consulta clínica y sus campos antropométricos son opcionales.
 
 Cada receta ordinaria emitida es un documento independiente e inmutable. La consulta admite un original, recetas adicionales y sustituciones versionadas. Una sustitución marca el folio anterior como no vigente sin reescribirlo y enlaza ambos documentos. Los snapshots almacenan nombre, nacimiento y alergias del paciente, además de nombre, cédula, perfil, establecimiento y domicilio del profesional. La bitácora sólo conserva identificadores, tipo, versión y conteos, nunca el contenido farmacológico.
+
+Cada pago nuevo conserva `monto_centavos`, moneda MXN, concepto, método, folio, clave de operación, fecha, paciente y responsable. `monto` continúa como espejo `Float` para compatibilidad, pero queda excluido de sumas y reportes. Los estados son `vigente`, `cancelado` y `requiere_revision`; sólo el primero se agrega. Cancelar añade responsable, fecha y motivo sin reescribir el importe ni eliminar la fila.
+
+`GET /pagos/` construye agregados exactos, desglose y, para Administración, una serie agrupada con `strftime` por día o mes. `GET /pagos/exportar.csv` reutiliza los mismos filtros; `GET /pagos/paciente/<id>/historial.csv` exporta el historial individual. Ambos CSV son exclusivos de Administración, tienen tope de 10,000 movimientos, anteponen BOM UTF-8, neutralizan celdas que comienzan como fórmulas y registran `EXPORTAR_PAGOS`. No calculan cargos, saldo ni conciliación.
 
 El campo persistente y el snapshot continúan denominados `domicilio_profesional`; la plantilla de impresión sólo cambia su etiqueta visible a **Domicilio**. No existe migración de esquema ni reescritura de recetas anteriores.
 
@@ -74,6 +83,10 @@ La importación XLSX utiliza el mismo bloqueo y asigna secuencias por fecha. Cam
 `init_db()` crea tablas faltantes y compara cada tabla conocida mediante `PRAGMA table_info`. Solo ejecuta `ALTER TABLE ... ADD COLUMN` cuando la columna nueva es nullable o posee un valor predeterminado. Si falta una llave primaria o una columna nueva no puede añadirse sin inventar datos, el arranque se detiene.
 
 Este mecanismo no elimina ni renombra columnas. La versión 1.6.0 incorpora una excepción controlada y versionada para retirar la restricción única legada `recetas.valoracion_id`: reconstruye sólo esa tabla dentro de una transacción, conserva todas sus filas, recrea llaves/índices y ejecuta `foreign_key_check` e `integrity_check`. La versión 1.7.2 incorpora otra migración transaccional que normaliza los turnos legados por fecha, `created_at` e ID, y crea el índice único diario después de `integrity_check`. El respaldo de arranque ocurre antes de las migraciones. Cualquier cambio estructural futuro requiere el mismo nivel de copia, prueba y verificación.
+
+La versión 1.10.0 incorpora `payments_v110`, una reconstrucción transaccional de `pagos`. Convierte importes válidos a centavos mediante `Decimal`, genera folios y claves para filas legadas, conserva filas incompletas como `requiere_revision`, retira `ON DELETE CASCADE` y verifica llaves e integridad antes de confirmar. No inventa importes para forzar movimientos vigentes.
+
+La reconstrucción apaga llaves foráneas sólo durante el cambio estructural y las reactiva antes de devolver la conexión al pool; las conexiones posteriores continúan con `PRAGMA foreign_keys=ON`.
 
 Las bases legadas con roles `Admin/Nutricionista/Asistente` se interpretan como `admin/medico/recepcion` sin modificar su restricción histórica; las instalaciones nuevas almacenan exclusivamente el catálogo actual.
 

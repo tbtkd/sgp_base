@@ -44,7 +44,7 @@
     <section class="mt-8 pt-6 border-t border-gray-100" aria-labelledby="seguimiento-operativo-title">
         <h2 id="seguimiento-operativo-title" class="text-lg font-semibold text-gray-900 mb-5">Seguimiento operativo</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div><p class="text-sm text-gray-500 font-medium">Último pago</p><p class="text-base font-semibold text-gray-900">{{ ultimo_pago.fecha_pago|format_date if ultimo_pago else 'No registrado' }}</p></div>
+            <div><p class="text-sm text-gray-500 font-medium">Último pago vigente</p><p class="text-base font-semibold text-gray-900">{% if ultimo_pago %}{{ ultimo_pago.monto_centavos|money_cents }} MXN · {{ ultimo_pago.fecha_pago|format_date }}{% else %}No registrado{% endif %}</p>{% if ultimo_pago %}<p class="text-xs text-gray-500 mt-1">{{ ultimo_pago.folio }}</p>{% endif %}</div>
             <div><p class="text-sm text-gray-500 font-medium">Siguiente cita</p><p class="text-base font-semibold text-gray-900">{{ siguiente_cita.strftime('%d/%m/%Y %H:%M') if siguiente_cita and siguiente_cita > today else 'No programada' }}</p></div>
         </div>
     </section>

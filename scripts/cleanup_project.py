@@ -7,7 +7,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRECTORIES = ("app", "tests", "scripts")
 ROOT_CACHE_DIRECTORIES = ("__pycache__", ".pytest_cache", ".ruff_cache")
-OBSOLETE_RELATIVE_FILES = (Path("app/static/img/logo.svg"),)
+OBSOLETE_RELATIVE_FILES = (
+    Path("app/static/img/logo.svg"),
+    Path("app/static/css/components/_sidebar.css"),
+)
 
 
 def cleanup_project(project_root: Path = PROJECT_ROOT) -> list[Path]:

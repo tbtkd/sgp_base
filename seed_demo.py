@@ -10,6 +10,7 @@ import os
 import secrets
 from datetime import date, timedelta
 from pathlib import Path
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from openpyxl import Workbook
 
@@ -24,6 +25,16 @@ from app.models.usuario import Usuario
 from app.models.valoracion_antropometrica import ValoracionAntropometrica
 
 DEMO_USERS = (
+    {
+        "username": "demo_admin",
+        "nombre": "Adriana",
+        "apellido_paterno": "Administración",
+        "apellido_materno": "Demo",
+        "email": "demo.admin@example.test",
+        "rol": "admin",
+        "perfil_profesional": None,
+        "cedula_profesional": None,
+    },
     {
         "username": "demo_medico",
         "nombre": "Daniel",
@@ -237,10 +248,20 @@ def _next_free_appointment_slot(day):
 
 def _create_appointments(patients):
     created = 0
-    for offset, patient in enumerate(patients[:4], start=1):
-        if Cita.obtener_cita_pendiente(patient.id):
+    definitions = (
+        (0, 1, "Cita demostrativa programada", "Programada", None),
+        (1, 2, "Cita demostrativa programada", "Programada", None),
+        (2, 3, "Cita demostrativa programada", "Programada", None),
+        (3, 4, "Cita demostrativa programada", "Programada", None),
+        (4, -4, "Cita demostrativa atendida", "Atendida", None),
+        (5, -3, "Cita demostrativa no asistida", "No Asistió", None),
+        (0, -10, "Cita demostrativa cancelada", "Cancelada", "Cancelación ficticia de validación"),
+    )
+    for patient_index, day_offset, reason, status, cancellation_reason in definitions:
+        patient = patients[patient_index]
+        if Cita.query.filter_by(paciente_id=patient.id, motivo=reason, estatus=status).first():
             continue
-        target = date.today() + timedelta(days=offset)
+        target = date.today() + timedelta(days=day_offset)
         slot = _next_free_appointment_slot(target)
         if slot is None:
             continue
@@ -249,9 +270,10 @@ def _create_appointments(patients):
                 paciente_id=patient.id,
                 fecha=target,
                 hora=slot,
-                motivo="Cita demostrativa programada",
-                estado="pendiente",
-                estatus="Programada",
+                motivo=reason,
+                estado="pendiente" if status == "Programada" else "cerrada",
+                estatus=status,
+                motivo_cancelacion=cancellation_reason,
             )
         )
         db.session.flush()
@@ -259,18 +281,76 @@ def _create_appointments(patients):
     return created
 
 
-def _create_payments(patients):
+def _create_payments(patients, users):
     created = 0
-    for index, patient in enumerate(patients[:3], start=1):
-        if Pago.query.filter_by(paciente_id=patient.id, concepto="Consulta demostrativa").first():
+    definitions = (
+        # paciente, días, centavos, concepto, método, registrador, cita, estado
+        (0, 1, 50000, "Consulta demostrativa", "efectivo", "demo_recepcion", "Programada", "vigente"),
+        (1, 2, 55000, "Consulta demostrativa", "tarjeta", "demo_recepcion", "Programada", "vigente"),
+        (2, 3, 60000, "Consulta demostrativa", "transferencia", "demo_recepcion", "Programada", "vigente"),
+        (0, 8, 35000, "Seguimiento demostrativo", "tarjeta", "demo_medico", None, "vigente"),
+        (1, 12, 80000, "Procedimiento demostrativo", "transferencia", "demo_admin", "Programada", "vigente"),
+        (2, 16, 42550, "Valoración nutricional demostrativa", "efectivo", "demo_nutricion", None, "vigente"),
+        (3, 5, 67500, "Atención odontológica demostrativa", "tarjeta", "demo_dentista", "Programada", "vigente"),
+        (3, 25, 30000, "Revisión odontológica demostrativa", "efectivo", "demo_recepcion", None, "vigente"),
+        (4, 4, 48000, "Consulta respiratoria demostrativa", "transferencia", "demo_medico", "Atendida", "vigente"),
+        (4, 18, 52000, "Seguimiento respiratorio demostrativo", "otro", "demo_recepcion", None, "vigente"),
+        (5, 7, 39000, "Orientación alimentaria demostrativa", "efectivo", "demo_nutricion", "No Asistió", "vigente"),
+        (5, 31, 44000, "Seguimiento metabólico demostrativo", "tarjeta", "demo_recepcion", None, "vigente"),
+        (0, 0, 15000, "Pago cancelado demostrativo", "efectivo", "demo_admin", "Cancelada", "cancelado"),
+        (1, 0, 12345, "Cobro sin cita aunque existe una programada", "otro", "demo_recepcion", None, "vigente"),
+        (2, 0, 101, "=PRUEBA_CSV_NEUTRALIZADA", "transferencia", "demo_admin", None, "vigente"),
+        (3, 65, 91000, "Pago de otro periodo para reporte mensual", "tarjeta", "demo_admin", None, "vigente"),
+        (5, 45, 27575, "Pago registrado por Odontología", "efectivo", "demo_dentista", None, "vigente"),
+    )
+    for patient_index, days_ago, cents, concept, method, username, appointment_status, status in definitions:
+        patient = patients[patient_index]
+        if Pago.query.filter_by(paciente_id=patient.id, concepto=concept).first():
             continue
+        appointment = None
+        if appointment_status:
+            appointment = (
+                Cita.query.filter_by(paciente_id=patient.id, estatus=appointment_status)
+                .order_by(Cita.fecha.desc(), Cita.hora.desc(), Cita.id.desc())
+                .first()
+            )
+        payment = Pago.crear(
+            patient.id,
+            {
+                "fecha_pago": date.today() - timedelta(days=days_ago),
+                "monto_centavos": cents,
+                "concepto": concept,
+                "metodo_pago": method,
+                "operation_key": str(uuid4()),
+            },
+            usuario_id=users[username].id,
+            cita_id=appointment.id if appointment else None,
+        )
+        db.session.flush()
+        if status == "cancelado":
+            payment.cancelar(
+                usuario_id=users["demo_admin"].id,
+                motivo="Cancelación demostrativa para validar trazabilidad",
+            )
+        created += 1
+
+    review_concept = "Pago legado incompleto para revisión"
+    review_patient = patients[4]
+    if not Pago.query.filter_by(paciente_id=review_patient.id, concepto=review_concept).first():
         db.session.add(
             Pago(
-                paciente_id=patient.id,
-                fecha_pago=date.today() - timedelta(days=index),
-                monto=450.0 + (index * 50),
-                concepto="Consulta demostrativa",
-                metodo_pago=("efectivo", "tarjeta", "transferencia")[index - 1],
+                paciente_id=review_patient.id,
+                fecha_pago=date.today() - timedelta(days=90),
+                monto=None,
+                monto_centavos=0,
+                moneda="MXN",
+                concepto=review_concept,
+                metodo_pago="otro",
+                folio="PAG-LEGADO-DEMO-0001",
+                operation_key=str(uuid5(NAMESPACE_URL, "sgpn-demo-pago-requiere-revision")),
+                usuario_registro_id=None,
+                cita_id=None,
+                estatus="requiere_revision",
             )
         )
         created += 1
@@ -338,7 +418,7 @@ def seed_demo_data(application, password=None):
         created_histories = _create_histories(patients)
         assessments, created_assessments = _create_consultations(patients, users)
         created_appointments = _create_appointments(patients)
-        created_payments = _create_payments(patients)
+        created_payments = _create_payments(patients, users)
         created_prescriptions = int(
             _create_demo_prescription(assessments[2], patients[0], users["demo_medico"])
         )
@@ -402,7 +482,7 @@ def main():
     print(
         "Nuevos: "
         f"{summary['pacientes']} pacientes, {summary['consultas']} consultas, "
-        f"{summary['citas']} citas, {summary['recetas']} receta."
+        f"{summary['citas']} citas, {summary['pagos']} pagos, {summary['recetas']} receta."
     )
     if summary["usuarios"]:
         print(f"Usuarios nuevos: {', '.join(summary['usuarios'])}")

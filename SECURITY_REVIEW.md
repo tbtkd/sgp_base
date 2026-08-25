@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.9.1 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.10.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -38,13 +38,15 @@ La versión 1.9.1 es adecuada para pruebas funcionales y para un piloto en una e
 | Signos vitales | TA estructurada, FC 30–250, FR 5–80, temperatura 30–45, SpO₂ 50–100, peso/estatura positivos |
 | Antropometría | todos los campos opcionales; cuando existen se validan como números finitos y con rangos |
 | Cita | fecha/hora futura, intervalos permitidos, motivo limitado, horario no duplicado, transiciones terminales y cancelación motivada |
-| Pago | monto 0–10,000,000, concepto obligatorio y método enumerado |
+| Pago | importe exacto mayor que cero y hasta 10,000,000 MXN, máximo dos decimales, UUID de operación, concepto, método y cita opcional explícita del mismo paciente |
+| Reporte de pagos | sólo Administración, rango máximo de 366 días, catálogo de agrupación, máximo 10,000 filas, UTF-8 y neutralización de prefijos de fórmula CSV |
 | Receta ordinaria | emisor autorizado, paciente activo, cédula/domicilio, máximo 10 medicamentos, filas completas/no duplicadas, orden exacto `1..n` y confirmaciones de competencia, alcance y firma |
 | XLSX | extensión, tamaño, ZIP válido, rutas internas, ratio de compresión, componentes, dimensiones, filas y transacción atómica |
 
 ### Trazabilidad y mensajes
 
 - Eventos críticos normalizados (`LOGIN`, `LOGOUT`, `CREAR_PACIENTE`, `CREAR_CONSULTA`, `REGISTRAR_PAGO`, etc.).
+- Pagos registra también `RECHAZAR_PAGO_DUPLICADO`, `CANCELAR_PAGO` y `EXPORTAR_PAGOS`; la auditoría conserva alcance, filas, folio/IDs/resultado sin duplicar el importe completo.
 - Registros con usuario, módulo, acción, descripción, entidad, IP, resultado y `request_id`.
 - Vista `/auditoria` exclusiva de administradores, con filtros y límite de 500 resultados.
 - Metadatos limitados y sin almacenar contraseñas, recetas completas o datos clínicos en el log técnico.
@@ -86,15 +88,21 @@ La versión 1.9.1 es adecuada para pruebas funcionales y para un piloto en una e
 - La compactación de la receta es exclusivamente de presentación: conserva todos los campos farmacológicos obligatorios, omite sólo opcionales vacíos y mantiene cada medicamento unido al paginar.
 - La simplificación de la firma no elimina identidad: nombre, perfil, cédula, domicilio y fecha permanecen impresos en el encabezado, mientras la firma autógrafa conserva una línea única claramente rotulada.
 - La supresión de metadatos del navegador se limita a CSS y al estado temporal del título; no altera el folio, la ruta autenticada, los snapshots ni el contenido clínico.
+- La idempotencia de pagos combina UUID v4 de formulario, restricción única y bloqueo visual; un reintento confirmado no crea una segunda fila.
+- La búsqueda por nombre completo se tokeniza y continúa parametrizada por SQLAlchemy; no concatena SQL proporcionado por el usuario.
+- Sólo Administración cancela pagos. Recepción consulta el módulo global y Medicina mantiene el acceso contextual, sin elevar permisos de cancelación.
+- Los totales financieros usan centavos enteros y excluyen cancelados/filas `requiere_revision`; ninguna suma depende del `Float` legado.
+- Cancelar conserva el original y exige motivo; el historial financiero no se elimina en cascada al eliminar un paciente. El retorno se limita a rutas internas de Pagos/Pacientes, descarta origen externo y evita que un filtro incompatible oculte el movimiento cancelado.
+- El resumen diario/mensual y los CSV global/individual exigen Administración. Las exportaciones limitan volumen, usan `no-store` y anteponen apóstrofo a celdas con prefijos interpretables como fórmula.
 
 ### Persistencia y entrega
 
 - Base `pacientes.db` fuera de `_MEIPASS`.
 - Respaldos consistentes mediante `sqlite3.Connection.backup()` y verificación de integridad.
 - Retención automática de 10 respaldos.
-- Migración aditiva guardada, migración transaccional para retirar la unicidad legada de recetas y migración transaccional para el turno diario, con comprobaciones de integridad.
+- Migración aditiva guardada, migraciones transaccionales para recetas, turno diario y pagos 1.10.0, con `foreign_key_check` e `integrity_check`.
 - ZIP y compilación excluyen bases, secretos, logs, cachés, entorno virtual y respaldos.
-- La limpieza de actualizaciones sólo elimina el recurso SVG obsoleto y cachés conocidas dentro del código; no recorre el entorno virtual ni los directorios de datos.
+- La limpieza de actualizaciones sólo elimina el SVG, la hoja de sidebar legada no referenciada y cachés conocidas dentro del código; no recorre el entorno virtual ni los directorios de datos.
 
 ## Decisiones que no se aplicaron literalmente
 
@@ -112,13 +120,16 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 8. Revisión legal y clínica según jurisdicción y especialidad.
 9. Firma electrónica regulada, si se desea sustituir la firma autógrafa en papel.
 10. Flujo independiente para medicamentos controlados o recetas especiales; no reutilizar la receta ordinaria.
+11. Definición formal de cargos, adeudos, reembolsos, recibos, conciliación y corte de caja antes de presentar el módulo de pagos como sistema contable.
 
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 100 pruebas totales.
+- `python -m pytest -q`: 109 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
-- `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.
+- `pip-audit`: sin vulnerabilidades conocidas en las dependencias instaladas; el entorno de verificación usa `pip 26.2.1`.
 - Compilación de plantillas y registro de rutas verificados durante la aceptación.
 - Arranque local verificado con Waitress y cabeceras de seguridad.
+
+El dictamen vigente sigue siendo **apto para pruebas y piloto local controlado**, no para exposición en red o Internet. Los datos demo prueban controles funcionales, pero no sustituyen una prueba de penetración ni una evaluación legal de privacidad.

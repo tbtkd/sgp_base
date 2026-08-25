@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.10.0 — Integridad e historial operativo de pagos
+
+- Los importes nuevos se validan con `Decimal` y se guardan en centavos enteros; `monto` queda sólo como espejo de compatibilidad.
+- Cada pago recibe moneda MXN, folio único, clave idempotente de operación, usuario registrador y cita opcional validada contra el paciente.
+- La migración transaccional `payments_v110` conserva pagos anteriores, convierte importes válidos y aísla filas incompletas como `requiere_revision` sin sumarlas.
+- La relación con Paciente cambia de eliminación en cascada a `ON DELETE RESTRICT`; usuarios y citas opcionales usan `SET NULL`.
+- El detalle del paciente muestra último pago vigente, importe/folio e historial inmutable de hasta cincuenta movimientos.
+- Nuevo módulo global **Pagos** para Administración/Recepción con total vigente, desglose por método, búsqueda Unicode, filtros, rango máximo y paginación.
+- La búsqueda admite nombres completos divididos entre nombre y apellidos; **Ver en Pagos** conserva el comportamiento esperado desde el detalle del paciente.
+- Administración dispone de resumen diario/mensual y exportaciones CSV del filtro o del historial por paciente, limitadas y neutralizadas contra fórmulas de hoja de cálculo.
+- Sólo Administración puede cancelar; la operación exige motivo y conserva monto, folio, autor y fila originales con auditoría.
+- Tras cancelar, el formulario permanece en el flujo de la tabla y el retorno conserva visible/resaltado el folio, aun si el filtro previo era Vigente.
+- Doble envío protegido en interfaz y base; intentos repetidos se reconocen sin insertar un segundo movimiento.
+- `seed_demo.py --confirm` incorpora una cuenta administrativa, siete citas y dieciocho pagos para validar todos los estados, relaciones explícitas/sin cita, cancelación, periodos, responsables, métodos y CSV seguro.
+- La interfaz aclara que una cita no se relaciona automáticamente y que el método de pago es operativo, no una decisión de facturación.
+- Hospitalización se retira de la navegación actual porque la edición 1.10.0 está enfocada en consultorios.
+- Se retira la hoja legada no referenciada `_sidebar.css`; la limpieza de actualización elimina también cualquier copia residual sin tocar datos ni entornos.
+- Nueva documentación operativa en `docs/PAGOS_OPERATIVOS_1_10_0.md` y suite ampliada a 109 pruebas.
+- Sin dependencias de ejecución nuevas; no se implementan CFDI, cargos, adeudos, reembolsos, recibos ni corte formal de caja.
+
 ## 1.9.1 — Legibilidad de pendientes y detalle progresivo
 
 - Los pacientes y estados desplegados en **Pendientes de atención** reciben colores oscuros específicos para texto, texto secundario, hover y foco, con contraste WCAG AA sobre el panel.

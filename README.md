@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.9.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.10.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos operativos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -15,7 +15,10 @@ Versión **1.9.1**. Aplicación local para consultorios médicos, dentales, nutr
 - Firma autógrafa única y centrada; identificación profesional completa exclusivamente en el encabezado.
 - Impresión de receta con márgenes clínicos propios y sin fecha, título, URL o paginación agregados por navegadores Chromium modernos.
 - Antropometría y pliegues opcionales, habilitados exclusivamente para perfiles de Nutrición.
-- Citas con motivo y estado; pagos con monto, concepto y método.
+- Pagos monetarios exactos en centavos, moneda MXN, folio único, responsable, relación explícita y opcional con cita y prevención de doble envío.
+- Historial inmutable de pagos por paciente, último pago vigente, cancelación administrativa trazable y conservación del movimiento original.
+- Módulo global de Pagos para Administración y Recepción, con total vigente, desglose por método, búsqueda por nombre completo o términos parciales, filtros y paginación.
+- Reporte administrativo diario o mensual y exportación CSV segura del filtro o del historial individual, con límite de 10,000 filas y neutralización de fórmulas.
 - Usuarios con roles `admin`, `medico` y `recepcion`, separados de su perfil profesional.
 - Perfiles clínicos: Medicina general, Odontología/Dentista y Nutrición.
 - Nombre, perfil y cédula del autor conservados dentro de cada consulta nueva.
@@ -66,7 +69,7 @@ Si actualizas sobre la misma carpeta, ejecuta después:
 python scripts\cleanup_project.py
 ```
 
-La utilidad elimina únicamente `app/static/img/logo.svg`, cachés de Python y cachés de herramientas conocidas. No recorre ni modifica `.venv`, `instance`, `backups`, bases de datos, secretos o registros. También se ejecuta automáticamente antes de construir el ejecutable.
+La utilidad elimina únicamente `app/static/img/logo.svg`, la hoja legada no referenciada `app/static/css/components/_sidebar.css`, cachés de Python y cachés de herramientas conocidas. No recorre ni modifica `.venv`, `instance`, `backups`, bases de datos, secretos o registros. También se ejecuta automáticamente antes de construir el ejecutable.
 
 ## Inicialización y ejecución
 
@@ -111,7 +114,7 @@ Para validar pantallas sin capturar todo manualmente, trabaja sobre una copia o 
 python seed_demo.py --confirm
 ```
 
-El comando agrega cuentas ficticias para Medicina, Odontología, Nutrición y Recepción, además de seis pacientes, historiales, nueve consultas, citas, pagos y una receta de tres medicamentos. También genera `demo_data/expediente_antropometrico_demo.xlsx`. La contraseña aleatoria de las cuentas nuevas se muestra una sola vez. Nada se carga automáticamente y una segunda ejecución no duplica el conjunto. Consulta [demo_data/README.md](demo_data/README.md) y elimina o desactiva estas cuentas antes de utilizar información real.
+El comando agrega cuentas ficticias para Administración, Medicina, Odontología, Nutrición y Recepción, además de seis pacientes, historiales, nueve consultas, siete citas, dieciocho pagos operativos y una receta de tres medicamentos. También genera `demo_data/expediente_antropometrico_demo.xlsx`. La contraseña aleatoria de las cuentas nuevas se muestra una sola vez. Nada se carga automáticamente y una segunda ejecución no duplica el conjunto. Consulta [demo_data/README.md](demo_data/README.md) y la [matriz de escenarios de Pagos](demo_data/ESCENARIOS_PAGOS_1_10.md); elimina o desactiva estas cuentas antes de utilizar información real.
 
 ## Persistencia y respaldos
 
@@ -125,6 +128,8 @@ El comando agrega cuentas ficticias para Medicina, Odontología, Nutrición y Re
 Si una base muy antigua no contiene el correo de sus usuarios, la migración conserva las cuentas y asigna valores únicos `usuario-migrado-<id>@local.invalid`. Son marcadores locales que no reciben mensajes y deben reemplazarse desde el panel **Usuarios**.
 
 Al actualizar a 1.7.2, las consultas existentes se numeran de forma determinista por fecha, momento de creación e identificador. Se crea una restricción única sobre `(fecha, numero_cita)` sin borrar consultas. El turno es una referencia histórica: si una nota se elimina o cambia de fecha puede quedar un hueco, por lo que los reportes deben contar registros y no usar el turno máximo como total definitivo.
+
+Al actualizar a 1.10.0, la tabla `pagos` se reconstruye dentro de una migración transaccional verificada. Los importes válidos se convierten a `monto_centavos`, reciben folio y clave de operación, y dejan de eliminarse en cascada con el paciente. Los registros legados sin importe, concepto o método confiable se conservan como **Requiere revisión**, permanecen visibles y no se suman en los totales. El campo `monto` se mantiene temporalmente como espejo de compatibilidad, pero ningún cálculo nuevo depende de `Float`.
 
 El directorio que contiene el ejecutable debe ser escribible. Los datos, respaldos y secretos están excluidos del paquete y del control de versiones.
 
@@ -141,6 +146,9 @@ La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombr
 | Función | admin | medico | recepcion |
 | --- | --- | --- | --- |
 | Pacientes, citas y pagos | Sí | Sí | Sí |
+| Módulo global de Pagos | Sí | No | Sí |
+| Reporte y exportación de Pagos | Sí | No | No |
+| Cancelar un pago | Sí | No | No |
 | Expediente clínico | Sí | Sí | No |
 | Consultas, diagnóstico e indicaciones | Sí | Sí | No |
 | Emitir receta ordinaria | Sólo con perfil Medicina/Odontología y datos completos | Sólo con perfil Medicina/Odontología y datos completos | No |
@@ -158,7 +166,7 @@ bandit -q -r app run.py seed_admin.py seed_demo.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 97 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md) y Consultas/datos demo en [docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md](docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md).
+La aceptación funcional incluye 109 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md), Consultas/datos demo en [docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md](docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md) y Pagos en [docs/PAGOS_OPERATIVOS_1_10_0.md](docs/PAGOS_OPERATIVOS_1_10_0.md).
 
 ## Compilación para Windows
 

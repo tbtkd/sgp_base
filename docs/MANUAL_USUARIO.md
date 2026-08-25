@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.9.1
+# Manual de usuario — Sistema Clínico 1.10.0
 
 ## 1. Propósito
 
@@ -278,7 +278,54 @@ La receta muestra los datos profesionales en la parte superior. El campo de ubic
 
 ### Pago
 
-Desde el detalle del paciente registra fecha, monto, concepto y método. Verifica el importe antes de guardar; un pago debe representar un movimiento real y no utilizarse como nota administrativa.
+Desde el detalle del paciente:
+
+1. Verifica la identidad del paciente.
+2. Captura una fecha igual o anterior al día actual.
+3. Ingresa el importe en MXN con máximo dos decimales. Debe ser mayor que cero.
+4. Describe el concepto real del cobro.
+5. Selecciona efectivo, tarjeta, transferencia u otro. Este método sirve para el desglose operativo de caja; no indica si el paciente requiere factura.
+6. Si corresponde, relaciona una cita del mismo paciente. La existencia de una cita no la enlaza automáticamente: selecciona sólo la atención que originó el cobro.
+7. Pulsa una sola vez **Registrar pago** y espera el folio de confirmación.
+
+El movimiento queda en **Historial de pagos** con fecha, folio, importe, método, responsable y estado. El bloque **Último pago vigente** omite pagos cancelados.
+
+### Módulo Pagos
+
+Administración y Recepción pueden abrir **Gestión → Pagos**. La pantalla inicia con el día actual y permite:
+
+- buscar por nombre completo, términos parciales, folio o concepto;
+- elegir un rango máximo de 366 días;
+- filtrar método y estado;
+- consultar total vigente y desglose por método;
+- recorrer resultados en páginas de 25 movimientos.
+
+Los movimientos cancelados y los registros legados que requieren revisión permanecen visibles, pero no se suman.
+
+### Reportes y CSV
+
+Sólo Administración puede usar estas acciones:
+
+1. Ajusta búsqueda, fechas, método y estado.
+2. En **Resumen**, elige **Por día** o **Por mes** y aplica los filtros.
+3. Revisa el bloque **Reporte administrativo**.
+4. Pulsa **Exportar filtro CSV** para descargar exactamente ese conjunto.
+5. Para un solo paciente, abre su detalle y pulsa **Exportar historial CSV**.
+
+El archivo abre en Excel y conserva folio, paciente, concepto, método, importe, responsables, cita y cancelación. La aplicación limita cada descarga a 10,000 filas. El reporte sólo refleja cobros: no calcula saldo, adeudo ni conciliación.
+
+### Cancelar un pago
+
+Sólo Administración puede cancelar:
+
+1. Abre el menú rojo del movimiento.
+2. Captura un motivo específico de al menos cinco caracteres.
+3. Confirma la advertencia.
+4. Comprueba que el estado cambió a **Cancelado**. La pantalla vuelve al mismo folio y resalta el renglón; si estaba activo el filtro Vigente, lo sustituye por la búsqueda del folio para conservarlo visible.
+
+Cancelar no elimina ni edita el pago original. Si el cobro correcto es diferente, registra después un pago nuevo. No utilices la cancelación para representar un reembolso; esa operación todavía no está implementada.
+
+El módulo es un control operativo local. No genera CFDI, cargos, adeudos, estados de cuenta, contabilidad o cortes formales de caja. Cuando se diseñe Facturación deberá capturarse por separado la solicitud de factura y la información fiscal; nunca se deducirá del método de pago.
 
 ### WhatsApp
 
@@ -379,6 +426,6 @@ No edites la base con herramientas externas mientras la aplicación está abiert
 
 ## 17. Límites actuales
 
-Laboratorio, Hospitalización, Facturación, Inventario, Reportes, Configuración multi-sede y Portal del paciente todavía son módulos planificados. El sistema está preparado para una estación local controlada y no debe publicarse directamente en Internet.
+Laboratorio, Facturación, Inventario, el módulo general de Reportes, Configuración multi-sede y Portal del paciente todavía están planificados. Hospitalización queda fuera del alcance actual porque esta edición está dirigida a consultorios. Pagos sí incluye su resumen y CSV administrativos dentro del propio módulo. El sistema está preparado para una estación local controlada y no debe publicarse directamente en Internet.
 
 Para instalación, pruebas y mantenimiento técnico consulta [../README.md](../README.md), [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md), [RECUPERACION_ACCESO.md](RECUPERACION_ACCESO.md) y [RECETA_MEDICA_MEXICO.md](RECETA_MEDICA_MEXICO.md).

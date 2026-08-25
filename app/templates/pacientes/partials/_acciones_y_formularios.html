@@ -12,12 +12,16 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 no-print">
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h3 class="text-lg font-semibold mb-4"><i class="fas fa-receipt text-teal-600 mr-2"></i>Registrar pago</h3>
-        <form action="{{ url_for('pacientes.registrar_pago_paciente', id=paciente.id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label for="fecha_pago" class="block text-sm font-medium mb-1">Fecha</label><input type="date" id="fecha_pago" name="fecha_pago" class="w-full rounded-xl border-gray-200" required></div>
-            <div><label for="monto" class="block text-sm font-medium mb-1">Monto</label><input type="number" id="monto" name="monto" min="0" step="0.01" class="w-full rounded-xl border-gray-200" required></div>
+        <p class="text-sm text-gray-500 mb-4">El movimiento recibe un folio y no podrá editarse ni eliminarse.</p>
+        <form action="{{ url_for('pacientes.registrar_pago_paciente', id=paciente.id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4" data-payment-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="operation_key" value="{{ payment_operation_key }}">
+            <div><label for="fecha_pago" class="block text-sm font-medium mb-1">Fecha</label><input type="date" id="fecha_pago" name="fecha_pago" value="{{ fecha_pago_default.isoformat() }}" max="{{ fecha_pago_default.isoformat() }}" class="w-full rounded-xl border-gray-200" required></div>
+            <div><label for="monto" class="block text-sm font-medium mb-1">Monto (MXN)</label><input type="number" id="monto" name="monto" min="0.01" max="10000000" step="0.01" inputmode="decimal" class="w-full rounded-xl border-gray-200" required></div>
             <div><label for="concepto" class="block text-sm font-medium mb-1">Concepto</label><input id="concepto" name="concepto" maxlength="200" class="w-full rounded-xl border-gray-200" required></div>
-            <div><label for="metodo_pago" class="block text-sm font-medium mb-1">Método</label><select id="metodo_pago" name="metodo_pago" class="w-full rounded-xl border-gray-200" required><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
-            <button type="submit" class="md:col-span-2 py-3 bg-teal-600 text-white rounded-xl font-semibold">Registrar pago</button>
+            <div><label for="metodo_pago" class="block text-sm font-medium mb-1">Método de pago</label><select id="metodo_pago" name="metodo_pago" class="w-full rounded-xl border-gray-200" aria-describedby="metodo_pago_ayuda" required><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select><p id="metodo_pago_ayuda" class="mt-1 text-xs text-gray-500">Se usa para el desglose operativo; no determina si debe emitirse factura.</p></div>
+            <div class="md:col-span-2"><label for="cita_id_pago" class="block text-sm font-medium mb-1">Relacionar con cita <span class="font-normal text-gray-500">(opcional)</span></label><select id="cita_id_pago" name="cita_id" class="w-full rounded-xl border-gray-200" aria-describedby="cita_pago_ayuda"><option value="">Sin cita relacionada</option>{% for cita in citas_pago %}<option value="{{ cita.id }}">{{ cita.fecha|format_date }} · {{ cita.hora.strftime('%H:%M') }} · {{ cita.estatus }}</option>{% endfor %}</select><p id="cita_pago_ayuda" class="mt-1 text-xs text-gray-500">Una cita existente no se enlaza automáticamente: selecciona únicamente la atención que originó este cobro.</p></div>
+            <button type="submit" class="md:col-span-2 py-3 bg-teal-600 text-white rounded-xl font-semibold disabled:opacity-60 disabled:cursor-wait" data-payment-submit><span data-payment-submit-label>Registrar pago</span></button>
         </form>
     </div>
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">

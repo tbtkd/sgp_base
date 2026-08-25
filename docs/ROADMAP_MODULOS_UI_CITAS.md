@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.9.1 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. **Agenda y citas** abre una ruta operativa diaria/semanal que reutiliza búsqueda privada, disponibilidad, alta y reagenda, aplica estados terminales y limita el contenido clínico para Recepción. **Consultas** muestra ahora un paciente por fila con su última nota, búsqueda normalizada, orden y paginación; el contexto **Recetas** conserva las notas históricas. La importación antropométrica sólo se muestra y autoriza para Nutrición. El Dashboard conserva su resumen. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El sidebar usa una escala legible y los estados interactivos oscuros ya no heredan fondos blancos. Los pendientes desplegados también usan texto, texto secundario, hover y foco con contraste AA en tema oscuro. El detalle del paciente mantiene la información principal y operativa, muestra sólo campos complementarios capturados y resume su ausencia en un único estado accionable. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La columna de grasa del historial también es exclusiva de ese perfil. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado, rotula el domicilio de forma breve, reserva una firma centrada y sustituye los metadatos automáticos de impresión en Chromium moderno. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
+La versión 1.10.0 conserva la base clínica y añade Pagos operativos íntegros: centavos exactos, folio, responsable, idempotencia, historial por paciente, cancelación administrativa, módulo global para Administración/Recepción y reportes CSV diarios/mensuales exclusivos de Administración. Agenda, Consultas, Recetas, perfiles, dashboard, shell, tema, contraste y detalle progresivo permanecen sin regresiones. Las migraciones transaccionales de recetas, turnos y pagos conservan y verifican datos; los totales de pagos excluyen cancelados y filas legadas que requieren revisión.
 
 Módulos evaluados:
 
@@ -16,6 +16,7 @@ Módulos evaluados:
 8. Usuarios, perfiles profesionales y cédula.
 9. Receta ordinaria e identidad visual.
 10. Cambio, restablecimiento y recuperación local de contraseña.
+11. Pagos operativos, historial y cancelación.
 
 ## 2. Diagnóstico de las capturas recibidas
 
@@ -26,7 +27,7 @@ Módulos evaluados:
 | PDF en blanco | `window.print()` imprimía el shell completo de la aplicación. Los contenedores con altura/overflow y el CSS de impresión recortaban la nota. | Ruta y plantilla de impresión independientes, con tamaño A4, sin sidebar, header, Tailwind, Alpine ni CDN. |
 | Historial de consultas con `None` | Los valores opcionales se concatenaban directamente con unidades. | Sustitución por `—` y unidades únicamente cuando existe un valor. |
 | Cuenta “Administradora A.” | La interfaz fabricaba un alias con nombre e inicial del apellido, que podía parecer un rol o un dato truncado. | El top bar usa el `username`; el desplegable rotula nombre registrado, usuario, rol, área clínica y cédula por separado. |
-| Prueba falla por `logo.svg` | Descomprimir un ZIP sobre una carpeta existente no elimina archivos ausentes en la versión nueva. La prueba comprobaba el disco en vez del recurso usado. | La prueba revisa referencias efectivas; `scripts/cleanup_project.py` retira físicamente el SVG y las cachés sin tocar datos o `.venv`. |
+| Prueba falla por `logo.svg` | Descomprimir un ZIP sobre una carpeta existente no elimina archivos ausentes en la versión nueva. La prueba comprobaba el disco en vez del recurso usado. | La prueba revisa referencias efectivas; `scripts/cleanup_project.py` retira físicamente el SVG, la hoja de sidebar legada y las cachés sin tocar datos o `.venv`. |
 
 ## 3. Fases completadas
 
@@ -161,7 +162,7 @@ Módulos evaluados:
 - Top bar con búsqueda real, sede informativa, notificaciones vacías, breadcrumb, tema y cuenta.
 - Tema oscuro persistente, foco visible, teclado/Escape y sidebar móvil controlado localmente.
 - Dashboard ampliado con acciones rápidas, gráfica de siete días, próximas citas y alertas reales.
-- Se mantienen sin backend Laboratorio, Hospitalización, Facturación, Inventario, Reportes, Configuración y Portal del paciente.
+- Se mantienen sin backend Laboratorio, Facturación, Inventario, el módulo general de Reportes, Configuración y Portal del paciente; Hospitalización queda fuera del alcance actual para consultorios y el reporte básico de cobros vive dentro de Pagos.
 - Próximo: autocontener recursos CDN, pruebas de navegador y diseño formal de cada módulo antes de habilitarlo.
 
 ### Fase 1.8: simplificación del shell — completada en 1.6.5
@@ -293,12 +294,24 @@ Módulos evaluados:
 - No requiere migración ni dependencias adicionales.
 - Documentación detallada: [DETALLE_PROGRESIVO_1_9_1.md](DETALLE_PROGRESIVO_1_9_1.md).
 
+### Fase 1.22: integridad e historial de pagos — completada en 1.10.0
+
+- Importe autoritativo en centavos, moneda MXN, folio, UUID de operación y responsable.
+- Migración verificada que conserva filas anteriores, aísla incompletas y elimina la cascada desde Paciente.
+- Historial inmutable por paciente y último pago vigente con monto/folio.
+- Módulo global para Administración/Recepción con filtros, total vigente, desglose y paginación.
+- Resumen diario/mensual y CSV global/por paciente sólo para Administración, con límite, auditoría y neutralización de fórmulas.
+- Cancelación sólo administrativa, motivada y auditada, sin editar o borrar el original.
+- Doble envío bloqueado en interfaz y base.
+- Dieciocho pagos demo, siete citas de todos los estados y cobertura de nombre completo/retorno visible tras cancelar.
+- Documentación detallada: [PAGOS_OPERATIVOS_1_10_0.md](PAGOS_OPERATIVOS_1_10_0.md).
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
 | --- | --- | --- | --- |
 | Diseño | Paleta teal/esmeralda, tarjetas, sidebar y tablas | Estados vacíos, jerarquía, top bar e icono unificado | Identidad/cierre duplicados del sidebar |
-| Base de datos | Relaciones y todos los datos existentes | Columnas aditivas, múltiples recetas y turno diario migrados transaccionalmente | Ninguna fila ni dato clínico |
+| Base de datos | Relaciones y todos los datos existentes | Columnas aditivas, múltiples recetas, turno diario y pagos migrados transaccionalmente | Cascada destructiva de pagos desde Paciente |
 | Historial | Expediente individual y permisos | Lista con campos actuales | Campos de nutrición legados inexistentes |
 | Pestañas | Tres secciones generales | Cuarta sección sólo para Nutrición | Estado `activeTab` dependiente de Alpine |
 | Impresión | Botón desde la nota clínica | Vistas A4 separadas para nota y receta | Nota rotulada implícitamente como receta |
@@ -355,6 +368,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | AGENDA-01 | Operación | Día/Semana, navegación, alta, reagenda, estados y privacidad por rol |
 | AGENDA-02 | Integridad | Conflictos, cierre futuro, terminalidad, cancelación obligatoria y auditoría |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
+| PAY-01 | Pagos operativos | Centavos, folio, idempotencia, historial, RBAC, cancelación, filtros, reportes CSV y migración |
 
 Suite oficial:
 
@@ -362,7 +376,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.9.1: **100 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, rótulo Domicilio, impresión sin metadatos del navegador, margen A4 propio, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción y visibilidad de antropometría/importación, seguimiento nutricional, índice de consultas sin duplicados, búsqueda Unicode, paginación, carga demo idempotente, importación del XLSX demo, detalle progresivo con datos vacíos/parciales, contraste AA de pendientes, orden del historial, contraste clínico oscuro, legibilidad del sidebar, búsqueda privada de pacientes, agenda rápida/operativa, vistas Día/Semana, reagenda, estados terminales, privacidad por rol, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. Además de la cobertura clínica previa, la suite valida centavos, folio, UUID, doble envío, historial, último pago vigente, cancelación inmutable, permisos, búsqueda/filtros, totales, agrupación diaria/mensual, CSV seguro, auditoría de exportación, migración, cuarentena de filas legadas y `ON DELETE RESTRICT`.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
@@ -373,7 +387,8 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - Paginación real pendiente en Pacientes, Historial y Auditoría; Consultas ya pagina en servidor.
 - Índices y medición de consultas para bases con mayor volumen.
 - Horarios, bloqueos, duración y filtros por profesional desde la Agenda dedicada.
-- Exportación controlada de reportes sin incluir datos no solicitados.
+- Exportación controlada de pagos neutralizando fórmulas, sólo después de definir alcance y permisos administrativos.
+- Recibos no fiscales, reembolsos como movimientos y caja formal sólo después de modelar cargos, conciliación y responsables.
 - Confirmaciones y auditoría de operaciones administrativas masivas.
 
 ## 8. Fase 3 recomendada — frontend autocontenido

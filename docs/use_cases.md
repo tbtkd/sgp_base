@@ -18,7 +18,19 @@ Desde el KPI Citas de hoy, el usuario escribe al menos dos caracteres del nombre
 
 ## UC-05 — Registrar un pago
 
-El usuario captura fecha, monto, concepto y método de pago.
+Desde el detalle del paciente, Administración, Medicina o Recepción captura fecha, importe MXN, concepto, método y una cita opcional del mismo paciente. El servidor convierte a centavos, asigna folio/responsable y rechaza fechas futuras, importes no positivos, más de dos decimales, catálogos manipulados, citas ajenas y claves de operación repetidas.
+
+## UC-05A — Consultar pagos
+
+El detalle muestra el último pago vigente y hasta cincuenta movimientos del paciente. Administración y Recepción abren además el módulo global, filtran un rango de hasta 366 días, paciente/folio/concepto, método y estado, y consultan total vigente, desglose y movimientos paginados.
+
+## UC-05B — Cancelar un pago
+
+Administración captura un motivo y confirma la cancelación. El sistema conserva importe, folio, fecha, concepto, método y registrador originales, añade responsable/momento/motivo, excluye el pago de totales y audita éxito o intento duplicado. Recepción y Medicina no pueden ejecutar esta operación.
+
+## UC-05C — Generar reporte de pagos
+
+Administración filtra hasta 366 días, elige resumen por día o mes y exporta el resultado global a CSV. También puede descargar el historial de cobros de un paciente. El servidor limita 10,000 filas, neutraliza fórmulas de hoja de cálculo, impide acceso a otros roles y audita alcance y cantidad exportada. El reporte no calcula saldos ni adeudos.
 
 ## UC-06 — Contactar por WhatsApp
 

@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from flask import Flask, flash, g, jsonify, redirect, request, send_from_directory, session, url_for
@@ -79,11 +80,13 @@ def create_app(config_name=None, test_config=None):
     from app.controllers.historial_clinico import historial_clinico
     from app.controllers.main import main
     from app.controllers.pacientes import agenda, pacientes
+    from app.controllers.pagos import pagos
     from app.controllers.plantillas import plantillas_bp
     from app.controllers.recetas import recetas
     from app.controllers.valoracion_antropometrica import valoracion
 
     app.register_blueprint(main)
+    app.register_blueprint(pagos)
     app.register_blueprint(plantillas_bp)
     app.register_blueprint(pacientes)
     app.register_blueprint(agenda)
@@ -164,5 +167,13 @@ def create_app(config_name=None, test_config=None):
             return parsed.strftime("%d/%m/%Y")
         except (TypeError, ValueError):
             return ""
+
+    @app.template_filter("money_cents")
+    def money_cents(value):
+        try:
+            amount = Decimal(int(value or 0)) / Decimal(100)
+        except (InvalidOperation, TypeError, ValueError):
+            amount = Decimal(0)
+        return f"${amount:,.2f}"
 
     return app

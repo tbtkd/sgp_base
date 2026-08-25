@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.9.1:
+Resultado esperado para la versión 1.10.0:
 
 ```text
-100 passed
+109 passed
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -71,6 +71,12 @@ Para validar el turno diario global, su API sin caché y la migración de consul
 
 ```powershell
 python -m pytest -q tests/test_daily_consultation_sequence.py
+```
+
+Para validar importes exactos, folios, idempotencia, historial, permisos, cancelación, filtros, agrupación diaria/mensual, CSV seguro y migración de pagos:
+
+```powershell
+python -m pytest -q tests/test_payments.py
 ```
 
 Para validar login, cambio/restablecimiento de contraseña, invalidación de sesiones y recuperación local:
@@ -124,6 +130,6 @@ python -m pip_audit -r requirements.txt
 - Si aparece `No module named pytest`, instala `requirements-dev.txt` dentro del mismo entorno virtual.
 - Desde la versión 1.3.1, las pruebas de migración liberan explícitamente SQLAlchemy antes de borrar sus bases temporales; esto evita `WinError 32` en Windows/Python 3.13.
 - Si `WinError 32` persiste con otro archivo, cierra `python run.py`, visores de SQLite y procesos que mantengan abierta esa ruta.
-- Si una actualización se descomprimió sobre una carpeta anterior, ejecuta `python scripts\cleanup_project.py`. Windows no elimina por sí mismo archivos que ya no forman parte del ZIP, como el antiguo `app/static/img/logo.svg`.
+- Si una actualización se descomprimió sobre una carpeta anterior, ejecuta `python scripts\cleanup_project.py`. Windows no elimina por sí mismo archivos que ya no forman parte del ZIP, como el antiguo `app/static/img/logo.svg` o `app/static/css/components/_sidebar.css`.
 - La prueba del icono valida que las plantillas usan `logo.png` y la compilación usa `logo.ico`; un archivo no referenciado que haya quedado de una versión anterior no cambia la interfaz. La utilidad de limpieza permite retirarlo físicamente.
 - Si una prueba falla, conserva la salida completa desde la primera línea `FAILURES` hasta el resumen final para diagnosticarla.

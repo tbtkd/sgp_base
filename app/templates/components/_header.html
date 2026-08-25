@@ -13,6 +13,8 @@
     {% set titulo_modulo = 'Reagendar cita' %}{% set subtitulo_modulo = 'Agenda y disponibilidad' %}
 {% elif 'agenda.' in endpoint_actual %}
     {% set titulo_modulo = 'Agenda y citas' %}{% set subtitulo_modulo = 'Operación diaria y semanal' %}
+{% elif 'pagos.' in endpoint_actual %}
+    {% set titulo_modulo = 'Pagos' %}{% set subtitulo_modulo = 'Control operativo local' %}
 {% elif 'pacientes.' in endpoint_actual %}
     {% set titulo_modulo = 'Pacientes' %}{% set subtitulo_modulo = 'Gestión de expedientes' %}
 {% elif endpoint_actual == 'valoracion.nueva_valoracion' %}

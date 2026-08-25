@@ -40,11 +40,13 @@ Crea, sólo cuando no existen:
 
 - `demo_medico`, `demo_dentista`, `demo_nutricion` y `demo_recepcion`;
 - seis pacientes con correos `example.test` y teléfonos identificables;
-- seis historiales, nueve consultas —incluyendo varias del mismo paciente—, cuatro citas y tres pagos;
+- seis historiales, nueve consultas —incluyendo varias del mismo paciente—, cuatro citas y tres pagos en la entrega histórica 1.9.0;
 - una receta ficticia con tres medicamentos en orden;
 - `demo_data/expediente_antropometrico_demo.xlsx` con tres mediciones históricas.
 
 La contraseña robusta compartida por las cuentas creadas se muestra una sola vez. Puede establecerse previamente mediante `SGPN_DEMO_PASSWORD`. Si una cuenta ya existe, su contraseña no se reemplaza. Ejecutar el comando nuevamente no duplica el conjunto.
+
+> Actualización 1.10.0: el conjunto vigente incorpora `demo_admin`, siete citas y dieciocho pagos para cubrir estados, historial, folios, métodos, filtros, relaciones explícitas/sin cita, responsables, cancelación y CSV seguro. La idempotencia continúa aplicándose.
 
 Para validar la restricción Excel:
 

@@ -1,0 +1,55 @@
+<section class="payment-patient-panel no-print" aria-labelledby="payment-history-title">
+    <div class="payment-panel-heading">
+        <div>
+            <p class="payment-eyebrow">Seguimiento financiero operativo</p>
+            <h2 id="payment-history-title">Historial de pagos</h2>
+            <p>Movimientos inmutables asociados con este paciente.</p>
+        </div>
+        <div class="payment-heading-actions">
+            {% if current_user.rol_clinico == 'admin' %}<a href="{{ url_for('pagos.exportar_paciente_csv', paciente_id=paciente.id) }}" class="payment-secondary-action"><i class="fas fa-file-csv" aria-hidden="true"></i>Exportar historial CSV</a>{% endif %}
+            {% if current_user.rol_clinico in ['admin', 'recepcion'] %}<a href="{{ url_for('pagos.index', q=paciente.nombre_completo, desde=fecha_pago_desde_default.isoformat(), hasta=fecha_pago_default.isoformat()) }}" class="payment-secondary-action"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>Ver en Pagos</a>{% endif %}
+        </div>
+    </div>
+
+    {% if pagos_historial %}
+    <div class="payment-table-wrap">
+        <table class="payment-table">
+            <thead>
+                <tr><th>Folio</th><th>Fecha</th><th>Concepto</th><th>Método</th><th>Monto</th><th>Registró</th><th>Estado</th><th><span class="sr-only">Acciones</span></th></tr>
+            </thead>
+            <tbody>
+                {% for pago in pagos_historial %}
+                <tr id="pago-{{ pago.id }}">
+                    <td><strong>{{ pago.folio }}</strong><small>{% if pago.cita %}Cita {{ pago.cita.fecha|format_date }} · {{ pago.cita.hora.strftime('%H:%M') }}{% else %}Sin cita relacionada{% endif %}</small></td>
+                    <td>{{ pago.fecha_pago|format_date }}</td>
+                    <td class="payment-concept">{{ pago.concepto }}</td>
+                    <td>{{ pago.metodo_pago|capitalize }}</td>
+                    <td class="payment-amount">{% if pago.monto_centavos > 0 %}{{ pago.monto_centavos|money_cents }} {{ pago.moneda }}{% else %}No disponible{% endif %}</td>
+                    <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Registro migrado' }}</td>
+                    <td>
+                        <span class="payment-status payment-status--{{ pago.estatus|replace('_', '-') }}">{{ pago.estatus_etiqueta }}</span>
+                        {% if pago.estatus == 'cancelado' %}<small>{{ pago.motivo_cancelacion }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {% if current_user.rol_clinico == 'admin' and pago.estatus != 'cancelado' %}
+                        <details class="payment-cancel-menu">
+                            <summary aria-label="Cancelar pago {{ pago.folio }}"><i class="fas fa-ban" aria-hidden="true"></i></summary>
+                            <form action="{{ url_for('pagos.cancelar', pago_id=pago.id) }}" method="POST" data-payment-cancel-form>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.path }}">
+                                <label for="cancel-reason-patient-{{ pago.id }}">Motivo de cancelación</label>
+                                <textarea id="cancel-reason-patient-{{ pago.id }}" name="motivo_cancelacion" minlength="5" maxlength="500" required></textarea>
+                                <button type="submit">Conservar original y cancelar</button>
+                            </form>
+                        </details>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="payment-empty-state"><i class="fas fa-receipt" aria-hidden="true"></i><strong>Sin pagos registrados</strong><p>Utiliza el formulario superior para crear el primer movimiento.</p></div>
+    {% endif %}
+</section>

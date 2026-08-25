@@ -3,7 +3,9 @@ from datetime import date, timedelta
 
 from app import db_orm as db
 from app.core.audit import AuditLog
+from app.models.cita import Cita
 from app.models.paciente import Paciente
+from app.models.pago import Pago
 from app.models.usuario import Usuario
 from app.models.valoracion_antropometrica import ValoracionAntropometrica
 from seed_demo import create_demo_workbook, seed_demo_data
@@ -200,6 +202,7 @@ def test_demo_seed_is_idempotent_and_generates_importable_workbook(app, tmp_path
     workbook_path = create_demo_workbook(tmp_path / "demo.xlsx")
 
     assert first["usuarios"] == [
+        "demo_admin",
         "demo_medico",
         "demo_dentista",
         "demo_nutricion",
@@ -207,8 +210,8 @@ def test_demo_seed_is_idempotent_and_generates_importable_workbook(app, tmp_path
     ]
     assert first["pacientes"] == 6
     assert first["consultas"] == 9
-    assert first["citas"] == 4
-    assert first["pagos"] == 3
+    assert first["citas"] == 7
+    assert first["pagos"] == 18
     assert first["recetas"] == 1
     assert second["usuarios"] == []
     assert second["pacientes"] == 0
@@ -219,9 +222,25 @@ def test_demo_seed_is_idempotent_and_generates_importable_workbook(app, tmp_path
     assert workbook_path.is_file()
 
     with app.app_context():
+        assert Usuario.find_by_username("demo_admin").rol_clinico == "admin"
         assert Usuario.find_by_username("demo_nutricion").puede_capturar_antropometria
         assert not Usuario.find_by_username("demo_medico").puede_capturar_antropometria
         assert Paciente.query.filter(Paciente.telefono.like("55000001%")).count() == 6
+        assert Cita.query.filter(Cita.estatus == "Programada").count() == 4
+        assert Cita.query.filter(Cita.estatus == "Atendida").count() == 1
+        assert Cita.query.filter(Cita.estatus == "No Asistió").count() == 1
+        assert Cita.query.filter(Cita.estatus == "Cancelada").count() == 1
+        assert Pago.query.filter(Pago.estatus == "vigente").count() == 16
+        assert Pago.query.filter(Pago.estatus == "cancelado").count() == 1
+        assert Pago.query.filter(Pago.estatus == "requiere_revision").count() == 1
+        linked = Pago.query.filter_by(concepto="Consulta demostrativa").first()
+        assert linked.cita_id is not None
+        unlinked = Pago.query.filter_by(concepto="Cobro sin cita aunque existe una programada").one()
+        assert unlinked.cita_id is None
+        assert Cita.obtener_cita_pendiente(unlinked.paciente_id) is not None
+        review = Pago.query.filter_by(concepto="Pago legado incompleto para revisión").one()
+        assert review.monto_centavos == 0
+        assert review.usuario_registro_id is None
         prescription = ValoracionAntropometrica.query.filter_by(
             motivo_consulta="Consulta más reciente demostrativa"
         ).one().recetas[0]

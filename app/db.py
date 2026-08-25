@@ -5,7 +5,9 @@ import sqlite3
 import sys
 from contextlib import suppress
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
+from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import String, cast, literal
 
@@ -160,6 +162,230 @@ def _sqlite_column_definition(column, dialect) -> str:
             )
         definition += f" NOT NULL DEFAULT {migration['default']}"
     return definition
+
+
+def _payments_schema_is_current(db) -> bool:
+    with db.engine.connect() as connection:
+        tables = set(connection.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").scalars())
+        if "pagos" not in tables:
+            return True
+        columns = {
+            row["name"]: row
+            for row in connection.exec_driver_sql("PRAGMA table_info('pagos')").mappings().all()
+        }
+        required = {
+            "monto_centavos",
+            "moneda",
+            "folio",
+            "operation_key",
+            "usuario_registro_id",
+            "cita_id",
+            "estatus",
+            "cancelado_at",
+            "cancelado_por_id",
+            "motivo_cancelacion",
+        }
+        if not required <= set(columns) or not columns["monto_centavos"]["notnull"]:
+            return False
+        foreign_keys = connection.exec_driver_sql("PRAGMA foreign_key_list('pagos')").mappings().all()
+        on_delete = {row["from"]: str(row["on_delete"]).upper() for row in foreign_keys}
+        unique_columns = set()
+        for index in connection.exec_driver_sql("PRAGMA index_list('pagos')").mappings().all():
+            if not index["unique"]:
+                continue
+            indexed = connection.exec_driver_sql(
+                f"PRAGMA index_info({_quote_identifier(index['name'])})"
+            ).mappings().all()
+            if len(indexed) == 1:
+                unique_columns.add(indexed[0]["name"])
+        return (
+            on_delete.get("paciente_id") == "RESTRICT"
+            and on_delete.get("usuario_registro_id") == "SET NULL"
+            and on_delete.get("cita_id") == "SET NULL"
+            and on_delete.get("cancelado_por_id") == "SET NULL"
+            and {"folio", "operation_key"} <= unique_columns
+        )
+
+
+def _legacy_payment_amount(value):
+    try:
+        amount = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, TypeError, ValueError):
+        return 0, False
+    if amount <= 0 or amount > Decimal("10000000"):
+        return 0, False
+    return int(amount * 100), True
+
+
+def _migrate_payments_v110(db, *, logger=None) -> bool:
+    """Convierte pagos legados a movimientos monetarios íntegros y trazables."""
+    if _payments_schema_is_current(db):
+        return False
+
+    connection = db.engine.raw_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("PRAGMA foreign_keys=OFF")
+        cursor.execute("PRAGMA legacy_alter_table=OFF")
+        cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("DROP TABLE IF EXISTS pagos_migration_v110")
+        cursor.execute(
+            """
+            CREATE TABLE pagos_migration_v110 (
+                id INTEGER NOT NULL PRIMARY KEY,
+                paciente_id INTEGER NOT NULL,
+                fecha_pago DATE NOT NULL,
+                monto FLOAT,
+                monto_centavos INTEGER NOT NULL,
+                moneda VARCHAR(3) NOT NULL DEFAULT 'MXN',
+                concepto VARCHAR(200) NOT NULL,
+                metodo_pago VARCHAR(30) NOT NULL,
+                folio VARCHAR(40) NOT NULL UNIQUE,
+                operation_key VARCHAR(36) NOT NULL UNIQUE,
+                usuario_registro_id INTEGER,
+                cita_id INTEGER,
+                estatus VARCHAR(30) NOT NULL DEFAULT 'vigente',
+                cancelado_at DATETIME,
+                cancelado_por_id INTEGER,
+                motivo_cancelacion VARCHAR(500),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT ck_pagos_estatus
+                    CHECK (estatus IN ('vigente','cancelado','requiere_revision')),
+                CONSTRAINT ck_pagos_monto_centavos CHECK (monto_centavos >= 0),
+                CONSTRAINT ck_pagos_vigente_monto_positivo
+                    CHECK (estatus != 'vigente' OR monto_centavos > 0),
+                CONSTRAINT ck_pagos_moneda CHECK (moneda = 'MXN'),
+                FOREIGN KEY(paciente_id) REFERENCES pacientes(id) ON DELETE RESTRICT,
+                FOREIGN KEY(usuario_registro_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+                FOREIGN KEY(cita_id) REFERENCES citas(id) ON DELETE SET NULL,
+                FOREIGN KEY(cancelado_por_id) REFERENCES usuarios(id) ON DELETE SET NULL
+            )
+            """
+        )
+
+        cursor.execute("SELECT * FROM pagos ORDER BY id")
+        column_names = [item[0] for item in cursor.description]
+        rows = [dict(zip(column_names, values, strict=True)) for values in cursor.fetchall()]
+        user_ids = {row[0] for row in cursor.execute("SELECT id FROM usuarios").fetchall()}
+        appointment_rows = cursor.execute("SELECT id, paciente_id FROM citas").fetchall()
+        appointments = {row[0]: row[1] for row in appointment_rows}
+        used_folios = set()
+        used_operations = set()
+
+        for row in rows:
+            payment_id = int(row["id"])
+            patient_id = int(row["paciente_id"])
+            payment_date = str(row.get("fecha_pago") or datetime.now(timezone.utc).date().isoformat())[:10]
+            cents, valid_amount = _legacy_payment_amount(
+                row.get("monto_centavos") / 100
+                if row.get("monto_centavos") is not None
+                else row.get("monto")
+            )
+            concept = " ".join(str(row.get("concepto") or "").split())[:200]
+            raw_method = str(row.get("metodo_pago") or "").strip()
+            method = raw_method if raw_method in {"efectivo", "tarjeta", "transferencia", "otro"} else "otro"
+            currency = str(row.get("moneda") or "MXN").upper()
+            requires_review = not valid_amount or not concept or raw_method != method or currency != "MXN"
+            if not concept:
+                concept = "Pago legado sin concepto"
+
+            raw_status = str(row.get("estatus") or "vigente")
+            if raw_status == "cancelado":
+                status = "cancelado"
+            elif raw_status == "requiere_revision" or requires_review:
+                status = "requiere_revision"
+            else:
+                status = "vigente"
+
+            compact_date = "".join(character for character in payment_date if character.isdigit())[:8]
+            folio = str(row.get("folio") or "").strip()[:40]
+            if not folio or folio in used_folios:
+                folio = f"PAG-{compact_date or 'LEGADO'}-{payment_id:06d}"
+            used_folios.add(folio)
+
+            operation = str(row.get("operation_key") or "").strip()[:36]
+            if not operation or operation in used_operations:
+                operation = str(uuid5(NAMESPACE_URL, f"sgpn-pago-{payment_id}-{payment_date}"))
+            used_operations.add(operation)
+
+            registered_by = row.get("usuario_registro_id")
+            registered_by = registered_by if registered_by in user_ids else None
+            cancelled_by = row.get("cancelado_por_id")
+            cancelled_by = cancelled_by if cancelled_by in user_ids else None
+            appointment_id = row.get("cita_id")
+            appointment_id = appointment_id if appointments.get(appointment_id) == patient_id else None
+            cancelled_at = row.get("cancelado_at") if status == "cancelado" else None
+            cancellation_reason = (
+                " ".join(str(row.get("motivo_cancelacion") or "").split())[:500]
+                if status == "cancelado"
+                else None
+            )
+            if status == "cancelado" and not cancellation_reason:
+                cancellation_reason = "Cancelación legada sin motivo registrado"
+            created_at = row.get("created_at") or datetime.now(timezone.utc).replace(tzinfo=None).isoformat(" ")
+
+            cursor.execute(
+                """
+                INSERT INTO pagos_migration_v110 (
+                    id, paciente_id, fecha_pago, monto, monto_centavos, moneda, concepto,
+                    metodo_pago, folio, operation_key, usuario_registro_id, cita_id, estatus,
+                    cancelado_at, cancelado_por_id, motivo_cancelacion, created_at
+                ) VALUES (?, ?, ?, ?, ?, 'MXN', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    payment_id,
+                    patient_id,
+                    payment_date,
+                    cents / 100,
+                    cents,
+                    concept,
+                    method,
+                    folio,
+                    operation,
+                    registered_by,
+                    appointment_id,
+                    status,
+                    cancelled_at,
+                    cancelled_by,
+                    cancellation_reason,
+                    created_at,
+                ),
+            )
+
+        cursor.execute("DROP TABLE pagos")
+        cursor.execute("ALTER TABLE pagos_migration_v110 RENAME TO pagos")
+        for index_name, column_name in (
+            ("ix_pagos_paciente_id", "paciente_id"),
+            ("ix_pagos_fecha_pago", "fecha_pago"),
+            ("ix_pagos_metodo_pago", "metodo_pago"),
+            ("ix_pagos_folio", "folio"),
+            ("ix_pagos_operation_key", "operation_key"),
+            ("ix_pagos_usuario_registro_id", "usuario_registro_id"),
+            ("ix_pagos_cita_id", "cita_id"),
+            ("ix_pagos_estatus", "estatus"),
+            ("ix_pagos_cancelado_por_id", "cancelado_por_id"),
+        ):
+            cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON pagos ({column_name})")
+        foreign_key_errors = cursor.execute("PRAGMA foreign_key_check").fetchall()
+        if foreign_key_errors:
+            raise sqlite3.DatabaseError("La migración de pagos produjo llaves foráneas inválidas.")
+        integrity = cursor.execute("PRAGMA integrity_check").fetchone()
+        if not integrity or integrity[0] != "ok":
+            raise sqlite3.DatabaseError("La migración de pagos no superó la comprobación de integridad.")
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        # La conexión DBAPI puede volver al pool. Reactivar la validación aquí
+        # evita que un checkout posterior reutilice la conexión con FK apagadas.
+        with suppress(Exception):
+            cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+        connection.close()
+    if logger:
+        logger.info("Migración controlada aplicada; schema=payments_v110")
+    return True
 
 
 def _has_legacy_single_prescription_constraint(db) -> bool:
@@ -357,6 +583,8 @@ def init_db(db, *, logger=None) -> list[str]:
     """Crea tablas, añade columnas y ejecuta migraciones de restricciones versionadas."""
     db.create_all()
     applied = []
+    if _migrate_payments_v110(db, logger=logger):
+        applied.append("pagos.schema.v110")
     with db.engine.begin() as connection:
         dialect = connection.dialect
         existing_tables = set(connection.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").scalars())

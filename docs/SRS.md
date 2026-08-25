@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.9.1 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.10.0 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -12,7 +12,7 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 4. Consultas con signos vitales, síntomas, impresión diagnóstica, plan e indicaciones clínicas.
 5. Antropometría opcional sin bloquear consultas generales.
 6. Citas con fecha, hora, motivo y estado.
-7. Pagos con fecha, monto, concepto y método.
+7. Pagos con importe exacto en centavos, moneda MXN, fecha, concepto, método, folio, responsable y cita opcional.
 8. WhatsApp directo y bitácora de contacto.
 9. Impresión limpia y separada de notas y recetas mediante `window.print()`.
 10. Administración de usuarios y consulta de auditoría.
@@ -37,41 +37,57 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 29. Contexto de Recetas separado que conserva el acceso a consultas históricas específicas.
 30. Importación antropométrica visible y autorizada únicamente para el perfil profesional Nutrición.
 31. Carga demostrativa opcional, explícita e idempotente que nunca se ejecuta durante el arranque.
-28. Agenda rápida sin precarga del padrón: búsqueda autenticada y limitada por nombre, expediente o teléfono, con una sola ficha seleccionada visible.
-28. Búsqueda global conectada al buscador autorizado de pacientes, breadcrumb y selector informativo de sede local.
-29. Tema claro/oscuro persistente, foco visible y navegación de shell operable con teclado.
-30. Los módulos no implementados deben identificarse como planificados y no deben exponer rutas ficticias.
-31. Dashboard con tres KPI informativos y accionables, agenda, próximas citas, gráfica de citas/consultas, actividad, una sola vista de pendientes y Acompañamiento Intermedio.
-32. Estados vacíos, indicador de carga de navegación y mensajes de confirmación sin inventar información clínica.
-33. Recetas y Expedientes deben permanecer en el sidebar y no duplicarse como acciones rápidas del dashboard.
-34. Plantillas, Usuarios, Auditoría y Configuración deben agruparse bajo Administración sin modificar la autorización de cada destino.
-35. El topbar debe permanecer visible mientras se desplaza el contenido y mantener comportamiento adaptable en resoluciones pequeñas.
-36. Pestañas, botones secundarios y divisores del formulario clínico deben conservar contraste suficiente en tema oscuro.
-37. El detalle debe presentar Historial médico antes de Alimentación y Actividad física.
-38. El pendiente de pacientes sin consulta reciente debe mostrarse sólo a perfiles de Nutrición.
-39. La acción Agendar cita del KPI debe permitir seleccionar un paciente activo registrado y consultar visualmente disponibilidad sin navegar a su detalle.
-40. El calendario rápido debe mostrar 21 días, permitir una fecha posterior y distinguir horarios disponibles, ocupados y transcurridos.
-41. La disponibilidad mostrada debe revalidarse al confirmar; el flujo rápido no puede sobrescribir una cita programada existente.
-42. La agenda rápida no debe duplicarse en el sidebar ni retirar el agendamiento/reagendamiento existente en el detalle del paciente.
-43. Cada consulta debe recibir en servidor un turno global consecutivo por fecha; el primer turno de cada día es `1`.
-44. El turno enviado por el navegador no debe aceptarse como autoridad y `(fecha, turno)` debe ser único en SQLite.
-45. La migración debe preservar todas las consultas legadas y normalizar su turno de forma determinista.
-46. Agregar un medicamento debe insertar la nueva tarjeta arriba sin alterar el orden de captura persistido e impreso `1..n`.
-47. El servidor debe rechazar órdenes de medicamentos incompletos, repetidos o no consecutivos.
-48. La receta impresa debe usar una lista compacta sin tarjetas por medicamento, omitir sólo campos opcionales vacíos, mantener juntos los datos de cada medicamento al paginar y conservar todos los datos obligatorios.
-49. La receta debe imprimir la identidad profesional completa una sola vez en el encabezado, reservar una línea centrada para la firma autógrafa y declarar el favicon institucional vigente con invalidación de caché.
-50. La impresión de receta debe sustituir los metadatos automáticos de margen en Chromium moderno, ocultar temporalmente el título como respaldo y conservar un margen A4 moderado.
-51. La receta debe mostrar el rótulo abreviado **Domicilio** sin renombrar ni perder el dato histórico `domicilio_profesional`.
-52. El sidebar debe mantener tamaños legibles en marca, secciones, navegación, submenús e identidad sin alterar rutas ni permisos.
-53. Los estados de puntero en tema oscuro no deben utilizar fondos claros que reduzcan el contraste del texto.
-54. La columna de porcentaje de grasa del historial debe mostrarse únicamente a perfiles de Nutrición.
-55. **Agenda y citas** debe abrir una ruta operativa dedicada con vistas Día/Semana y navegación por periodo.
-56. El alta y la reagenda desde Agenda deben reutilizar búsqueda privada, disponibilidad y validación transaccional existentes.
-57. Una cita cerrada no puede volver a Programada; una cita futura no puede cerrarse como Atendida o No Asistió.
-58. Cancelación, inasistencia, atención y reagenda deben generar auditoría sin almacenar el motivo clínico completo.
-59. Recepción puede administrar citas, pero la Agenda no debe mostrarle motivos clínicos ni acciones de inicio de consulta.
-60. El detalle del paciente debe mantener visibles los datos principales y el seguimiento operativo, mostrar sólo los campos complementarios capturados y resumir su ausencia conjunta en un estado accionable.
-61. Los detalles desplegados de pendientes deben cumplir contraste WCAG AA en tema oscuro para texto principal, secundario, hover y foco visible.
+32. Agenda rápida sin precarga del padrón: búsqueda autenticada y limitada por nombre, expediente o teléfono, con una sola ficha seleccionada visible.
+33. Búsqueda global conectada al buscador autorizado de pacientes, breadcrumb y selector informativo de sede local.
+34. Tema claro/oscuro persistente, foco visible y navegación de shell operable con teclado.
+35. Los módulos no implementados deben identificarse como planificados y no deben exponer rutas ficticias.
+36. Dashboard con tres KPI informativos y accionables, agenda, próximas citas, gráfica de citas/consultas, actividad, una sola vista de pendientes y Acompañamiento Intermedio.
+37. Estados vacíos, indicador de carga de navegación y mensajes de confirmación sin inventar información clínica.
+38. Recetas y Expedientes deben permanecer en el sidebar y no duplicarse como acciones rápidas del dashboard.
+39. Plantillas, Usuarios, Auditoría y Configuración deben agruparse bajo Administración sin modificar la autorización de cada destino.
+40. El topbar debe permanecer visible mientras se desplaza el contenido y mantener comportamiento adaptable en resoluciones pequeñas.
+41. Pestañas, botones secundarios y divisores del formulario clínico deben conservar contraste suficiente en tema oscuro.
+42. El detalle debe presentar Historial médico antes de Alimentación y Actividad física.
+43. El pendiente de pacientes sin consulta reciente debe mostrarse sólo a perfiles de Nutrición.
+44. La acción Agendar cita del KPI debe permitir seleccionar un paciente activo registrado y consultar visualmente disponibilidad sin navegar a su detalle.
+45. El calendario rápido debe mostrar 21 días, permitir una fecha posterior y distinguir horarios disponibles, ocupados y transcurridos.
+46. La disponibilidad mostrada debe revalidarse al confirmar; el flujo rápido no puede sobrescribir una cita programada existente.
+47. La agenda rápida no debe duplicarse en el sidebar ni retirar el agendamiento/reagendamiento existente en el detalle del paciente.
+48. Cada consulta debe recibir en servidor un turno global consecutivo por fecha; el primer turno de cada día es `1`.
+49. El turno enviado por el navegador no debe aceptarse como autoridad y `(fecha, turno)` debe ser único en SQLite.
+50. La migración debe preservar todas las consultas legadas y normalizar su turno de forma determinista.
+51. Agregar un medicamento debe insertar la nueva tarjeta arriba sin alterar el orden de captura persistido e impreso `1..n`.
+52. El servidor debe rechazar órdenes de medicamentos incompletos, repetidos o no consecutivos.
+53. La receta impresa debe usar una lista compacta sin tarjetas por medicamento, omitir sólo campos opcionales vacíos, mantener juntos los datos de cada medicamento al paginar y conservar todos los datos obligatorios.
+54. La receta debe imprimir la identidad profesional completa una sola vez en el encabezado, reservar una línea centrada para la firma autógrafa y declarar el favicon institucional vigente con invalidación de caché.
+55. La impresión de receta debe sustituir los metadatos automáticos de margen en Chromium moderno, ocultar temporalmente el título como respaldo y conservar un margen A4 moderado.
+56. La receta debe mostrar el rótulo abreviado **Domicilio** sin renombrar ni perder el dato histórico `domicilio_profesional`.
+57. El sidebar debe mantener tamaños legibles en marca, secciones, navegación, submenús e identidad sin alterar rutas ni permisos.
+58. Los estados de puntero en tema oscuro no deben utilizar fondos claros que reduzcan el contraste del texto.
+59. La columna de porcentaje de grasa del historial debe mostrarse únicamente a perfiles de Nutrición.
+60. **Agenda y citas** debe abrir una ruta operativa dedicada con vistas Día/Semana y navegación por periodo.
+61. El alta y la reagenda desde Agenda deben reutilizar búsqueda privada, disponibilidad y validación transaccional existentes.
+62. Una cita cerrada no puede volver a Programada; una cita futura no puede cerrarse como Atendida o No Asistió.
+63. Cancelación, inasistencia, atención y reagenda deben generar auditoría sin almacenar el motivo clínico completo.
+64. Recepción puede administrar citas, pero la Agenda no debe mostrarle motivos clínicos ni acciones de inicio de consulta.
+65. El detalle del paciente debe mantener visibles los datos principales y el seguimiento operativo, mostrar sólo los campos complementarios capturados y resumir su ausencia conjunta en un estado accionable.
+66. Los detalles desplegados de pendientes deben cumplir contraste WCAG AA en tema oscuro para texto principal, secundario, hover y foco visible.
+67. Todo pago nuevo debe usar `monto_centavos`, ser positivo, incluir como máximo dos decimales y recibir moneda MXN, folio y clave de operación únicos.
+68. El registro debe conservar al usuario responsable y aceptar una cita opcional sólo cuando pertenezca al mismo paciente.
+69. Un pago no debe editarse ni eliminarse; Administración puede cancelarlo con motivo, fecha y responsable sin alterar el original.
+70. Los pagos legados incompletos deben conservarse como `requiere_revision` y quedar fuera de los totales.
+71. La eliminación del paciente debe restringirse cuando existan pagos; eliminar usuarios o citas opcionales sólo debe retirar la referencia.
+72. El módulo global debe permitir búsqueda, rango máximo de 366 días, método, estado, total vigente, desglose y paginación.
+73. Administración y Recepción pueden abrir el módulo global; Medicina registra y consulta sólo desde el paciente; únicamente Administración cancela.
+74. Los totales deben sumar exclusivamente movimientos `vigente` y nunca depender del campo `Float` legado.
+75. El módulo no debe presentarse como CFDI, contabilidad, estado de cuenta ni corte de caja formal.
+76. Administración debe poder agrupar el periodo filtrado por día o mes y exportar el filtro o el historial de un paciente en CSV.
+77. Las exportaciones deben ser exclusivas de Administración, limitarse a 10,000 filas, neutralizar fórmulas de hoja de cálculo, usar `no-store` y quedar auditadas.
+78. Los reportes de pagos sólo informan cobros vigentes/cancelados; no deben calcular saldos, cargos, adeudos o conciliaciones inexistentes.
+79. La búsqueda de Pagos debe localizar un nombre completo aunque sus componentes estén almacenados en campos separados y el acceso **Ver en Pagos** debe conservar el rango y la identidad buscada.
+80. La relación con cita debe ser explícita, opcional y limitada al mismo paciente; el sistema no debe inferirla por la mera existencia de una cita.
+81. Después de cancelar, el movimiento original debe permanecer visible mediante un retorno interno validado, búsqueda por folio y ancla cuando el filtro anterior lo ocultaría.
+82. El método de pago debe utilizarse para desglose operativo y no para decidir facturación. Hospitalización queda fuera del alcance de la edición para consultorios.
 
 ## Requisitos de seguridad
 

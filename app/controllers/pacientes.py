@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import PurePosixPath
 from threading import Lock
+from uuid import uuid4
 
 import openpyxl
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
@@ -256,10 +257,21 @@ def detalle_paciente(id):
                 }
     next_appointment = Cita.obtener_siguiente_cita(id)
     next_datetime = datetime.combine(next_appointment.fecha, next_appointment.hora) if next_appointment else None
+    payment_appointments = (
+        Cita.query.filter_by(paciente_id=id)
+        .order_by(Cita.fecha.desc(), Cita.hora.desc(), Cita.id.desc())
+        .limit(20)
+        .all()
+    )
     return render_template(
         "pacientes/detalle_paciente.html",
         paciente=patient,
         ultimo_pago=Pago.obtener_ultimo_pago(id),
+        pagos_historial=Pago.obtener_historial_paciente(id),
+        payment_operation_key=str(uuid4()),
+        fecha_pago_default=date.today(),
+        fecha_pago_desde_default=date.today() - timedelta(days=365),
+        citas_pago=payment_appointments,
         historial=HistorialClinico.obtener_por_paciente_id(id) if can_view_clinical else None,
         ultima_valoracion=current,
         valoracion_anterior=previous,
@@ -302,14 +314,46 @@ def registrar_pago_paciente(id):
         return redirect(url_for("pacientes.lista_pacientes_activos"))
     try:
         data = payment_payload(request.form)
-        payment = Pago(paciente_id=id, **data)
-        db.session.add(payment)
+        appointment_id = None
+        raw_appointment_id = str(request.form.get("cita_id") or "").strip()
+        if raw_appointment_id:
+            appointment_id = integer(raw_appointment_id, "Cita", minimum=1)
+            appointment = db.session.get(Cita, appointment_id)
+            if not appointment or appointment.paciente_id != patient.id:
+                raise ValidationError("La cita seleccionada no pertenece al paciente.")
+        payment = Pago.crear(
+            id,
+            data,
+            usuario_id=current_user.id,
+            cita_id=appointment_id,
+        )
         db.session.flush()
-        AuditLog.record("pago.create", entity_type="pago", entity_id=payment.id, metadata={"paciente_id": id})
+        AuditLog.record(
+            "pago.create",
+            entity_type="pago",
+            entity_id=payment.id,
+            metadata={"paciente_id": id, "folio": payment.folio, "cita_id": appointment_id},
+        )
         db.session.commit()
-        flash("Pago registrado exitosamente.", "success")
+        flash(f"Pago {payment.folio} registrado exitosamente.", "success")
     except ValidationError as error:
+        db.session.rollback()
         _flash_validation(error)
+    except IntegrityError:
+        db.session.rollback()
+        duplicate = Pago.query.filter_by(operation_key=str(request.form.get("operation_key") or "")).first()
+        AuditLog.record(
+            "pago.duplicate",
+            entity_type="pago",
+            entity_id=duplicate.id if duplicate else None,
+            outcome="denied",
+            metadata={"paciente_id": id},
+        )
+        db.session.commit()
+        if duplicate and duplicate.paciente_id == patient.id:
+            flash(f"La operación ya había sido registrada con el folio {duplicate.folio}.", "warning")
+        else:
+            flash("No fue posible registrar el pago. Recarga el formulario e inténtalo nuevamente.", "error")
     return redirect(url_for("pacientes.detalle_paciente", id=id))
 
 

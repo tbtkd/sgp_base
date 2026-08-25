@@ -3,7 +3,7 @@
     <a href="{{ url_for('valoracion.nueva_valoracion', paciente_id=paciente.id) }}" class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 bg-teal-600 text-white"><i class="fas fa-stethoscope"></i>Nueva consulta</a>
     <a href="{{ url_for('historial_clinico.ver_crear_historial', paciente_id=paciente.id) }}" class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 bg-white border"><i class="fas fa-notes-medical"></i>Expediente</a>
     {% if ultima_valoracion %}<a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=ultima_valoracion.id) }}" class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 bg-white border"><i class="fas fa-file-medical"></i>Última consulta</a>{% endif %}
-    <button type="button" id="btnOpenExcelModal" class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-file-excel text-emerald-600 mr-1"></i>Importar Excel</button>
+    {% if current_user.puede_capturar_antropometria %}<button type="button" id="btnOpenExcelModal" class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-file-excel text-emerald-600 mr-1"></i>Importar Excel</button>{% endif %}
     {% endif %}
     <a href="{{ paciente.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 bg-emerald-600 text-white"><i class="fab fa-whatsapp"></i>WhatsApp</a>
     <button type="button" onclick="abrirBitacoraWhatsApp()" class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-list mr-1"></i>Bitácora</button>

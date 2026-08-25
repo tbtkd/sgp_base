@@ -61,3 +61,7 @@ La consulta usa `(fecha, numero_cita)` como clave única operativa. `numero_cita
 La migración `consultation_daily_sequence` reasigna filas legadas por `fecha`, `created_at` e `id`, crea un índice único y ejecuta `integrity_check`. No elimina ni fusiona consultas. Los huecos posteriores por eliminación o cambio de fecha se conservan para no mutar referencias históricas.
 
 Las recetas reciben `orden_medicamento[]`. `prescription_payload()` exige una secuencia única y consecutiva, reordena las columnas paralelas antes de construir cada medicamento y mantiene compatibilidad con clientes 1.7.1 que no envían el nuevo campo.
+
+El índice `GET /valoraciones/` selecciona una sola nota reciente por paciente mediante una ventana SQL ordenada por fecha, turno e ID. Acepta `q`, `orden=fecha_desc|fecha_asc` y `page`; filtra y pagina en servidor. `?origen=recetas` conserva el listado completo de consultas para mantener accesibles folios históricos.
+
+`POST /pacientes/<id>/cargar-excel` exige además el perfil profesional `nutricion`. La interfaz no renderiza sus controles para otros perfiles y un intento directo se deniega y audita antes de resolver el identificador del paciente.

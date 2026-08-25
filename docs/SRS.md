@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.8.0 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.9.0 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -33,6 +33,10 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 25. Cambio propio, restablecimiento administrativo y recuperación local de contraseñas para administradores.
 26. Identidad compacta mediante nombre de usuario y detalle rotulado de nombre, rol, área clínica y cédula en el menú de cuenta.
 27. Limpieza segura y explícita de recursos obsoletos al actualizar sobre una carpeta existente.
+28. Listado de Consultas con un paciente por fila, acceso a su nota más reciente, búsqueda por nombre y orden/paginación de servidor.
+29. Contexto de Recetas separado que conserva el acceso a consultas históricas específicas.
+30. Importación antropométrica visible y autorizada únicamente para el perfil profesional Nutrición.
+31. Carga demostrativa opcional, explícita e idempotente que nunca se ejecuta durante el arranque.
 28. Agenda rápida sin precarga del padrón: búsqueda autenticada y limitada por nombre, expediente o teléfono, con una sola ficha seleccionada visible.
 28. Búsqueda global conectada al buscador autorizado de pacientes, breadcrumb y selector informativo de sede local.
 29. Tema claro/oscuro persistente, foco visible y navegación de shell operable con teclado.

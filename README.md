@@ -1,12 +1,13 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.8.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.9.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
 - Expediente con datos personales, ocupación, dirección y contacto de emergencia.
 - Antecedentes patológicos, heredofamiliares, alergias, medicación, hábitos y notas.
 - Consultas con síntomas, signos vitales, diagnóstico, plan e indicaciones clínicas.
+- Índice de Consultas con una sola fila por paciente, última nota determinista, búsqueda por nombre/apellidos, orden por fecha y paginación de servidor.
 - Turno diario global de consultas, asignado por el servidor en secuencia `1..n` y reiniciado para cada fecha.
 - Receta médica ordinaria independiente para Medicina/Odontología, con folios originales, adicionales y sustituciones trazables.
 - Captura de medicamentos con altas nuevas en la parte superior y orden clínico final estable `1, 2, 3…`.
@@ -38,7 +39,7 @@ Versión **1.8.0**. Aplicación local para consultorios médicos, dentales, nutr
 - Resumen del historial ordenado por relevancia clínica: Historial médico, Alimentación y Actividad física.
 - El pendiente **Sin consulta reciente** se calcula y muestra sólo para perfiles de Nutrición.
 - Navegación que diferencia enlaces operativos, acceso contextual funcional a recetas, grupo desplegable de Administración y módulos planificados sin crear rutas ficticias.
-- Importación XLSX defensiva para expedientes antropométricos históricos.
+- Importación XLSX defensiva para expedientes antropométricos históricos, visible y autorizada exclusivamente para perfiles de Nutrición.
 
 ## Instalación
 
@@ -100,6 +101,16 @@ Get-Content .\instance\logs\startup.log -Tail 80
 
 Para una inicialización automatizada se admiten `SGPN_ADMIN_USERNAME`, `SGPN_ADMIN_PASSWORD`, `SGPN_ADMIN_NAME`, `SGPN_ADMIN_LASTNAME`, `SGPN_ADMIN_MATERNAL` y `SGPN_ADMIN_EMAIL`.
 
+### Datos de demostración opcionales
+
+Para validar pantallas sin capturar todo manualmente, trabaja sobre una copia o base de pruebas y ejecuta:
+
+```powershell
+python seed_demo.py --confirm
+```
+
+El comando agrega cuentas ficticias para Medicina, Odontología, Nutrición y Recepción, además de seis pacientes, historiales, nueve consultas, citas, pagos y una receta de tres medicamentos. También genera `demo_data/expediente_antropometrico_demo.xlsx`. La contraseña aleatoria de las cuentas nuevas se muestra una sola vez. Nada se carga automáticamente y una segunda ejecución no duplica el conjunto. Consulta [demo_data/README.md](demo_data/README.md) y elimina o desactiva estas cuentas antes de utilizar información real.
+
 ## Persistencia y respaldos
 
 - Ejecución normal: `instance/pacientes.db` dentro del proyecto.
@@ -140,12 +151,12 @@ La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombr
 
 ```bash
 python -m pytest -q
-ruff check app tests run.py seed_admin.py
-bandit -q -r app run.py seed_admin.py -x app/static,app/templates
+ruff check app tests run.py seed_admin.py seed_demo.py
+bandit -q -r app run.py seed_admin.py seed_demo.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 89 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda 1.8.0 se documenta en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md) y el trabajo pendiente de Consultas permanece en [docs/ROADMAP_AGENDA_Y_CONSULTAS.md](docs/ROADMAP_AGENDA_Y_CONSULTAS.md).
+La aceptación funcional incluye 97 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md) y Consultas/datos demo en [docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md](docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md).
 
 ## Compilación para Windows
 

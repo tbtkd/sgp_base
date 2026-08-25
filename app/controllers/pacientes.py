@@ -382,15 +382,26 @@ def _validate_xlsx_archive(blob):
 @login_required
 @roles_required("admin", "medico")
 def cargar_excel(id):
-    if not db.session.get(Paciente, id):
-        return jsonify({"success": False, "message": "Paciente no encontrado"}), 404
     if not current_user.puede_capturar_antropometria:
+        AuditLog.record(
+            "valoracion.import",
+            entity_type="paciente",
+            entity_id=id,
+            outcome="denied",
+            metadata={
+                "reason": "professional_profile_not_allowed",
+                "perfil_profesional": current_user.perfil_profesional_clinico,
+            },
+        )
+        db.session.commit()
         return jsonify(
             {
                 "success": False,
                 "message": "La importación antropométrica sólo está disponible para profesionales de Nutrición.",
             }
         ), 403
+    if not db.session.get(Paciente, id):
+        return jsonify({"success": False, "message": "Paciente no encontrado"}), 404
     uploaded = request.files.get("excel_file") or request.files.get("file")
     if not uploaded or not uploaded.filename:
         return jsonify({"success": False, "message": "Selecciona un archivo XLSX"}), 400

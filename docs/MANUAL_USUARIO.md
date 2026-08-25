@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.8.0
+# Manual de usuario — Sistema Clínico 1.9.0
 
 ## 1. Propósito
 
@@ -178,6 +178,18 @@ Las alergias deben revisarse antes de emitir cualquier receta. Evita utilizar ab
 
 ## 9. Registrar una consulta
 
+### Localizar la última nota
+
+1. Abre **Consultas** en el sidebar.
+2. Cada paciente aparece una sola vez, con la fecha de su nota más reciente.
+3. Busca por nombre o apellidos; no es necesario respetar mayúsculas o acentos.
+4. Pulsa **Fecha más reciente** para alternar entre orden descendente y ascendente.
+5. Selecciona **Ver nota** para abrir la consulta más reciente de ese paciente.
+
+El acceso **Recetas** conserva todas las consultas, incluidas las anteriores, porque un folio puede pertenecer a una nota histórica. No confundas ambos listados.
+
+### Capturar una consulta
+
 1. Abre el paciente correcto.
 2. Selecciona **Nueva consulta**.
 3. Completa las pestañas:
@@ -191,6 +203,8 @@ Las alergias deben revisarse antes de emitir cualquier receta. Evita utilizar ab
 El **Turno diario** es informativo y lo asigna el servidor. Se reinicia cada fecha y no debe editarse manualmente.
 
 Si un campo es inválido, el sistema abre la pestaña que contiene el problema. Corrige el dato antes de intentar guardar nuevamente.
+
+La opción **Importar Excel** sólo se muestra al personal con perfil Nutrición. Medicina general, Odontología y Recepción no pueden utilizarla aunque intenten enviar directamente la solicitud.
 
 ## 10. Generar una receta ordinaria
 

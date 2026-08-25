@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.8.0
+# Arquitectura técnica — versión 1.9.0
 
 ## Componentes
 
@@ -16,6 +16,8 @@ El dashboard agrega consultas de lectura acotadas para altas de seis meses, acti
 La Agenda operativa vive en el blueprint `agenda`: `GET /agenda` ofrece vistas diaria y semanal; `GET/POST /agenda/citas/<id>/reagendar` modifica una cita programada sin cambiar su identidad o paciente. La creación rápida reutiliza `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido` y puede excluir la cita actual durante una reagenda. Estas respuestas usan `Cache-Control: no-store`.
 
 Toda creación o reagenda vuelve a validar paciente activo, fecha, rango, hora y conflicto dentro del bloqueo local de escritura antes del `commit`. Las transiciones administrativas son unidireccionales: una cita `Programada` puede terminar como `Atendida`, `No Asistió` o `Cancelada`; los cierres de atención sólo se admiten cuando el horario ya transcurrió y una cita terminal no se reabre. Cada éxito o rechazo relevante queda en auditoría sin copiar el motivo clínico completo.
+
+El índice clínico `/valoraciones/` usa `row_number()` particionado por paciente para seleccionar la última consulta de forma determinista por fecha, turno e ID. Búsqueda, orden permitido y paginación se ejecutan en SQLite; una función local `sgpn_search_key` registrada por conexión normaliza Unicode para buscar nombres sin depender de mayúsculas o acentos. El contexto `?origen=recetas` conserva todas las consultas específicas para no perder acceso a folios asociados con notas históricas.
 
 Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
 

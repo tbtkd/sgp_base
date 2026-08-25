@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from threading import Lock
 
-from sqlalchemy import text
+from sqlalchemy import asc, desc, func, text
 from sqlalchemy.orm import joinedload
 
 from app import db_orm as db
@@ -145,6 +145,65 @@ class ValoracionAntropometrica(db.Model):
             .limit(1000)
             .all()
         )
+
+    @staticmethod
+    def buscar_ultimas_por_paciente(busqueda="", orden="fecha_desc", pagina=1, por_pagina=25):
+        """Devuelve una sola consulta, la más reciente, por cada paciente.
+
+        La selección se resuelve en SQLite de forma determinista por fecha,
+        turno diario e ID. El filtrado y la paginación también se ejecutan en
+        servidor para no exponer ni cargar el historial completo en el cliente.
+        """
+        from app.core.text import search_key
+        from app.models.paciente import Paciente
+
+        ranked = (
+            db.session.query(
+                ValoracionAntropometrica.id.label("valoracion_id"),
+                func.row_number()
+                .over(
+                    partition_by=ValoracionAntropometrica.paciente_id,
+                    order_by=(
+                        ValoracionAntropometrica.fecha.desc(),
+                        ValoracionAntropometrica.numero_cita.desc(),
+                        ValoracionAntropometrica.id.desc(),
+                    ),
+                )
+                .label("posicion"),
+            )
+            .subquery()
+        )
+        query = (
+            ValoracionAntropometrica.query.options(joinedload(ValoracionAntropometrica.paciente))
+            .join(ranked, ranked.c.valoracion_id == ValoracionAntropometrica.id)
+            .join(ValoracionAntropometrica.paciente)
+            .filter(ranked.c.posicion == 1)
+        )
+
+        full_name = func.sgpn_search_key(
+            func.trim(
+                Paciente.nombre
+                + " "
+                + Paciente.apellido_paterno
+                + " "
+                + func.coalesce(Paciente.apellido_materno, "")
+            )
+        )
+        for term in search_key(busqueda).split():
+            query = query.filter(full_name.contains(term))
+
+        descending = orden != "fecha_asc"
+        direction = desc if descending else asc
+        query = query.order_by(
+            direction(ValoracionAntropometrica.fecha),
+            direction(ValoracionAntropometrica.numero_cita),
+            direction(ValoracionAntropometrica.id),
+        )
+        total = query.count()
+        safe_page = max(int(pagina), 1)
+        safe_size = min(max(int(por_pagina), 1), 100)
+        items = query.offset((safe_page - 1) * safe_size).limit(safe_size).all()
+        return items, total
 
     @staticmethod
     def contar_mes_vigente():

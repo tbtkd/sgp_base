@@ -119,8 +119,41 @@ def lista_valoraciones(paciente_id):
 @login_required
 @roles_required("admin", "medico")
 def todas_valoraciones():
+    recipe_context = request.args.get("origen") == "recetas"
+    if recipe_context:
+        return render_template(
+            "valoraciones/todas_valoraciones.html",
+            valoraciones=ValoracionAntropometrica.obtener_todas(),
+            modo_recetas=True,
+        )
+
+    search = str(request.args.get("q", "")).strip()[:100]
+    order = request.args.get("orden", "fecha_desc")
+    if order not in {"fecha_desc", "fecha_asc"}:
+        order = "fecha_desc"
+    try:
+        page = max(int(request.args.get("page", 1)), 1)
+    except (TypeError, ValueError):
+        page = 1
+    per_page = 25
+    assessments, total = ValoracionAntropometrica.buscar_ultimas_por_paciente(
+        search, order, page, per_page
+    )
+    pages = max((total + per_page - 1) // per_page, 1)
+    if page > pages:
+        page = pages
+        assessments, total = ValoracionAntropometrica.buscar_ultimas_por_paciente(
+            search, order, page, per_page
+        )
     return render_template(
-        "valoraciones/todas_valoraciones.html", valoraciones=ValoracionAntropometrica.obtener_todas()
+        "valoraciones/todas_valoraciones.html",
+        valoraciones=assessments,
+        modo_recetas=False,
+        busqueda=search,
+        orden=order,
+        pagina=page,
+        paginas=pages,
+        total=total,
     )
 
 

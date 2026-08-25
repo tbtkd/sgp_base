@@ -2,11 +2,11 @@
 
 ## 1. Alcance de esta revisión
 
-La versión 1.8.0 implementa la Agenda operativa y conserva la columna **% Grasa** del grid **Historial de consultas** exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones.
+La versión 1.9.0 conserva la Agenda operativa 1.8.0, implementa el índice simplificado de Consultas y mantiene la columna **% Grasa** del grid **Historial de consultas** exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones.
 
 La regla se basa en el perfil autenticado, no en el autor de la consulta, y se aplica tanto al encabezado como a todas las celdas para no dejar una columna vacía. No se modifican los datos almacenados, la impresión de notas ni la captura antropométrica existente.
 
-La Agenda descrita a continuación está **implementada**. La simplificación de Consultas clínicas permanece documentada y todavía no se implementa.
+La Agenda y la simplificación de Consultas clínicas descritas a continuación están **implementadas**. El siguiente trabajo se concentra en pruebas de navegador real, medición con bases de mayor volumen y filtros futuros por profesional.
 
 ## 2. Diagnóstico de Agenda y citas
 
@@ -68,13 +68,13 @@ El acceso del sidebar abre `/agenda`, mientras el Dashboard conserva el resumen 
 
 Después de validar la primera versión pueden añadirse horarios por profesional, duración variable, días inhábiles, bloqueos y sedes. No conviene habilitarlos hasta definir responsables, reglas de solapamiento y migración de citas existentes.
 
-## 4. Propuesta para Consultas clínicas
+## 4. Consultas clínicas — implementada en 1.9.0
 
 ### 4.1 Problema actual
 
 La pantalla lista una fila por consulta. Un paciente con varias atenciones aparece repetido y las columnas Motivo/Diagnóstico convierten el índice en una vista clínica densa cuando su función principal debería ser localizar la nota más reciente.
 
-### 4.2 Lista simplificada recomendada
+### 4.2 Lista simplificada implementada
 
 - Mostrar una sola fila por paciente con consulta registrada.
 - Columnas: **Paciente**, **Fecha más reciente** y **Acción**.
@@ -82,9 +82,9 @@ La pantalla lista una fila por consulta. Un paciente con varias atenciones apare
 - El resultado se ordena por fecha descendente de forma predeterminada.
 - El encabezado Fecha alterna descendente/ascendente y expone `aria-sort`.
 - Un filtro por nombre busca sin distinguir mayúsculas y admite nombres/apellidos.
-- Conservar paginación para evitar cargar todo el historial al crecer la base.
+- Paginar a 25 pacientes para evitar cargar todo el historial al crecer la base.
 
-### 4.3 Consulta de datos propuesta
+### 4.3 Consulta de datos implementada
 
 La consulta debe obtener la última nota por paciente de forma determinista, ordenando por `fecha`, `numero_cita` e `id`. No debe resolver duplicados en la plantilla ni cargar todas las filas para filtrarlas en JavaScript.
 
@@ -128,7 +128,7 @@ Los valores de `orden` se limitarán a una lista permitida; cualquier valor desc
 
 ## 6. Siguiente orden recomendado
 
-1. Implementar la consulta agregada de pacientes con su índice y paginación.
-2. Añadir búsqueda y ordenamiento mediante parámetros de servidor.
-3. Incorporar las pruebas de duplicados, empates, filtros, permisos y paginación descritas arriba.
-4. Ejecutar pruebas de navegador para Agenda y Consultas antes de ampliar horarios o agregar sedes.
+1. Ejecutar pruebas de navegador real para Agenda y Consultas en las resoluciones utilizadas por el consultorio.
+2. Medir la consulta agregada con una copia anonimizada de mayor volumen antes de modificar índices.
+3. Evaluar filtros por profesional únicamente cuando existan agendas separadas por responsable.
+4. Definir horarios, bloqueos y duración antes de ampliar la Agenda a múltiples profesionales o sedes.

@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.8.0
+# Matriz de pruebas — versión 1.9.0
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -142,10 +142,23 @@ python -m pytest -q
 | CONS-DAY-02 | Proyección | Requiere sesión, valida fecha futura y responde sin caché |
 | CONS-DAY-03 | Migración | Filas legadas se conservan, renumeran determinísticamente y reciben unicidad diaria |
 
+## Índice de consultas y datos demo (`tests/test_consultation_index.py`)
+
+| ID | Control | Cobertura |
+| --- | --- | --- |
+| CONS-IDX-01 | Paciente único | Cada paciente aparece una vez y Ver nota abre la última consulta por fecha, turno e ID |
+| CONS-IDX-02 | Búsqueda/orden | Nombre y apellidos sin distinción de mayúsculas o acentos; orden permitido e inválidos normalizados |
+| CONS-IDX-03 | Paginación | 25 pacientes por página, sin repetir ni omitir expedientes |
+| CONS-RX-01 | Compatibilidad | El contexto Recetas conserva todas las consultas específicas e históricas |
+| XLS-RBAC-01 | Visibilidad | Botón, formulario y resultado de importación sólo se renderizan para Nutrición |
+| XLS-RBAC-02 | Autorización | Solicitud forjada se rechaza antes de consultar al paciente y queda auditada como denegada |
+| DEMO-01 | Datos de prueba | Carga idempotente, perfiles, pacientes, consultas, receta ordenada y XLSX demostrativo |
+| DEMO-02 | XLSX demostrativo | El archivo incluido es aceptado por el flujo real de importación de Nutrición |
+
 Resultados esperados:
 
 ```text
-pytest: 89/89 (incluye 15 casos unittest)
+pytest: 97/97 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

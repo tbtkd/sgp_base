@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.9.0 — Consultas simplificadas y datos demostrativos
+
+- Consultas clínicas muestra una sola fila por paciente y abre la nota más reciente usando desempate por fecha, turno diario e ID.
+- Búsqueda por nombre/apellidos normalizada para mayúsculas y acentos, orden accesible por fecha y paginación de 25 pacientes en servidor.
+- El contexto Recetas conserva todas las consultas históricas para no perder el acceso a folios emitidos desde notas anteriores.
+- Importar Excel, su formulario y el resultado sólo se renderizan para Nutrición; solicitudes forjadas se rechazan antes de resolver al paciente y se auditan.
+- `seed_demo.py --confirm` agrega de forma idempotente usuarios por perfil, seis pacientes, historiales, nueve consultas, citas, pagos y una receta ficticia.
+- Se incluye `demo_data/expediente_antropometrico_demo.xlsx` para validar la importación nutricional.
+- Suite ampliada a 97 pruebas; sin dependencias ni migraciones de esquema nuevas.
+
 ## 1.8.0 — Agenda operativa y estados seguros
 
 - **Agenda y citas** abre `/agenda` en lugar de desplazar el Dashboard.

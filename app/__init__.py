@@ -24,6 +24,9 @@ def _configure_sqlite(dbapi_connection, connection_record):
     import sqlite3
 
     if isinstance(dbapi_connection, sqlite3.Connection):
+        from app.core.text import search_key
+
+        dbapi_connection.create_function("sgpn_search_key", 1, search_key, deterministic=True)
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.execute("PRAGMA busy_timeout=5000")

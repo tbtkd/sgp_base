@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.8.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.9.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -69,6 +69,8 @@ La versión 1.8.0 es adecuada para pruebas funcionales y para un piloto en una e
 - La vista de impresión es una ruta clínica autenticada, aislada del shell y sin recursos externos.
 - El perfil profesional se valida por separado del rol de acceso.
 - La antropometría se oculta y se rechaza en servidor salvo para perfiles de Nutrición.
+- La importación XLSX no renderiza botón ni modales fuera de Nutrición; una solicitud manipulada se rechaza antes de resolver el paciente y se audita como `denied`.
+- El índice de Consultas expone sólo paciente, expediente y fecha de última nota; búsqueda, selección determinista, orden y paginación se resuelven en SQLite con parámetros permitidos.
 - Nombre, perfil y cédula del autor se conservan como instantánea; la impresión no usa la identidad del usuario que sólo consulta.
 - La nota clínica no se presenta como receta; las indicaciones nutricionales nunca se rotulan como prescripción médica.
 - La receta ordinaria requiere Medicina/Odontología, cédula y domicilio; Nutrición y Recepción son rechazados por el servidor.
@@ -114,7 +116,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 89 pruebas totales.
+- `python -m pytest -q`: 97 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

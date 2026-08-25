@@ -1,5 +1,6 @@
 {% set endpoint_actual = request.endpoint or '' %}
 {% set nav_link = 'shell-nav-link' %}
+{% set agenda_activa = 'agenda.' in endpoint_actual or request.path == '/pacientes/agendar-cita' %}
 {% set recetas_activa = 'recetas.' in endpoint_actual or (endpoint_actual == 'valoracion.todas_valoraciones' and request.args.get('origen') == 'recetas') %}
 {% set consultas_activa = 'valoracion.' in endpoint_actual and not recetas_activa %}
 {% set administracion_activa = 'plantillas.' in endpoint_actual or endpoint_actual == 'auth.auditoria' or endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %}
@@ -16,8 +17,8 @@
     <nav class="shell-sidebar-nav" aria-label="Módulos del sistema">
         <p class="shell-nav-section">General</p>
         <a href="{{ url_for('main.index') }}" class="{{ nav_link }}{% if endpoint_actual == 'main.index' %} is-active{% endif %}"{% if endpoint_actual == 'main.index' %} aria-current="page"{% endif %}><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Dashboard</span></a>
-        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="{{ nav_link }}{% if 'pacientes.' in endpoint_actual %} is-active{% endif %}"{% if 'pacientes.' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-users" aria-hidden="true"></i><span>Pacientes</span></a>
-        <a href="{{ url_for('main.index') }}#agenda-hoy" class="{{ nav_link }}"><i class="fas fa-calendar-alt" aria-hidden="true"></i><span>Agenda y citas</span></a>
+        <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="{{ nav_link }}{% if 'pacientes.' in endpoint_actual and not agenda_activa %} is-active{% endif %}"{% if 'pacientes.' in endpoint_actual and not agenda_activa %} aria-current="page"{% endif %}><i class="fas fa-users" aria-hidden="true"></i><span>Pacientes</span></a>
+        <a href="{{ url_for('agenda.index') }}" class="{{ nav_link }}{% if agenda_activa %} is-active{% endif %}"{% if agenda_activa %} aria-current="page"{% endif %}><i class="fas fa-calendar-alt" aria-hidden="true"></i><span>Agenda y citas</span></a>
         {% if current_user.rol_clinico in ['admin', 'medico'] %}
         <a href="{{ url_for('valoracion.todas_valoraciones') }}" class="{{ nav_link }}{% if consultas_activa %} is-active{% endif %}"{% if consultas_activa %} aria-current="page"{% endif %}><i class="fas fa-stethoscope" aria-hidden="true"></i><span>Consultas</span></a>
 

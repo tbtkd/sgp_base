@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.7.6
+# Manual de usuario — Sistema Clínico 1.8.0
 
 ## 1. Propósito
 
@@ -70,7 +70,7 @@ El menú lateral agrupa las funciones por área:
 
 - **Dashboard**: resumen operativo del consultorio.
 - **Pacientes**: búsqueda, alta y expediente administrativo.
-- **Agenda y citas**: lleva a la agenda del día en el Dashboard.
+- **Agenda y citas**: abre la agenda operativa con vistas por día o semana.
 - **Consultas**: notas clínicas registradas.
 - **Expedientes clínicos**: antecedentes, alergias, medicación y hábitos.
 - **Recetas**: localiza consultas que contienen o pueden generar recetas.
@@ -101,7 +101,7 @@ La barra superior permanece visible mientras recorres una pantalla larga.
 2. Busca al paciente antes de crear uno nuevo para evitar duplicados.
 3. Si no existe, selecciona **Nuevo paciente** desde el KPI de Pacientes registrados.
 4. Captura los datos administrativos y el contacto de emergencia.
-5. Usa **Agendar cita** en el KPI Citas de hoy.
+5. Abre **Agenda y citas** en el sidebar o usa **Agendar cita** en el KPI Citas de hoy.
 6. Busca al paciente, elige una fecha y selecciona un horario disponible.
 7. Desde el detalle del paciente registra el pago cuando corresponda.
 8. Utiliza WhatsApp únicamente después de verificar el número y el mensaje.
@@ -135,7 +135,21 @@ Un paciente inactivo conserva su historial. No debe crearse nuevamente como otro
 
 ## 7. Agendar una cita
 
-### Agenda rápida desde el Dashboard
+### Agenda operativa
+
+1. Selecciona **Agenda y citas** en el sidebar.
+2. Alterna entre **Día** y **Semana**.
+3. Usa Anterior, Hoy, Siguiente o el selector de fecha para cambiar de periodo.
+4. Revisa el resumen de Programadas, Atendidas, No asistieron y Canceladas.
+5. Abre el menú `...` de una cita programada para reagendar, cancelar o registrar inasistencia.
+6. Cuando la fecha/hora ya ocurrió, la cita puede cerrarse como Atendida o No Asistió.
+7. El personal clínico puede seleccionar **Iniciar consulta** en las citas del día.
+
+Una cita cerrada no se reabre. Si el estado se registró incorrectamente, informa al administrador; no crees otra cita sin confirmar primero el historial operativo.
+
+Recepción ve la identidad del paciente y el estado necesario para trabajar, pero la Agenda oculta el motivo clínico y no ofrece acceso a la nota.
+
+### Agendar desde Dashboard o Agenda
 
 1. En el KPI **Citas de hoy**, pulsa **Agendar cita**.
 2. Escribe al menos dos caracteres del nombre, expediente o teléfono.
@@ -149,7 +163,7 @@ El sistema vuelve a comprobar la disponibilidad al guardar. Si otra persona ocup
 
 ### Reagendar o cancelar
 
-La agenda rápida sólo crea citas. Para modificar una cita programada, abre el detalle del paciente y utiliza la opción de reagenda existente. Confirma siempre la fecha y hora resultantes.
+Desde el menú `...` de una cita programada selecciona **Reagendar**. El sistema conserva al paciente, libera únicamente el espacio actual para la consulta de disponibilidad y vuelve a validar el nuevo horario al guardar. Para cancelar, el motivo es obligatorio. La opción del detalle del paciente permanece disponible como alternativa contextual.
 
 ## 8. Expediente clínico
 

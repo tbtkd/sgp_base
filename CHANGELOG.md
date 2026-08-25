@@ -1,13 +1,27 @@
 # Changelog
 
+## 1.8.0 — Agenda operativa y estados seguros
+
+- **Agenda y citas** abre `/agenda` en lugar de desplazar el Dashboard.
+- Se incorporan vistas Día/Semana, navegación por periodo, conteos de estado y estados vacíos accionables.
+- El alta contextual reutiliza la búsqueda privada, el calendario y la validación final existentes.
+- La reagenda conserva cita/paciente, excluye sólo su espacio actual y vuelve a comprobar conflictos bajo bloqueo.
+- Atendida, No Asistió y Cancelada son estados terminales; las citas futuras no pueden cerrarse como atendidas/inasistentes y cancelar exige motivo.
+- Recepción puede operar la agenda sin recibir motivos clínicos ni acciones de inicio de consulta.
+- Los cambios y denegaciones se auditan sin copiar el texto clínico completo.
+- La columna **% Grasa** permanece visible exclusivamente para Nutrición.
+- No cambian esquema ni dependencias.
+- Verificación: 89 pruebas `pytest`; 15 casos heredados compatibles con `unittest`; Ruff y Bandit sin hallazgos.
+
 ## 1.7.6 — Legibilidad del sidebar y contraste interactivo
 
 - La receta sustituye el rótulo visual **Domicilio profesional** por **Domicilio**, sin modificar el dato persistido ni su instantánea histórica.
 - Se incrementan de forma moderada los tamaños de marca, secciones, enlaces, submenús, iconos e identidad del sidebar, conservando su ancho y navegación adaptable.
 - El tema oscuro redefine los estados `hover` claros de tablas, tarjetas y controles para evitar fondos blancos con texto de bajo contraste.
+- El historial de consultas muestra la columna **% Grasa** únicamente a perfiles de Nutrición y documenta el futuro módulo operativo de Agenda y la lista deduplicada de Consultas.
 - Se mantienen rutas, permisos, esquema, dependencias y comportamiento clínico.
 - Se incorpora un manual operativo para usuarios médicos, administradores y asistentes/recepción.
-- Verificación: 80 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+- Verificación: 81 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
 
 ## 1.7.5 — Impresión de receta sin metadatos del navegador
 

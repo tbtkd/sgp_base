@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.7.6 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El sidebar usa una escala legible y los estados interactivos oscuros ya no heredan fondos blancos. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado, rotula el domicilio de forma breve, reserva una firma centrada y sustituye los metadatos automáticos de impresión en Chromium moderno. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
+La versión 1.8.0 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. **Agenda y citas** abre ahora una ruta operativa diaria/semanal que reutiliza búsqueda privada, disponibilidad, alta y reagenda, aplica estados terminales y limita el contenido clínico para Recepción. El Dashboard conserva su resumen. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El sidebar usa una escala legible y los estados interactivos oscuros ya no heredan fondos blancos. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La columna de grasa del historial también es exclusiva de ese perfil. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado, rotula el domicilio de forma breve, reserva una firma centrada y sustituye los metadatos automáticos de impresión en Chromium moderno. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
 
 Módulos evaluados:
 
@@ -257,6 +257,23 @@ Módulos evaluados:
 - Se agrega un manual de usuario orientado a Medicina, Administración y Asistente/Recepción.
 - No se modifican esquema, permisos, rutas, dependencias ni lógica clínica.
 
+### Ajuste complementario: visibilidad antropométrica por perfil
+
+- La columna **% Grasa** del Historial de consultas se oculta para Medicina general y Odontología.
+- Nutrición conserva el encabezado y sus valores; no se eliminan ni modifican datos persistidos.
+- La simplificación futura de Consultas clínicas queda definida en [ROADMAP_AGENDA_Y_CONSULTAS.md](ROADMAP_AGENDA_Y_CONSULTAS.md).
+
+### Fase 1.19: Agenda operativa — completada en 1.8.0
+
+- El sidebar abre `/agenda`; el Dashboard conserva únicamente el resumen del día.
+- Vistas Día/Semana, periodo navegable, selector de fecha y conteos de estados.
+- Alta contextual y reagenda reutilizan búsqueda, disponibilidad y bloqueo existentes.
+- Reagenda conserva el ID y excluye sólo el espacio de la cita editada.
+- Atendida, No Asistió y Cancelada son terminales; el servidor bloquea cierre futuro, reapertura y cancelación sin motivo.
+- Recepción gestiona citas sin recibir motivo clínico ni inicio de consulta.
+- Éxitos y denegaciones se auditan sin copiar el contenido clínico completo.
+- Documentación detallada: [AGENDA_OPERATIVA_1_8_0.md](AGENDA_OPERATIVA_1_8_0.md).
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -313,6 +330,8 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | PRO-08 | Seguimiento nutricional | Ausencia de consulta reciente visible sólo para Nutrición |
 | CITA-KPI-01 | Agenda rápida | Paciente, calendario, horarios, revalidación y auditoría sin duplicar navegación |
 | CITA-SEARCH-01 | Búsqueda privada | Sin padrón inicial, máximo ocho resultados, ficha única y respuesta sin datos clínicos |
+| AGENDA-01 | Operación | Día/Semana, navegación, alta, reagenda, estados y privacidad por rol |
+| AGENDA-02 | Integridad | Conflictos, cierre futuro, terminalidad, cancelación obligatoria y auditoría |
 | PKG-CLEAN-01 | Actualización | Cachés/SVG retirados; logo, base y entorno preservados |
 
 Suite oficial:
@@ -321,16 +340,17 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.7.6: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, rótulo Domicilio, impresión sin metadatos del navegador, margen A4 propio, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, legibilidad del sidebar, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.8.0: **89 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, rótulo Domicilio, impresión sin metadatos del navegador, margen A4 propio, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción y visibilidad de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, legibilidad del sidebar, búsqueda privada de pacientes, agenda rápida/operativa, vistas Día/Semana, reagenda, estados terminales, privacidad por rol, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
 ## 7. Fase 2 recomendada — volumen y operación
 
-- Filtros de consultas por paciente, fecha y texto.
+- Simplificar Consultas clínicas a pacientes únicos con su nota más reciente, filtro por nombre y ordenamiento accesible por fecha.
+- El diseño funcional, controles de seguridad y pruebas de Consultas se detallan en [ROADMAP_AGENDA_Y_CONSULTAS.md](ROADMAP_AGENDA_Y_CONSULTAS.md).
 - Paginación real en Pacientes, Consultas, Historial y Auditoría.
 - Índices y medición de consultas para bases con mayor volumen.
-- Estados y filtros de citas desde un módulo de agenda dedicado.
+- Horarios, bloqueos, duración y filtros por profesional desde la Agenda dedicada.
 - Exportación controlada de reportes sin incluir datos no solicitados.
 - Confirmaciones y auditoría de operaciones administrativas masivas.
 

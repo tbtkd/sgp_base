@@ -51,6 +51,15 @@ class Cita(db.Model):
         return Cita.query.options(joinedload(Cita.paciente)).filter_by(fecha=target).order_by(Cita.hora).all()
 
     @staticmethod
+    def obtener_periodo(fecha_inicio, fecha_fin):
+        return (
+            Cita.query.options(joinedload(Cita.paciente))
+            .filter(Cita.fecha.between(fecha_inicio, fecha_fin))
+            .order_by(Cita.fecha.asc(), Cita.hora.asc(), Cita.id.asc())
+            .all()
+        )
+
+    @staticmethod
     def obtener_proximas(limite=5, momento=None):
         current = momento or datetime.now()
         return (

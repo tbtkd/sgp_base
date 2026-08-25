@@ -166,7 +166,7 @@
 
     <section class="dashboard-operational-row">
         <article class="dashboard-panel dashboard-upcoming-panel" aria-labelledby="proximas-citas-title">
-            <header class="dashboard-panel-header"><div><p class="dashboard-panel-eyebrow">Continuidad de atención</p><h3 id="proximas-citas-title">Próximas citas</h3></div><a href="#agenda-hoy" class="dashboard-panel-link">Ver agenda de hoy</a></header>
+            <header class="dashboard-panel-header"><div><p class="dashboard-panel-eyebrow">Continuidad de atención</p><h3 id="proximas-citas-title">Próximas citas</h3></div><a href="{{ url_for('agenda.index') }}" class="dashboard-panel-link">Abrir agenda</a></header>
             {% if proximas_citas %}
             <div class="dashboard-upcoming-list">
                 {% for cita in proximas_citas %}

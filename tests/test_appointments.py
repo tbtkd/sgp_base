@@ -6,6 +6,7 @@ from app import db_orm as db
 from app.core.audit import AuditLog
 from app.models.cita import Cita
 from app.models.paciente import Paciente
+from app.models.usuario import Usuario
 from tests.conftest import csrf_from
 
 
@@ -28,6 +29,15 @@ def _patient(name="Paciente", phone="5512345678"):
 
 def _future_day(offset=3):
     return date.today() + timedelta(days=offset)
+
+
+def _change_status(client, appointment_id, status, reason="", *, page="/agenda"):
+    token = csrf_from(client.get(page))
+    return client.post(
+        f"/pacientes/citas/{appointment_id}/cambiar-estatus",
+        json={"estatus": status, "motivo": reason},
+        headers={"X-CSRFToken": token},
+    )
 
 
 def test_appointment_modal_is_closed_and_hours_have_literal_labels(app, client, login):
@@ -461,3 +471,327 @@ def test_occupied_or_past_slot_is_not_persisted(app, client, login):
     with app.app_context():
         assert Cita.query.count() == 1
         assert Cita.query.filter_by(paciente_id=second_id).count() == 0
+
+
+def test_dedicated_agenda_requires_login_and_supports_day_week_navigation(app, client, login):
+    anonymous = client.get("/agenda")
+    assert anonymous.status_code == 302
+    assert "/login" in anonymous.headers["Location"]
+
+    login()
+    target = _future_day()
+    with app.app_context():
+        patient = _patient("Agenda", "5512345690")
+        db.session.add(
+            Cita(
+                paciente_id=patient.id,
+                fecha=target,
+                hora=time(10, 0),
+                motivo="Revisión programada",
+                estatus="Programada",
+                estado="pendiente",
+            )
+        )
+        db.session.commit()
+
+    day = client.get(f"/agenda?fecha={target.isoformat()}&vista=dia")
+    day_page = day.get_data(as_text=True)
+    assert day.status_code == 200
+    assert "Agenda y citas" in day_page
+    assert "Agenda Pruebas Citas" in day_page
+    assert 'href="/agenda"' in day_page
+    assert 'aria-current="page"' in day_page
+    assert "#agenda-hoy" not in day_page
+
+    week_page = client.get(f"/agenda?fecha={target.isoformat()}&vista=semana").get_data(as_text=True)
+    assert week_page.count('class="agenda-day-panel') == 7
+    assert "Revisión programada" in week_page
+
+    invalid = client.get("/agenda?fecha=no-es-fecha&vista=desconocida").get_data(as_text=True)
+    assert "Fecha de agenda no tiene una fecha válida" in invalid
+    assert "La vista solicitada no es válida" in invalid
+
+
+def test_agenda_hides_clinical_reason_from_reception_and_limits_start_action(app, client, login):
+    with app.app_context():
+        receptionist = Usuario(
+            username="reception-agenda",
+            nombre="Recepción",
+            apellido_paterno="Agenda",
+            email="reception-agenda@example.test",
+            rol="recepcion",
+            status="activo",
+        )
+        receptionist.set_password("StrongPass!2026")
+        db.session.add(receptionist)
+        patient = _patient("Privada", "5512345691")
+        db.session.add(
+            Cita(
+                paciente_id=patient.id,
+                fecha=date.today(),
+                hora=time(19, 0),
+                motivo="Motivo clínico reservado",
+                estatus="Programada",
+                estado="pendiente",
+            )
+        )
+        db.session.commit()
+
+    login("reception-agenda")
+    reception_page = client.get(f"/agenda?fecha={date.today().isoformat()}").get_data(as_text=True)
+    assert "Privada Pruebas Citas" in reception_page
+    assert "Motivo clínico reservado" not in reception_page
+    assert "Iniciar consulta" not in reception_page
+    assert "Cita programada" in reception_page
+
+    clinical_client = app.test_client()
+    token = csrf_from(clinical_client.get("/login"))
+    clinical_client.post(
+        "/login",
+        data={
+            "username": "administrator",
+            "password": "StrongPass!2026",
+            "csrf_token": token,
+        },
+    )
+    clinical_page = clinical_client.get(f"/agenda?fecha={date.today().isoformat()}").get_data(as_text=True)
+    assert "Motivo clínico reservado" in clinical_page
+    assert "Iniciar consulta" in clinical_page
+
+
+def test_agenda_creation_returns_to_agenda_and_records_origin(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        patient_id = _patient("Origen", "5512345692").id
+
+    page = client.get(f"/pacientes/agendar-cita?origen=agenda&fecha={target.isoformat()}")
+    content = page.get_data(as_text=True)
+    assert 'name="origen" value="agenda"' in content
+    assert "Volver a Agenda" in content
+    response = client.post(
+        "/pacientes/agendar-cita",
+        data={
+            "csrf_token": csrf_from(page),
+            "origen": "agenda",
+            "paciente_id": str(patient_id),
+            "proxima_cita_fecha": target.isoformat(),
+            "proxima_cita_hora": "13:30",
+            "motivo": "Alta desde módulo operativo",
+        },
+    )
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith(f"/agenda?fecha={target.isoformat()}")
+    with app.app_context():
+        appointment = Cita.query.one()
+        audit = AuditLog.query.filter_by(action="CREAR_CITA", entity_id=appointment.id).one()
+        assert '"origen":"agenda"' in audit.metadata_json
+
+
+def test_agenda_reschedule_reuses_availability_and_preserves_record(app, client, login):
+    login()
+    original_day = _future_day(2)
+    new_day = _future_day(5)
+    with app.app_context():
+        patient = _patient("Reagenda", "5512345693")
+        appointment = Cita(
+            paciente_id=patient.id,
+            fecha=original_day,
+            hora=time(11, 0),
+            motivo="Cita original",
+            estatus="Programada",
+            estado="pendiente",
+        )
+        db.session.add(appointment)
+        db.session.commit()
+        appointment_id = appointment.id
+
+    page = client.get(f"/agenda/citas/{appointment_id}/reagendar")
+    content = page.get_data(as_text=True)
+    assert page.status_code == 200
+    assert "Reagendar cita" in content
+    assert f'data-editing-appointment="{appointment_id}"' in content
+    assert 'role="combobox"' not in content
+    assert 'value="11:00" data-selected-time' in content
+    assert "Reagenda Pruebas Citas" in content
+
+    availability = client.get(
+        f"/pacientes/disponibilidad_citas?fecha={original_day.isoformat()}&excluir_cita_id={appointment_id}"
+    ).get_json()
+    old_slot = next(slot for slot in availability["horarios"] if slot["hora"] == "11:00")
+    assert old_slot["disponible"] is True
+
+    response = client.post(
+        f"/agenda/citas/{appointment_id}/reagendar",
+        data={
+            "csrf_token": csrf_from(page),
+            "proxima_cita_fecha": new_day.isoformat(),
+            "proxima_cita_hora": "14:00",
+            "motivo": "Cita reagendada",
+        },
+    )
+    assert response.status_code == 302
+    assert response.headers["Location"].startswith(f"/agenda?fecha={new_day.isoformat()}")
+    with app.app_context():
+        assert Cita.query.count() == 1
+        updated = db.session.get(Cita, appointment_id)
+        assert updated.fecha == new_day
+        assert updated.hora == time(14, 0)
+        assert updated.motivo == "Cita reagendada"
+        audit = AuditLog.query.filter_by(action="ACTUALIZAR_CITA", entity_id=appointment_id).one()
+        assert '"origen":"agenda"' in audit.metadata_json
+
+
+def test_agenda_reschedule_rejects_conflict_and_closed_appointment(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        first = _patient("PrimeraAgenda", "5512345694")
+        second = _patient("SegundaAgenda", "5512345695")
+        first_appointment = Cita(
+            paciente_id=first.id,
+            fecha=target,
+            hora=time(10, 0),
+            estatus="Programada",
+            estado="pendiente",
+        )
+        occupied = Cita(
+            paciente_id=second.id,
+            fecha=target,
+            hora=time(10, 30),
+            estatus="Programada",
+            estado="pendiente",
+        )
+        db.session.add_all([first_appointment, occupied])
+        db.session.commit()
+        appointment_id = first_appointment.id
+
+    page = client.get(f"/agenda/citas/{appointment_id}/reagendar")
+    conflict = client.post(
+        f"/agenda/citas/{appointment_id}/reagendar",
+        data={
+            "csrf_token": csrf_from(page),
+            "proxima_cita_fecha": target.isoformat(),
+            "proxima_cita_hora": "10:30",
+            "motivo": "No debe persistirse",
+        },
+    )
+    assert conflict.status_code == 400
+    assert "ya no está disponible" in conflict.get_data(as_text=True)
+    with app.app_context():
+        unchanged = db.session.get(Cita, appointment_id)
+        assert unchanged.hora == time(10, 0)
+        denied = AuditLog.query.filter_by(
+            action="ACTUALIZAR_CITA", entity_id=appointment_id, outcome="denied"
+        ).one()
+        assert '"origen":"agenda"' in denied.metadata_json
+        unchanged.estatus = "Cancelada"
+        unchanged.estado = "completada"
+        past_patient = _patient("PasadaAgenda", "5512345698")
+        past_appointment = Cita(
+            paciente_id=past_patient.id,
+            fecha=date.today() - timedelta(days=1),
+            hora=time(9, 0),
+            estatus="Programada",
+            estado="pendiente",
+        )
+        db.session.add(past_appointment)
+        db.session.commit()
+        past_appointment_id = past_appointment.id
+
+    closed = client.get(f"/agenda/citas/{appointment_id}/reagendar", follow_redirects=True)
+    assert "Sólo las citas programadas pueden reagendarse" in closed.get_data(as_text=True)
+    elapsed = client.get(f"/agenda/citas/{past_appointment_id}/reagendar", follow_redirects=True)
+    assert "horario ya transcurrió" in elapsed.get_data(as_text=True)
+
+
+def test_agenda_status_transitions_close_past_appointment_and_block_reopening(app, client, login):
+    login()
+    past_day = date.today() - timedelta(days=1)
+    with app.app_context():
+        patient = _patient("Inasistencia", "5512345696")
+        appointment = Cita(
+            paciente_id=patient.id,
+            fecha=past_day,
+            hora=time(9, 0),
+            motivo="Seguimiento",
+            estatus="Programada",
+            estado="pendiente",
+        )
+        db.session.add(appointment)
+        db.session.commit()
+        appointment_id = appointment.id
+
+    changed = _change_status(
+        client,
+        appointment_id,
+        "No Asistió",
+        "No se presentó",
+        page=f"/agenda?fecha={past_day.isoformat()}",
+    )
+    assert changed.status_code == 200
+    assert changed.get_json()["nuevo_estatus"] == "No Asistió"
+    reopened = _change_status(client, appointment_id, "Programada", page=f"/agenda?fecha={past_day.isoformat()}")
+    assert reopened.status_code == 400
+    assert "ya está cerrada" in reopened.get_json()["error"]
+    with app.app_context():
+        appointment = db.session.get(Cita, appointment_id)
+        assert appointment.estatus == "No Asistió"
+        assert appointment.estado == "completada"
+        assert appointment.motivo_cancelacion == "No se presentó"
+        logs = AuditLog.query.filter_by(action="CAMBIAR_ESTADO_CITA", entity_id=appointment_id).all()
+        assert {log.outcome for log in logs} == {"success", "denied"}
+
+
+def test_agenda_blocks_future_closure_and_requires_cancellation_reason(app, client, login):
+    login()
+    target = _future_day()
+    with app.app_context():
+        patient = _patient("Futura", "5512345697")
+        appointment = Cita(
+            paciente_id=patient.id,
+            fecha=target,
+            hora=time(17, 0),
+            estatus="Programada",
+            estado="pendiente",
+        )
+        db.session.add(appointment)
+        db.session.commit()
+        appointment_id = appointment.id
+
+    for status in ("Atendida", "No Asistió"):
+        response = _change_status(client, appointment_id, status)
+        assert response.status_code == 400
+        assert "cita futura" in response.get_json()["error"]
+    missing_reason = _change_status(client, appointment_id, "Cancelada")
+    assert missing_reason.status_code == 400
+    assert "motivo de cancelación" in missing_reason.get_json()["error"]
+    invalid = _change_status(client, appointment_id, "Eliminada")
+    assert invalid.status_code == 400
+    assert "opción inválida" in invalid.get_json()["error"]
+
+    cancelled = _change_status(client, appointment_id, "Cancelada", "Solicitud del paciente")
+    assert cancelled.status_code == 200
+    with app.app_context():
+        appointment = db.session.get(Cita, appointment_id)
+        assert appointment.estatus == "Cancelada"
+        assert appointment.estado == "completada"
+        assert appointment.motivo_cancelacion == "Solicitud del paciente"
+
+
+def test_agenda_frontend_uses_local_safe_state_controls():
+    root = Path(__file__).parents[1]
+    script = (root / "app" / "static" / "js" / "agenda.js").read_text(encoding="utf-8")
+    styles = (root / "app" / "static" / "css" / "agenda.css").read_text(encoding="utf-8")
+    template = (root / "app" / "templates" / "agenda" / "index.html").read_text(encoding="utf-8")
+
+    assert "allowedStatuses" in script
+    assert "pendingRequests" in script
+    assert "textContent" in script
+    assert "replaceAll" in script
+    assert ".innerHTML" not in script
+    assert "data-appointment-status-action" in template
+    assert 'aria-live="polite"' in template
+    assert 'vista_agenda == \'semana\'' in template
+    assert 'html[data-theme="dark"] .agenda-workspace' in styles
+    assert ".agenda-days--semana" in styles

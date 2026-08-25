@@ -1,0 +1,118 @@
+{% extends "base/base.html" %}
+
+{% block title %}Agenda y citas - Sistema Clínico{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/agenda.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="agenda-workspace" data-agenda-workspace>
+    <header class="agenda-heading">
+        <div>
+            <p>Operación del consultorio</p>
+            <h2>Agenda y citas</h2>
+            <span>Consulta la atención programada, administra sus estados y abre el flujo clínico cuando corresponda.</span>
+        </div>
+        <a href="{{ url_for('pacientes.agendar_cita_rapida', origen='agenda', fecha=fecha_nueva_cita.isoformat()) }}" class="agenda-primary-action">
+            <i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Agendar cita</span>
+        </a>
+    </header>
+
+    <section class="agenda-toolbar" aria-label="Controles de agenda">
+        <div class="agenda-view-switch" role="group" aria-label="Vista de agenda">
+            <a href="{{ url_for('agenda.index', fecha=fecha_objetivo.isoformat(), vista='dia') }}" class="{% if vista_agenda == 'dia' %}is-active{% endif %}"{% if vista_agenda == 'dia' %} aria-current="page"{% endif %}>Día</a>
+            <a href="{{ url_for('agenda.index', fecha=fecha_objetivo.isoformat(), vista='semana') }}" class="{% if vista_agenda == 'semana' %}is-active{% endif %}"{% if vista_agenda == 'semana' %} aria-current="page"{% endif %}>Semana</a>
+        </div>
+
+        <nav class="agenda-period-navigation" aria-label="Cambiar periodo">
+            <a href="{{ url_for('agenda.index', fecha=fecha_anterior.isoformat(), vista=vista_agenda) }}" aria-label="Periodo anterior"><i class="fas fa-chevron-left" aria-hidden="true"></i></a>
+            <a href="{{ url_for('agenda.index', fecha=fecha_hoy.isoformat(), vista=vista_agenda) }}" class="agenda-today-link">Hoy</a>
+            <a href="{{ url_for('agenda.index', fecha=fecha_siguiente.isoformat(), vista=vista_agenda) }}" aria-label="Periodo siguiente"><i class="fas fa-chevron-right" aria-hidden="true"></i></a>
+        </nav>
+
+        <strong class="agenda-period-label">{{ rango_etiqueta }}</strong>
+
+        <form method="GET" action="{{ url_for('agenda.index') }}" class="agenda-date-picker">
+            <input type="hidden" name="vista" value="{{ vista_agenda }}">
+            <label for="agenda-date">Ir a fecha</label>
+            <input id="agenda-date" name="fecha" type="date" max="{{ fecha_maxima.isoformat() }}" value="{{ fecha_objetivo.isoformat() }}">
+            <button type="submit">Consultar</button>
+        </form>
+    </section>
+
+    <section class="agenda-status-summary" aria-label="Resumen del periodo">
+        <div><span>Total</span><strong data-total-count>{{ total_citas }}</strong></div>
+        <div><span>Programadas</span><strong data-status-count="Programada">{{ conteos_estatus['Programada'] }}</strong></div>
+        <div><span>Atendidas</span><strong data-status-count="Atendida">{{ conteos_estatus['Atendida'] }}</strong></div>
+        <div><span>No asistieron</span><strong data-status-count="No Asistió">{{ conteos_estatus['No Asistió'] }}</strong></div>
+        <div><span>Canceladas</span><strong data-status-count="Cancelada">{{ conteos_estatus['Cancelada'] }}</strong></div>
+    </section>
+
+    <section class="agenda-days agenda-days--{{ vista_agenda }}" aria-label="Citas del periodo">
+        {% for dia in dias_agenda %}
+        <article class="agenda-day-panel{% if dia.fecha == fecha_hoy %} is-today{% endif %}" aria-labelledby="agenda-day-{{ dia.fecha.isoformat() }}">
+            <header>
+                <div>
+                    <p>{{ dia.dia_semana }}{% if dia.fecha == fecha_hoy %}<span>Hoy</span>{% endif %}</p>
+                    <h3 id="agenda-day-{{ dia.fecha.isoformat() }}">{{ dia.fecha.day }} de {{ dia.mes }}</h3>
+                </div>
+                <span>{{ dia.citas|length }} {{ 'cita' if dia.citas|length == 1 else 'citas' }}</span>
+            </header>
+
+            {% if dia.citas %}
+            <div class="agenda-appointment-list">
+                {% for cita in dia.citas %}
+                {% set estatus_actual = cita.estatus or 'Programada' %}
+                <article class="agenda-appointment" data-appointment-row data-current-status="{{ estatus_actual }}">
+                    <time datetime="{{ cita.fecha.isoformat() }}T{{ cita.hora.strftime('%H:%M') }}">{{ cita.hora.strftime('%H:%M') }}</time>
+                    <span class="agenda-timeline-marker" aria-hidden="true"></span>
+                    <span class="agenda-patient-avatar" aria-hidden="true">{{ ((cita.paciente.nombre[0] if cita.paciente else 'P') ~ (cita.paciente.apellido_paterno[0] if cita.paciente else ''))|upper }}</span>
+                    <div class="agenda-patient-copy">
+                        <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}">{{ cita.paciente.nombre_completo if cita.paciente else 'Paciente no disponible' }}</a>
+                        <span>{% if can_view_clinical %}{{ cita.motivo or 'Consulta programada' }}{% else %}Cita programada{% endif %}</span>
+                    </div>
+                    <div class="agenda-appointment-actions">
+                        <span class="agenda-status agenda-status--{{ estatus_actual|lower|replace(' ', '-')|replace('ó', 'o') }}" data-appointment-status>{{ estatus_actual }}</span>
+                        {% if estatus_actual == 'Programada' %}
+                        <div class="agenda-open-actions" data-appointment-actions>
+                            {% if can_view_clinical and cita.puede_iniciar_consulta %}
+                            <a href="{{ url_for('valoracion.nueva_valoracion', paciente_id=cita.paciente_id) }}" class="agenda-clinical-action" aria-label="Iniciar consulta de {{ cita.paciente.nombre if cita.paciente else 'paciente' }}"><i class="fas fa-stethoscope" aria-hidden="true"></i><span>Iniciar consulta</span></a>
+                            {% endif %}
+                            <details class="agenda-row-menu">
+                                <summary aria-label="Más acciones para {{ cita.paciente.nombre if cita.paciente else 'la cita' }}"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></summary>
+                                <div>
+                                    <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}"><i class="fas fa-user" aria-hidden="true"></i> Ver paciente</a>
+                                    {% if cita.puede_reagendar %}<a href="{{ url_for('agenda.reagendar_cita', cita_id=cita.id) }}"><i class="fas fa-calendar-alt" aria-hidden="true"></i> Reagendar</a>{% endif %}
+                                    {% if cita.puede_cerrar %}
+                                    <button type="button" data-appointment-status-action="Atendida" data-status-url="{{ url_for('pacientes.cambiar_estatus_cita', id=cita.id) }}"><i class="fas fa-check-circle" aria-hidden="true"></i> Marcar atendida</button>
+                                    <button type="button" data-appointment-status-action="No Asistió" data-status-url="{{ url_for('pacientes.cambiar_estatus_cita', id=cita.id) }}"><i class="fas fa-user-times" aria-hidden="true"></i> No asistió</button>
+                                    {% endif %}
+                                    <button type="button" data-appointment-status-action="Cancelada" data-status-url="{{ url_for('pacientes.cambiar_estatus_cita', id=cita.id) }}"><i class="fas fa-ban" aria-hidden="true"></i> Cancelar cita</button>
+                                </div>
+                            </details>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="agenda-empty-state">
+                <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                <strong>Sin citas registradas</strong>
+                <span>No hay atención programada para este día.</span>
+                {% if dia.fecha >= fecha_hoy %}<a href="{{ url_for('pacientes.agendar_cita_rapida', origen='agenda', fecha=dia.fecha.isoformat()) }}">Agendar en esta fecha</a>{% endif %}
+            </div>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </section>
+
+    <p class="agenda-live-region" data-agenda-live role="status" aria-live="polite" aria-atomic="true"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
+{% endblock %}

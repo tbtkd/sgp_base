@@ -278,6 +278,42 @@ def test_general_professional_edit_preserves_existing_anthropometry(app):
         assert assessment.cintura == 84
 
 
+def test_body_fat_history_column_is_visible_only_to_nutrition(app):
+    with app.app_context():
+        nutritionist = _user("nutrition-history", "nutricion")
+        _user("general-history", "medico_general")
+        _user("dentist-history", "dentista")
+        patient = _patient()
+        assessment = ValoracionAntropometrica.crear(
+            patient.id,
+            {
+                "numero_cita": 1,
+                "fecha": date.today(),
+                "motivo_consulta": "Valoración de composición corporal",
+                "porcentaje_grasa": 24.5,
+            },
+            profesional=nutritionist,
+        )
+        db.session.commit()
+        assessment_id = assessment.id
+
+    for username in ("general-history", "dentist-history"):
+        professional_client = app.test_client()
+        _login(professional_client, username)
+        page = professional_client.get(
+            f"/valoraciones/valoraciones/{assessment_id}"
+        ).get_data(as_text=True)
+        assert 'data-history-column="body-fat"' not in page
+
+    nutrition_client = app.test_client()
+    _login(nutrition_client, "nutrition-history")
+    nutrition_page = nutrition_client.get(
+        f"/valoraciones/valoraciones/{assessment_id}"
+    ).get_data(as_text=True)
+    assert nutrition_page.count('data-history-column="body-fat"') == 2
+    assert "24.5%" in nutrition_page
+
+
 def test_professional_snapshot_columns_migrate_without_data_loss():
     with tempfile.TemporaryDirectory() as directory:
         database = Path(directory) / "legacy-professional.db"

@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.7.6 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.8.0 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -60,6 +60,12 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 51. La receta debe mostrar el rótulo abreviado **Domicilio** sin renombrar ni perder el dato histórico `domicilio_profesional`.
 52. El sidebar debe mantener tamaños legibles en marca, secciones, navegación, submenús e identidad sin alterar rutas ni permisos.
 53. Los estados de puntero en tema oscuro no deben utilizar fondos claros que reduzcan el contraste del texto.
+54. La columna de porcentaje de grasa del historial debe mostrarse únicamente a perfiles de Nutrición.
+55. **Agenda y citas** debe abrir una ruta operativa dedicada con vistas Día/Semana y navegación por periodo.
+56. El alta y la reagenda desde Agenda deben reutilizar búsqueda privada, disponibilidad y validación transaccional existentes.
+57. Una cita cerrada no puede volver a Programada; una cita futura no puede cerrarse como Atendida o No Asistió.
+58. Cancelación, inasistencia, atención y reagenda deben generar auditoría sin almacenar el motivo clínico completo.
+59. Recepción puede administrar citas, pero la Agenda no debe mostrarle motivos clínicos ni acciones de inicio de consulta.
 
 ## Requisitos de seguridad
 

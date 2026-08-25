@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.7.6
+# Matriz de pruebas — versión 1.8.0
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -42,6 +42,14 @@ Estos 15 casos permanecen por compatibilidad y son recolectados por la suite uni
 | CITA-KPI-03 | Alta rápida | Paciente activo, cita y auditoría con origen de Dashboard persistidos |
 | CITA-KPI-04 | Protección | Cita previa y horario que dejó de estar libre son rechazados sin sobrescribir datos |
 | CITA-KPI-05 | Frontend seguro | DOM local, cancelación de solicitudes, doble envío, ARIA y tema oscuro |
+| AGENDA-01 | Ruta operativa | Sidebar abre `/agenda`; autenticación y vistas Día/Semana |
+| AGENDA-02 | Privacidad por rol | Recepción no recibe motivo clínico ni acceso para iniciar consulta |
+| AGENDA-03 | Alta contextual | Agenda reutiliza la búsqueda/disponibilidad y registra su origen |
+| AGENDA-04 | Reagenda | Conserva cita/paciente, excluye su propio espacio y revalida conflictos |
+| AGENDA-05 | Citas cerradas | Una cita terminal no puede reagendarse ni volver a Programada |
+| AGENDA-06 | Transiciones temporales | Citas futuras no se cierran como Atendida/No Asistió |
+| AGENDA-07 | Cancelación | Motivo obligatorio, estado cerrado y auditoría de éxito/denegación |
+| AGENDA-08 | Interfaz | Estado local seguro, doble envío, ARIA, responsive y tema oscuro |
 
 Comando oficial único:
 
@@ -101,6 +109,7 @@ python -m pytest -q
 | PRO-06 | Edición | Un profesional general no borra antropometría preexistente |
 | PRO-07 | Migración | Columnas de autoría se agregan sin perder consultas legadas |
 | PRO-08 | Seguimiento | Sin consulta reciente sólo se renderiza para Nutrición, no para Medicina general u Odontología |
+| PRO-09 | Visibilidad antropométrica | La columna % Grasa del historial sólo se renderiza para Nutrición |
 
 ## Receta e identidad (`tests/test_prescriptions.py`)
 
@@ -136,7 +145,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 80/80 (incluye 15 casos unittest)
+pytest: 89/89 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 ```

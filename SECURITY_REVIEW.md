@@ -2,7 +2,7 @@
 
 ## Dictamen
 
-La versión 1.7.6 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.8.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
 
 ## Controles implementados
 
@@ -37,7 +37,7 @@ La versión 1.7.6 es adecuada para pruebas funcionales y para un piloto en una e
 | Consulta | fecha no futura, motivo obligatorio, textos limitados, IMC recalculado y turno diario ignorado del cliente/asignado en servidor |
 | Signos vitales | TA estructurada, FC 30–250, FR 5–80, temperatura 30–45, SpO₂ 50–100, peso/estatura positivos |
 | Antropometría | todos los campos opcionales; cuando existen se validan como números finitos y con rangos |
-| Cita | fecha/hora futura, intervalos permitidos, motivo limitado y horario no duplicado |
+| Cita | fecha/hora futura, intervalos permitidos, motivo limitado, horario no duplicado, transiciones terminales y cancelación motivada |
 | Pago | monto 0–10,000,000, concepto obligatorio y método enumerado |
 | Receta ordinaria | emisor autorizado, paciente activo, cédula/domicilio, máximo 10 medicamentos, filas completas/no duplicadas, orden exacto `1..n` y confirmaciones de competencia, alcance y firma |
 | XLSX | extensión, tamaño, ZIP válido, rutas internas, ratio de compresión, componentes, dimensiones, filas y transacción atómica |
@@ -55,6 +55,9 @@ La versión 1.7.6 es adecuada para pruebas funcionales y para un piloto en una e
 - La agenda rápida sólo acepta pacientes activos, limita fechas a dos años, rechaza citas previas y revalida el horario dentro de un bloqueo de escritura del proceso local.
 - La agenda rápida no entrega el padrón en el HTML: su búsqueda autenticada exige al menos dos caracteres, limita la respuesta a ocho coincidencias, no incluye datos clínicos y conserva sólo nombre, expediente, teléfono, enlace interno y fecha/hora de una cita programada.
 - La API visual de disponibilidad exige sesión, no entrega datos personales y marca su respuesta como `no-store`.
+- La Agenda dedicada reutiliza las validaciones existentes; Recepción sólo recibe identidad/horario/estado y no el motivo clínico ni acciones de consulta.
+- La reagenda conserva el ID, valida paciente activo, excluye sólo el espacio editado y vuelve a comprobar conflictos dentro del bloqueo.
+- Las citas futuras no pueden cerrarse como atendidas o no asistidas; una cita terminal no puede reabrirse. Los rechazos se auditan como `denied`.
 - Las pestañas de consulta y panel funcionan con JavaScript local, sin depender de Alpine/CDN.
 - El menú de cuenta inicia cerrado mediante HTML nativo y usa JavaScript local; si el script falla, el detalle permanece oculto y no expone información por defecto.
 - El sidebar móvil, selector de sede y notificaciones usan estados `hidden`/ARIA y controles locales; no existe navegación hacia módulos sin autorización o backend.
@@ -111,7 +114,7 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 80 pruebas totales.
+- `python -m pytest -q`: 89 pruebas totales.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en `requirements.txt`.

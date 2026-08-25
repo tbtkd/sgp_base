@@ -7,7 +7,9 @@
                     <th class="pb-3 font-medium">Fecha</th>
                     <th class="pb-3 font-medium text-right">Peso (kg)</th>
                     <th class="pb-3 font-medium text-right">IMC</th>
-                    <th class="pb-3 font-medium text-right">% Grasa</th>
+                    {% if current_user.puede_capturar_antropometria %}
+                    <th class="pb-3 font-medium text-right" data-history-column="body-fat">% Grasa</th>
+                    {% endif %}
                     <th class="pb-3 font-medium text-center">Tensión arterial</th>
                     <th class="pb-3 font-medium text-right">Frecuencia cardíaca</th>
                     <th class="pb-3 font-medium text-center">Acciones</th>
@@ -24,7 +26,9 @@
                     </td>
                     <td class="py-4 text-gray-900 text-right">{{ val['peso'] if val['peso'] is not none else '—' }}</td>
                     <td class="py-4 text-gray-900 text-right">{{ val['imc'] if val['imc'] is not none else '—' }}</td>
-                    <td class="py-4 text-gray-900 text-right max-w-[120px] truncate">{{ (val['porcentaje_grasa'] ~ '%') if val['porcentaje_grasa'] is not none else '—' }}</td>
+                    {% if current_user.puede_capturar_antropometria %}
+                    <td class="py-4 text-gray-900 text-right max-w-[120px] truncate" data-history-column="body-fat">{{ (val['porcentaje_grasa'] ~ '%') if val['porcentaje_grasa'] is not none else '—' }}</td>
+                    {% endif %}
                     <td class="py-4 text-gray-900 text-center">{{ val['tension_arterial'] or '—' }}</td>
                     <td class="py-4 text-gray-900 text-right">{{ (val['frecuencia_cardiaca'] ~ ' lpm') if val['frecuencia_cardiaca'] is not none else '—' }}</td>
                     <td class="py-4 text-center">
@@ -37,7 +41,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" class="py-10 text-center text-gray-500">No hay consultas previas registradas.</td></tr>
+                <tr><td colspan="{{ 7 if current_user.puede_capturar_antropometria else 6 }}" class="py-10 text-center text-gray-500">No hay consultas previas registradas.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

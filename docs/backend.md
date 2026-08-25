@@ -14,6 +14,7 @@
 - `auth`: bootstrap, login/logout, usuarios, cambio/restablecimiento de contraseña y auditoría.
 - `main`: dashboard y seguimiento.
 - `pacientes`: pacientes, citas, pagos e importación.
+- `agenda`: vista operativa Día/Semana y reagenda; comparte validaciones de citas con `pacientes`.
 - `historial_clinico`: expediente, limitado a `admin/medico`.
 - `valoracion`: consultas clínicas, limitado a `admin/medico`.
 - `recetas`: emisión de receta ordinaria por Medicina/Odontología e impresión clínica para `admin/medico`.
@@ -29,11 +30,15 @@
 6. Errores internos se registran, pero no se exponen.
 7. Se añaden cabeceras de seguridad y no-cache.
 
-## Agenda rápida
+## Agenda rápida y operativa
 
 `GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET no consulta ni renderiza el padrón completo; únicamente resuelve un paciente activo cuando llega un identificador ya seleccionado y construye el resumen de 21 días. `GET /pacientes/buscar_para_cita` exige autenticación, normaliza una búsqueda de 2–100 caracteres, consulta nombre/expediente/teléfono y devuelve hasta ocho coincidencias activas sin datos clínicos. La cita programada, cuando existe, se limita a fecha y hora. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes. Ambas respuestas JSON se marcan como `no-store`.
 
-El POST no confía en el calendario del navegador: valida el identificador, confirma que el paciente siga activo, aplica los validadores comunes de fecha/hora/motivo, limita la anticipación a dos años, impide sobrescribir una cita programada y consulta nuevamente el conflicto del bloque. En el despliegue local actual, la validación final y el `commit` se serializan con el mismo bloqueo de escritura usado por las rutas previas de agendamiento. La auditoría registra `CREAR_CITA` y el origen `kpi_dashboard`, sin guardar el motivo.
+El POST no confía en el calendario del navegador: valida el identificador, confirma que el paciente siga activo, aplica los validadores comunes de fecha/hora/motivo, limita la anticipación a dos años, impide sobrescribir una cita programada y consulta nuevamente el conflicto del bloque. En el despliegue local actual, la validación final y el `commit` se serializan con el mismo bloqueo de escritura usado por las rutas previas de agendamiento. La auditoría registra `CREAR_CITA` y el origen `kpi_dashboard` o `agenda`, sin guardar el motivo.
+
+`GET /agenda` agrupa citas por día o semana, calcula conteos por estado y limita el motivo clínico a `admin/medico`. Recepción recibe sólo los datos administrativos necesarios. `GET/POST /agenda/citas/<id>/reagendar` conserva paciente e ID, excluye temporalmente ese único bloque al consultar disponibilidad y revalida el conflicto dentro del bloqueo antes del `commit`.
+
+El endpoint de estado acepta únicamente transiciones desde `Programada` hacia `Atendida`, `No Asistió` o `Cancelada`. Las dos primeras requieren que el horario ya haya ocurrido; Cancelada exige motivo. Los estados terminales no se reabren. Éxitos y denegaciones generan `CAMBIAR_ESTADO_CITA` sin copiar el texto completo de la observación.
 
 ## Perfiles profesionales
 

@@ -1,6 +1,7 @@
 import io
 import re
 import zipfile
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import PurePosixPath
 from threading import Lock
@@ -35,12 +36,28 @@ from app.models.pago import Pago
 from app.models.valoracion_antropometrica import ValoracionAntropometrica
 
 pacientes = Blueprint("pacientes", __name__, url_prefix="/pacientes")
+agenda = Blueprint("agenda", __name__, url_prefix="/agenda")
 MAX_EXCEL_ROWS = 2000
 MAX_XLSX_UNCOMPRESSED = 25 * 1024 * 1024
 APPOINTMENT_CALENDAR_DAYS = 21
 APPOINTMENT_MAX_FUTURE_DAYS = 730
 WEEKDAYS_SHORT_ES = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
+WEEKDAYS_ES = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")
 MONTHS_SHORT_ES = ("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
+MONTHS_ES = (
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+)
 _APPOINTMENT_WRITE_LOCK = Lock()
 
 
@@ -48,16 +65,17 @@ def _flash_validation(error):
     flash(str(error), "error")
 
 
-def _appointment_calendar(moment=None):
+def _appointment_calendar(moment=None, exclude_appointment_id=None):
     current = moment or datetime.now()
     start = current.date()
     end = start + timedelta(days=APPOINTMENT_CALENDAR_DAYS - 1)
     occupied = {day: set() for day in (start + timedelta(days=offset) for offset in range(APPOINTMENT_CALENDAR_DAYS))}
-    rows = (
-        Cita.query.with_entities(Cita.fecha, Cita.hora)
-        .filter(Cita.estatus == "Programada", Cita.fecha.between(start, end))
-        .all()
+    query = Cita.query.with_entities(Cita.fecha, Cita.hora).filter(
+        Cita.estatus == "Programada", Cita.fecha.between(start, end)
     )
+    if exclude_appointment_id:
+        query = query.filter(Cita.id != exclude_appointment_id)
+    rows = query.all()
     for appointment_date, appointment_time in rows:
         occupied.setdefault(appointment_date, set()).add(appointment_time)
 
@@ -81,9 +99,14 @@ def _appointment_calendar(moment=None):
     return days
 
 
-def _quick_appointment_context():
-    calendar = _appointment_calendar()
-    raw_date = request.form.get("proxima_cita_fecha") or request.args.get("fecha")
+def _quick_appointment_context(appointment=None):
+    editing = appointment is not None
+    calendar = _appointment_calendar(exclude_appointment_id=appointment.id if editing else None)
+    raw_date = (
+        request.form.get("proxima_cita_fecha")
+        or request.args.get("fecha")
+        or (appointment.fecha.isoformat() if editing else None)
+    )
     selected_date = None
     if raw_date:
         try:
@@ -95,16 +118,20 @@ def _quick_appointment_context():
     if not selected_date:
         first_available = next((item for item in calendar if item["disponibles"]), calendar[0])
         selected_date = first_available["fecha"]
-    selected_patient = None
+    selected_patient = appointment.paciente if editing else None
     pending_appointment = None
-    raw_patient_id = request.form.get("paciente_id") or request.args.get("paciente_id", "")
+    raw_patient_id = (
+        appointment.paciente_id
+        if editing
+        else request.form.get("paciente_id") or request.args.get("paciente_id", "")
+    )
     if raw_patient_id:
         try:
             patient_id = integer(raw_patient_id, "Paciente", minimum=1)
             candidate = db.session.get(Paciente, patient_id)
             if candidate and candidate.status == "activo":
                 selected_patient = candidate
-                pending_appointment = Cita.obtener_cita_pendiente(candidate.id)
+                pending_appointment = None if editing else Cita.obtener_cita_pendiente(candidate.id)
         except ValidationError:
             pass
     return {
@@ -114,6 +141,11 @@ def _quick_appointment_context():
         "cita_pendiente_seleccionada": pending_appointment,
         "fecha_minima": date.today(),
         "fecha_maxima": date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS),
+        "cita_edicion": appointment,
+        "modo_reagenda": editing,
+        "origen_agenda": editing
+        or request.form.get("origen") == "agenda"
+        or request.args.get("origen") == "agenda",
     }
 
 
@@ -491,6 +523,177 @@ def _appointment_values(form):
     return data
 
 
+def _agenda_target_date():
+    raw = request.args.get("fecha")
+    if not raw:
+        return date.today()
+    target = date_value(raw, "Fecha de agenda", allow_future=True)
+    if target > date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS):
+        raise ValidationError("La agenda sólo puede consultarse hasta dos años en el futuro.")
+    return target
+
+
+def _agenda_context(target, view):
+    view = view if view in {"dia", "semana"} else "dia"
+    start = target if view == "dia" else target - timedelta(days=target.weekday())
+    end = start if view == "dia" else start + timedelta(days=6)
+    appointments = Cita.obtener_periodo(start, end)
+    by_day = defaultdict(list)
+    now = datetime.now()
+    for appointment in appointments:
+        appointment_moment = datetime.combine(appointment.fecha, appointment.hora)
+        active_patient = bool(appointment.paciente and appointment.paciente.status == "activo")
+        appointment.puede_reagendar = (
+            appointment.estatus == "Programada" and appointment_moment > now and active_patient
+        )
+        appointment.puede_cerrar = appointment.estatus == "Programada" and appointment_moment <= now
+        appointment.puede_iniciar_consulta = (
+            appointment.estatus == "Programada" and appointment.fecha == now.date() and active_patient
+        )
+        by_day[appointment.fecha].append(appointment)
+
+    days = []
+    for offset in range((end - start).days + 1):
+        day = start + timedelta(days=offset)
+        rows = by_day.get(day, [])
+        days.append(
+            {
+                "fecha": day,
+                "dia_semana": WEEKDAYS_ES[day.weekday()],
+                "mes": MONTHS_ES[day.month - 1],
+                "citas": rows,
+                "programadas": sum(1 for item in rows if item.estatus == "Programada"),
+            }
+        )
+
+    step = 1 if view == "dia" else 7
+    counts = {status: sum(1 for item in appointments if item.estatus == status) for status in ALLOWED_APPOINTMENT_STATUS}
+    range_label = (
+        f"{WEEKDAYS_ES[start.weekday()]} {start.day} de {MONTHS_ES[start.month - 1]} de {start.year}"
+        if view == "dia"
+        else (
+            f"{start.day} de {MONTHS_ES[start.month - 1]}"
+            f" — {end.day} de {MONTHS_ES[end.month - 1]} de {end.year}"
+        )
+    )
+    return {
+        "vista_agenda": view,
+        "fecha_objetivo": target,
+        "fecha_hoy": date.today(),
+        "fecha_inicio": start,
+        "fecha_fin": end,
+        "fecha_anterior": start - timedelta(days=step),
+        "fecha_siguiente": start + timedelta(days=step),
+        "fecha_maxima": date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS),
+        "fecha_nueva_cita": max(target, date.today()),
+        "rango_etiqueta": range_label,
+        "dias_agenda": days,
+        "total_citas": len(appointments),
+        "conteos_estatus": counts,
+        "can_view_clinical": current_user.rol_clinico in {"admin", "medico"},
+    }
+
+
+def _validate_appointment_status_transition(appointment, status, reason):
+    if appointment.estatus != "Programada":
+        raise ValidationError("La cita ya está cerrada y no admite otro cambio de estado.")
+    if status == "Programada":
+        raise ValidationError("La cita ya se encuentra programada.")
+    if status in {"Atendida", "No Asistió"}:
+        appointment_moment = datetime.combine(appointment.fecha, appointment.hora)
+        if appointment_moment > datetime.now():
+            raise ValidationError("Una cita futura no puede cerrarse como atendida o no asistida.")
+    if status == "Cancelada" and not reason:
+        raise ValidationError("Indica el motivo de cancelación.")
+
+
+@agenda.route("")
+@login_required
+def index():
+    try:
+        target = _agenda_target_date()
+    except ValidationError as error:
+        flash(str(error), "warning")
+        target = date.today()
+    view = request.args.get("vista", "dia")
+    if view not in {"dia", "semana"}:
+        flash("La vista solicitada no es válida; se mostró la agenda del día.", "warning")
+        view = "dia"
+    return render_template("agenda/index.html", **_agenda_context(target, view))
+
+
+@agenda.route("/citas/<int:cita_id>/reagendar", methods=["GET", "POST"])
+@login_required
+def reagendar_cita(cita_id):
+    appointment = db.session.get(Cita, cita_id)
+    if not appointment:
+        flash("Cita no encontrada.", "error")
+        return redirect(url_for("agenda.index"))
+    if appointment.estatus != "Programada":
+        flash("Sólo las citas programadas pueden reagendarse.", "warning")
+        return redirect(url_for("agenda.index", fecha=appointment.fecha.isoformat()))
+    if datetime.combine(appointment.fecha, appointment.hora) <= datetime.now():
+        flash("Una cita cuyo horario ya transcurrió debe cerrarse como atendida o no asistida.", "warning")
+        return redirect(url_for("agenda.index", fecha=appointment.fecha.isoformat()))
+    if not appointment.paciente or appointment.paciente.status != "activo":
+        flash("No es posible reagendar porque el paciente no está activo.", "warning")
+        return redirect(url_for("agenda.index", fecha=appointment.fecha.isoformat()))
+
+    if request.method == "POST":
+        try:
+            data = _appointment_values(request.form)
+            if data["fecha"] > date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS):
+                raise ValidationError("La cita no puede programarse con más de dos años de anticipación.")
+            with _APPOINTMENT_WRITE_LOCK:
+                if appointment.estatus != "Programada":
+                    raise ValidationError("La cita cambió de estado y ya no puede reagendarse.")
+                if not Cita.es_horario_disponible(data["fecha"], data["hora"], appointment.id):
+                    raise ValidationError("El horario seleccionado ya no está disponible.")
+                previous = {
+                    "fecha": appointment.fecha.isoformat(),
+                    "hora": appointment.hora.strftime("%H:%M"),
+                }
+                appointment.fecha = data["fecha"]
+                appointment.hora = data["hora"]
+                appointment.motivo = data["motivo"] or None
+                appointment.estado = "pendiente"
+                appointment.motivo_cancelacion = None
+                AuditLog.record(
+                    "cita.update",
+                    entity_type="cita",
+                    entity_id=appointment.id,
+                    metadata={
+                        "paciente_id": appointment.paciente_id,
+                        "origen": "agenda",
+                        "anterior": previous,
+                        "fecha": appointment.fecha.isoformat(),
+                        "hora": appointment.hora.strftime("%H:%M"),
+                    },
+                )
+                db.session.commit()
+            flash("Cita reagendada correctamente.", "success")
+            return redirect(url_for("agenda.index", fecha=appointment.fecha.isoformat(), vista="dia"))
+        except ValidationError as error:
+            db.session.rollback()
+            AuditLog.record(
+                "cita.update",
+                entity_type="cita",
+                entity_id=appointment.id,
+                outcome="denied",
+                metadata={
+                    "paciente_id": appointment.paciente_id,
+                    "origen": "agenda",
+                    "validacion": str(error)[:160],
+                },
+            )
+            db.session.commit()
+            _flash_validation(error)
+            return render_template(
+                "pacientes/agendar_cita.html", **_quick_appointment_context(appointment)
+            ), 400
+    return render_template("pacientes/agendar_cita.html", **_quick_appointment_context(appointment))
+
+
 @pacientes.route("/buscar_para_cita", methods=["GET"])
 @login_required
 def buscar_para_cita():
@@ -554,6 +757,7 @@ def buscar_para_cita():
 def agendar_cita_rapida():
     if request.method == "POST":
         try:
+            origin = "agenda" if request.form.get("origen") == "agenda" else "kpi_dashboard"
             patient_id = integer(request.form.get("paciente_id"), "Paciente", minimum=1)
             patient = db.session.get(Paciente, patient_id)
             if not patient or patient.status != "activo":
@@ -584,9 +788,12 @@ def agendar_cita_rapida():
                     "cita.create",
                     entity_type="cita",
                     entity_id=appointment.id,
-                    metadata={"paciente_id": patient.id, "origen": "kpi_dashboard"},
+                    metadata={"paciente_id": patient.id, "origen": origin},
                 )
                 db.session.commit()
+            if origin == "agenda":
+                flash("Cita agendada correctamente.", "success")
+                return redirect(url_for("agenda.index", fecha=appointment.fecha.isoformat(), vista="dia"))
             flash("Cita agendada exitosamente desde el Dashboard.", "success")
             return redirect(f"{url_for('main.index')}#agenda-hoy")
         except ValidationError as error:
@@ -679,6 +886,10 @@ def disponibilidad_horas():
 def disponibilidad_citas():
     try:
         target = date_value(request.args.get("fecha"), "Fecha", allow_future=True)
+        raw_exclusion = request.args.get("excluir_cita_id")
+        exclude_appointment_id = (
+            integer(raw_exclusion, "Cita excluida", minimum=1) if raw_exclusion else None
+        )
         if target < date.today():
             raise ValidationError("La fecha de cita no puede estar en el pasado.")
         if target > date.today() + timedelta(days=APPOINTMENT_MAX_FUTURE_DAYS):
@@ -689,7 +900,9 @@ def disponibilidad_citas():
         {
             "success": True,
             "fecha": target.isoformat(),
-            "horarios": Cita.obtener_disponibilidad_dia(target),
+            "horarios": Cita.obtener_disponibilidad_dia(
+                target, excluir_cita_id=exclude_appointment_id
+            ),
         }
     )
     response.headers["Cache-Control"] = "no-store"
@@ -702,17 +915,42 @@ def cambiar_estatus_cita(id):
     appointment = db.session.get(Cita, id)
     if not appointment:
         return jsonify({"success": False, "error": "Cita no encontrada"}), 404
+    attempted_status = ""
     try:
         payload = request.get_json(silent=True) or {}
-        status = enum_value(payload.get("estatus"), "Estatus", ALLOWED_APPOINTMENT_STATUS)
+        attempted_status = str(payload.get("estatus") or "")[:30]
+        status = enum_value(attempted_status, "Estatus", ALLOWED_APPOINTMENT_STATUS)
         reason = clean_text(payload.get("motivo"), "Motivo", maximum=500)
-        if status == "Cancelada" and not reason:
-            raise ValidationError("Indica el motivo de cancelación.")
+        _validate_appointment_status_transition(appointment, status, reason)
+        previous_status = appointment.estatus
         appointment.estatus = status
-        appointment.estado = "completada" if status == "Atendida" else "pendiente"
+        appointment.estado = "completada"
         appointment.motivo_cancelacion = reason if status in {"Cancelada", "No Asistió"} else None
-        AuditLog.record("cita.status", entity_type="cita", entity_id=appointment.id, metadata={"status": status})
+        AuditLog.record(
+            "cita.status",
+            entity_type="cita",
+            entity_id=appointment.id,
+            metadata={
+                "status_anterior": previous_status,
+                "status": status,
+                "paciente_id": appointment.paciente_id,
+                "con_observacion": bool(reason),
+            },
+        )
         db.session.commit()
         return jsonify({"success": True, "nuevo_estatus": status})
     except ValidationError as error:
+        db.session.rollback()
+        AuditLog.record(
+            "cita.status",
+            entity_type="cita",
+            entity_id=appointment.id,
+            outcome="denied",
+            metadata={
+                "status_actual": appointment.estatus,
+                "status_solicitado": attempted_status,
+                "paciente_id": appointment.paciente_id,
+            },
+        )
+        db.session.commit()
         return jsonify({"success": False, "error": str(error)}), 400

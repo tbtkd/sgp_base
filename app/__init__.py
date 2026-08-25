@@ -75,7 +75,7 @@ def create_app(config_name=None, test_config=None):
     from app.controllers.auth import auth
     from app.controllers.historial_clinico import historial_clinico
     from app.controllers.main import main
-    from app.controllers.pacientes import pacientes
+    from app.controllers.pacientes import agenda, pacientes
     from app.controllers.plantillas import plantillas_bp
     from app.controllers.recetas import recetas
     from app.controllers.valoracion_antropometrica import valoracion
@@ -83,6 +83,7 @@ def create_app(config_name=None, test_config=None):
     app.register_blueprint(main)
     app.register_blueprint(plantillas_bp)
     app.register_blueprint(pacientes)
+    app.register_blueprint(agenda)
     app.register_blueprint(historial_clinico)
     app.register_blueprint(valoracion)
     app.register_blueprint(recetas)

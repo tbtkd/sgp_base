@@ -1,4 +1,4 @@
-/** Flujo local, accesible y sin dependencias para agendar desde el KPI. */
+/** Flujo local y accesible compartido por Dashboard y Agenda. */
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-appointment-scheduler]').forEach(initializeAppointmentScheduler);
 });
@@ -33,6 +33,7 @@ function initializeAppointmentScheduler(container) {
     const characterCount = container.querySelector('[data-character-count]');
     const availabilityUrl = container.dataset.availabilityUrl;
     const patientSearchUrl = container.dataset.patientSearchUrl;
+    const editingAppointment = container.dataset.editingAppointment || '';
 
     if (!form || !patientId || !selectedDate || !selectedTime || !timeGrid || !availabilityStatus || !submitButton) return;
 
@@ -229,7 +230,8 @@ function initializeAppointmentScheduler(container) {
     }
 
     function updateSubmitState() {
-        const patientReady = Boolean(patientId.value) && !selectedPatient?.existingAppointment;
+        const patientReady = Boolean(patientId.value)
+            && (Boolean(editingAppointment) || !selectedPatient?.existingAppointment);
         submitButton.disabled = !(patientReady && selectedDate.value && selectedTime.value && availabilityReady) || submitting;
     }
 
@@ -305,6 +307,7 @@ function initializeAppointmentScheduler(container) {
         try {
             const url = new URL(availabilityUrl, window.location.origin);
             url.searchParams.set('fecha', dateValue);
+            if (editingAppointment) url.searchParams.set('excluir_cita_id', editingAppointment);
             const response = await fetch(url, {
                 headers: { Accept: 'application/json' },
                 cache: 'no-store',
@@ -373,7 +376,7 @@ function initializeAppointmentScheduler(container) {
         submitButton.disabled = true;
         submitButton.setAttribute('aria-busy', 'true');
         const label = submitButton.querySelector('span');
-        if (label) label.textContent = 'Agendando…';
+        if (label) label.textContent = submitButton.dataset.submitLoading || 'Guardando…';
     });
     window.addEventListener('pagehide', () => {
         availabilityRequest?.abort();

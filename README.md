@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.7.6**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.8.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -28,7 +28,10 @@ Versión **1.7.6**. Aplicación local para consultorios médicos, dentales, nutr
 - Pestañas clínicas locales, estados vacíos accionables y KPIs coherentes.
 - Dashboard operativo con agenda, gráfica local, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; Próximas citas y Acompañamiento Intermedio comparten una fila adaptable, sin duplicar alertas ni mostrar ingresos.
 - KPI accionables: cada tarjeta conserva su resumen, enlaza al módulo relacionado y permite Nuevo paciente, Agendar cita o Nueva consulta sin una fila duplicada.
-- Agenda rápida exclusiva del KPI **Citas de hoy**: búsqueda bajo demanda de paciente activo —sin precargar el padrón—, ficha única del paciente seleccionado, calendario de 21 días, consulta de fechas posteriores y selección visual de horarios disponibles.
+- Agenda rápida desde el KPI o el módulo operativo: búsqueda bajo demanda de paciente activo —sin precargar el padrón—, ficha única, calendario de 21 días, consulta de fechas posteriores y selección visual de horarios disponibles.
+- Módulo **Agenda y citas** con vistas Día/Semana, navegación por periodo, resumen de estados, reagenda sobre el mismo registro, cancelación, inasistencia, cierre como atendida e inicio de consulta según rol.
+- Estados de cita validados en servidor: una cita futura no puede cerrarse como atendida/inasistente y una cita cerrada no puede reabrirse.
+- Recepción administra la agenda sin recibir motivos clínicos ni accesos a notas; los perfiles clínicos conservan el inicio de consulta.
 - Topbar compacto que permanece visible mientras el área principal se desplaza, sin alterar el sidebar ni las vistas de impresión.
 - Formulario clínico con pestañas, botones secundarios y divisores adaptados a la paleta oscura, sin controles blancos de bajo contraste.
 - Sidebar con tipografía e iconografía reforzadas y estados interactivos de tablas, tarjetas y botones legibles en tema oscuro.
@@ -142,7 +145,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 80 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), el roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el cambio vigente se documenta en [docs/LEGIBILIDAD_INTERFAZ_1_7_6.md](docs/LEGIBILIDAD_INTERFAZ_1_7_6.md).
+La aceptación funcional incluye 89 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda 1.8.0 se documenta en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md) y el trabajo pendiente de Consultas permanece en [docs/ROADMAP_AGENDA_Y_CONSULTAS.md](docs/ROADMAP_AGENDA_Y_CONSULTAS.md).
 
 ## Compilación para Windows
 

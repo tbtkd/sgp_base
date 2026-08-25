@@ -1,6 +1,6 @@
 {% extends "base/base.html" %}
 
-{% block title %}Agendar cita - Sistema Clínico{% endblock %}
+{% block title %}{{ 'Reagendar cita' if modo_reagenda else 'Agendar cita' }} - Sistema Clínico{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/appointment_scheduler.css') }}">
@@ -10,27 +10,30 @@
 <div class="appointment-scheduler"
      data-appointment-scheduler
      data-availability-url="{{ url_for('pacientes.disponibilidad_citas') }}"
-     data-patient-search-url="{{ url_for('pacientes.buscar_para_cita') }}">
+     data-patient-search-url="{{ url_for('pacientes.buscar_para_cita') }}"
+     data-editing-appointment="{{ cita_edicion.id if cita_edicion else '' }}">
     <header class="appointment-scheduler-header">
         <div>
-            <p>Agenda rápida</p>
-            <h2>Agendar una cita</h2>
-            <span>Selecciona un paciente previamente registrado y consulta los espacios disponibles antes de confirmar.</span>
+            <p>{{ 'Agenda operativa' if origen_agenda else 'Agenda rápida' }}</p>
+            <h2>{{ 'Reagendar cita' if modo_reagenda else 'Agendar una cita' }}</h2>
+            <span>{% if modo_reagenda %}Conserva al paciente y selecciona un nuevo espacio disponible.{% else %}Selecciona un paciente previamente registrado y consulta los espacios disponibles antes de confirmar.{% endif %}</span>
         </div>
-        <a href="{{ url_for('main.index') }}" class="appointment-back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver al Dashboard</a>
+        <a href="{{ url_for('agenda.index', fecha=(cita_edicion.fecha if cita_edicion else fecha_seleccionada).isoformat()) if origen_agenda else url_for('main.index') }}" class="appointment-back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Volver a {{ 'Agenda' if origen_agenda else 'Dashboard' }}</a>
     </header>
 
     <form method="POST" class="appointment-scheduler-layout" data-appointment-form>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if origen_agenda %}<input type="hidden" name="origen" value="agenda">{% endif %}
         <input type="hidden" name="proxima_cita_fecha" value="{{ fecha_seleccionada.isoformat() }}" data-selected-date>
-        <input type="hidden" name="proxima_cita_hora" value="{{ request.form.get('proxima_cita_hora', '') }}" data-selected-time>
+        <input type="hidden" name="proxima_cita_hora" value="{{ request.form.get('proxima_cita_hora') or (cita_edicion.hora.strftime('%H:%M') if cita_edicion else '') }}" data-selected-time>
 
         <div class="appointment-scheduler-flow">
             <section class="appointment-step" aria-labelledby="appointment-patient-title">
                 <div class="appointment-step-heading">
                     <span>1</span>
-                    <div><h3 id="appointment-patient-title">Busca al paciente</h3><p>Los datos se muestran únicamente al encontrar y seleccionar un paciente activo.</p></div>
+                    <div><h3 id="appointment-patient-title">{{ 'Paciente de la cita' if modo_reagenda else 'Busca al paciente' }}</h3><p>{% if modo_reagenda %}El paciente permanece fijo durante la reagenda.{% else %}Los datos se muestran únicamente al encontrar y seleccionar un paciente activo.{% endif %}</p></div>
                 </div>
+                {% if not modo_reagenda %}
                 <label for="appointment-patient-search" class="appointment-label">Buscar por nombre, expediente o teléfono</label>
                 <div class="appointment-patient-finder">
                 <div class="appointment-search-box">
@@ -54,12 +57,13 @@
                      data-patient-list
                      hidden></div>
                 </div>
+                {% endif %}
                 <input type="hidden"
                        id="appointment-patient"
                        name="paciente_id"
                        value="{{ paciente_seleccionado.id if paciente_seleccionado else '' }}"
                        data-patient-id>
-                <p id="appointment-patient-status" class="appointment-results" data-patient-results aria-live="polite">Escribe al menos 2 caracteres para buscar.</p>
+                {% if not modo_reagenda %}<p id="appointment-patient-status" class="appointment-results" data-patient-results aria-live="polite">Escribe al menos 2 caracteres para buscar.</p>{% endif %}
 
                 <div class="appointment-selected-patient"
                      data-selected-patient
@@ -67,21 +71,21 @@
                      data-patient-record="{{ 'EXP-%04d'|format(paciente_seleccionado.id) if paciente_seleccionado else '' }}"
                      data-patient-phone="{{ paciente_seleccionado.telefono if paciente_seleccionado else '' }}"
                      data-patient-detail-url="{{ url_for('pacientes.detalle_paciente', id=paciente_seleccionado.id) if paciente_seleccionado else '' }}"
-                     data-existing-appointment="{% if cita_pendiente_seleccionada %}{{ cita_pendiente_seleccionada.fecha|format_date }} · {{ cita_pendiente_seleccionada.hora.strftime('%H:%M') }}{% endif %}"
+                     data-existing-appointment="{% if cita_pendiente_seleccionada and not modo_reagenda %}{{ cita_pendiente_seleccionada.fecha|format_date }} · {{ cita_pendiente_seleccionada.hora.strftime('%H:%M') }}{% endif %}"
                      {% if not paciente_seleccionado %}hidden{% endif %}>
                     <span class="appointment-selected-avatar" aria-hidden="true"><i class="fas fa-user-check"></i></span>
                     <span class="appointment-selected-copy">
                         <strong data-selected-patient-name>{{ paciente_seleccionado.nombre_completo if paciente_seleccionado else '' }}</strong>
                         <small><span data-selected-patient-record>{{ 'EXP-%04d'|format(paciente_seleccionado.id) if paciente_seleccionado else '' }}</span><span aria-hidden="true"> · </span><span data-selected-patient-phone>{{ paciente_seleccionado.telefono if paciente_seleccionado else '' }}</span></small>
                     </span>
-                    <button type="button" class="appointment-change-patient" data-clear-patient aria-label="Cambiar paciente">Cambiar</button>
+                    {% if not modo_reagenda %}<button type="button" class="appointment-change-patient" data-clear-patient aria-label="Cambiar paciente">Cambiar</button>{% endif %}
                 </div>
 
-                <div class="appointment-existing" data-existing-warning {% if not cita_pendiente_seleccionada %}hidden{% endif %}>
+                {% if not modo_reagenda %}<div class="appointment-existing" data-existing-warning {% if not cita_pendiente_seleccionada %}hidden{% endif %}>
                     <i class="fas fa-calendar-check" aria-hidden="true"></i>
                     <span><strong>Este paciente ya tiene una cita programada.</strong><small data-existing-copy>{% if cita_pendiente_seleccionada %}{{ cita_pendiente_seleccionada.fecha|format_date }} · {{ cita_pendiente_seleccionada.hora.strftime('%H:%M') }}{% endif %}</small></span>
                     <a href="{{ url_for('pacientes.detalle_paciente', id=paciente_seleccionado.id) if paciente_seleccionado else '#' }}" data-existing-link>Ver o reagendar</a>
-                </div>
+                </div>{% endif %}
             </section>
 
             <section class="appointment-step" aria-labelledby="appointment-date-title">
@@ -129,13 +133,13 @@
                     <div><h3 id="appointment-reason-title">Motivo de la cita</h3><p>Opcional; ayuda a preparar la atención.</p></div>
                 </div>
                 <label for="appointment-reason" class="appointment-label">Motivo u observaciones</label>
-                <textarea id="appointment-reason" name="motivo" rows="3" maxlength="500" placeholder="Ej. Consulta inicial, revisión o seguimiento">{{ request.form.get('motivo', '') }}</textarea>
+                <textarea id="appointment-reason" name="motivo" rows="3" maxlength="500" placeholder="Ej. Consulta inicial, revisión o seguimiento">{{ request.form.get('motivo') if request.method == 'POST' else (cita_edicion.motivo if cita_edicion and cita_edicion.motivo else '') }}</textarea>
                 <span class="appointment-character-count" data-character-count>0 / 500</span>
             </section>
         </div>
 
         <aside class="appointment-summary" aria-labelledby="appointment-summary-title">
-            <div class="appointment-summary-heading"><i class="fas fa-calendar-check" aria-hidden="true"></i><div><p>Resumen</p><h3 id="appointment-summary-title">Cita por confirmar</h3></div></div>
+            <div class="appointment-summary-heading"><i class="fas fa-calendar-check" aria-hidden="true"></i><div><p>Resumen</p><h3 id="appointment-summary-title">{{ 'Reagenda por confirmar' if modo_reagenda else 'Cita por confirmar' }}</h3></div></div>
             <dl>
                 <div><dt>Paciente</dt><dd data-summary-patient>Selecciona un paciente</dd></div>
                 <div><dt>Expediente</dt><dd data-summary-record>—</dd></div>
@@ -143,10 +147,10 @@
                 <div><dt>Horario</dt><dd data-summary-time>—</dd></div>
             </dl>
             <p class="appointment-summary-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> El servidor volverá a validar el espacio al confirmar para evitar citas duplicadas.</p>
-            <button type="submit" class="appointment-submit" data-appointment-submit disabled>
-                <i class="fas fa-calendar-plus" aria-hidden="true"></i><span>Confirmar cita</span>
+            <button type="submit" class="appointment-submit" data-appointment-submit data-submit-loading="{{ 'Guardando…' if modo_reagenda else 'Agendando…' }}" disabled>
+                <i class="fas {{ 'fa-calendar-alt' if modo_reagenda else 'fa-calendar-plus' }}" aria-hidden="true"></i><span>{{ 'Confirmar reagenda' if modo_reagenda else 'Confirmar cita' }}</span>
             </button>
-            <a href="{{ url_for('main.index') }}" class="appointment-cancel">Cancelar y volver</a>
+            <a href="{{ url_for('agenda.index', fecha=(cita_edicion.fecha if cita_edicion else fecha_seleccionada).isoformat()) if origen_agenda else url_for('main.index') }}" class="appointment-cancel">Cancelar y volver</a>
         </aside>
     </form>
 </div>

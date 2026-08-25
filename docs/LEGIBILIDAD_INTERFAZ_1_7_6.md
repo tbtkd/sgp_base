@@ -53,6 +53,6 @@ El estado sigue comunicándose con texto, iconos y bordes; no depende únicament
 - El favicon continúa versionado con la versión vigente.
 - El CSS conserva los tamaños reforzados del sidebar.
 - El tema oscuro contiene estados `hover` explícitos para filas grises y acciones teal.
-- La suite completa debe finalizar con 80 casos aprobados.
+- La suite completa debe finalizar con 81 casos aprobados.
 
 Consulta también [MANUAL_USUARIO.md](MANUAL_USUARIO.md), [TEST_MATRIX.md](TEST_MATRIX.md) y [ROADMAP_MODULOS_UI_CITAS.md](ROADMAP_MODULOS_UI_CITAS.md).

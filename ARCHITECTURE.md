@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.6
+# Arquitectura técnica — versión 1.8.0
 
 ## Componentes
 
@@ -13,7 +13,9 @@
 
 El dashboard agrega consultas de lectura acotadas para altas de seis meses, actividad de siete días, próximas citas, pacientes recientes y expedientes pendientes. La consulta de pacientes sin atención reciente se ejecuta únicamente para el perfil profesional de Nutrición; Medicina general y Odontología no reciben ese dato en el contexto de la plantilla. Las gráficas se generan como SVG local a partir de series construidas en servidor; no incorporan bibliotecas de visualización ni servicios externos.
 
-La acción de agenda del KPI reutiliza el blueprint `pacientes` mediante `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido`. Ambas respuestas usan `Cache-Control: no-store`. El POST vuelve a validar paciente activo, fecha, rango, hora, cita previa y conflicto; la comprobación y escritura se serializan dentro del proceso local de Waitress antes del `commit` y la auditoría.
+La Agenda operativa vive en el blueprint `agenda`: `GET /agenda` ofrece vistas diaria y semanal; `GET/POST /agenda/citas/<id>/reagendar` modifica una cita programada sin cambiar su identidad o paciente. La creación rápida reutiliza `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido` y puede excluir la cita actual durante una reagenda. Estas respuestas usan `Cache-Control: no-store`.
+
+Toda creación o reagenda vuelve a validar paciente activo, fecha, rango, hora y conflicto dentro del bloqueo local de escritura antes del `commit`. Las transiciones administrativas son unidireccionales: una cita `Programada` puede terminar como `Atendida`, `No Asistió` o `Cancelada`; los cierres de atención sólo se admiten cuando el horario ya transcurrió y una cita terminal no se reabre. Cada éxito o rechazo relevante queda en auditoría sin copiar el motivo clínico completo.
 
 Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
 

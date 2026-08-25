@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.9.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.9.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -40,6 +40,8 @@ Versión **1.9.0**. Aplicación local para consultorios médicos, dentales, nutr
 - El pendiente **Sin consulta reciente** se calcula y muestra sólo para perfiles de Nutrición.
 - Navegación que diferencia enlaces operativos, acceso contextual funcional a recetas, grupo desplegable de Administración y módulos planificados sin crear rutas ficticias.
 - Importación XLSX defensiva para expedientes antropométricos históricos, visible y autorizada exclusivamente para perfiles de Nutrición.
+- Detalle progresivo del paciente: datos principales y seguimiento siempre visibles; campos complementarios sólo cuando fueron capturados y un único aviso accionable cuando faltan.
+- Pendientes desplegables con contraste AA explícito en tema oscuro, incluidos texto secundario, hover y foco de teclado.
 
 ## Instalación
 

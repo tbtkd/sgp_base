@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.9.0
+# Arquitectura técnica — versión 1.9.1
 
 ## Componentes
 
@@ -18,6 +18,8 @@ La Agenda operativa vive en el blueprint `agenda`: `GET /agenda` ofrece vistas d
 Toda creación o reagenda vuelve a validar paciente activo, fecha, rango, hora y conflicto dentro del bloqueo local de escritura antes del `commit`. Las transiciones administrativas son unidireccionales: una cita `Programada` puede terminar como `Atendida`, `No Asistió` o `Cancelada`; los cierres de atención sólo se admiten cuando el horario ya transcurrió y una cita terminal no se reabre. Cada éxito o rechazo relevante queda en auditoría sin copiar el motivo clínico completo.
 
 El índice clínico `/valoraciones/` usa `row_number()` particionado por paciente para seleccionar la última consulta de forma determinista por fecha, turno e ID. Búsqueda, orden permitido y paginación se ejecutan en SQLite; una función local `sgpn_search_key` registrada por conexión normaliza Unicode para buscar nombres sin depender de mayúsculas o acentos. El contexto `?origen=recetas` conserva todas las consultas específicas para no perder acceso a folios asociados con notas históricas.
+
+El detalle de paciente usa revelado progresivo en la vista de lectura: identidad, datos requeridos y seguimiento operativo se renderizan siempre; correo, ocupación, dirección y contacto de emergencia sólo se renderizan cuando tienen contenido. La ausencia conjunta se representa con un único estado vacío y un enlace al formulario de edición. Esto es una decisión de presentación: el modelo, los formularios, las consultas y los datos almacenados no cambian.
 
 Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
 

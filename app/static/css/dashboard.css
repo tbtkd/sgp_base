@@ -328,6 +328,19 @@ html[data-theme="dark"] .dashboard-chart-labels strong,
 html[data-theme="dark"] .dashboard-empty-state strong,
 html[data-theme="dark"] .dashboard-task-number { color: #c9dcdf; }
 html[data-theme="dark"] .dashboard-task-number { background: #19363e; }
+html[data-theme="dark"] .dashboard-task-detail a {
+  color: #d8ebea;
+  font-weight: 600;
+}
+html[data-theme="dark"] .dashboard-task-detail small,
+html[data-theme="dark"] .dashboard-task-detail p { color: #b9d2d3; }
+html[data-theme="dark"] .dashboard-task-detail a:hover,
+html[data-theme="dark"] .dashboard-task-detail a:focus-visible {
+  background: #173a42;
+  color: #f0fdfa;
+}
+html[data-theme="dark"] .dashboard-task-detail a:hover small,
+html[data-theme="dark"] .dashboard-task-detail a:focus-visible small { color: #99f6e4; }
 
 @media (max-width: 1100px) {
   .dashboard-main-grid { grid-template-columns: 1fr; }

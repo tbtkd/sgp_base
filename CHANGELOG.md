@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.1 — Legibilidad de pendientes y detalle progresivo
+
+- Los pacientes y estados desplegados en **Pendientes de atención** reciben colores oscuros específicos para texto, texto secundario, hover y foco, con contraste WCAG AA sobre el panel.
+- El detalle del paciente mantiene siempre los datos principales y el seguimiento operativo, pero deja de repetir campos opcionales vacíos como múltiples valores “No registrado”.
+- La información complementaria capturada se muestra campo por campo; si no existe ninguna, aparece un único estado compacto con acceso a **Completar datos**.
+- Los datos ausentes no se eliminan, no cambian el formulario de edición y no alteran la persistencia, los permisos ni los reportes.
+- Suite ampliada a 100 pruebas; sin dependencias ni migraciones de esquema nuevas.
+
 ## 1.9.0 — Consultas simplificadas y datos demostrativos
 
 - Consultas clínicas muestra una sola fila por paciente y abre la nota más reciente usando desempate por fecha, turno diario e ID.

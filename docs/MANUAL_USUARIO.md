@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.9.0
+# Manual de usuario — Sistema Clínico 1.9.1
 
 ## 1. Propósito
 
@@ -128,6 +128,17 @@ Busca por:
 5. Pulsa **Registrar paciente**.
 
 Los teléfonos deben contener exactamente 10 dígitos. La fecha de nacimiento no puede ser futura ni anterior a 1900.
+
+### Leer el detalle del paciente
+
+El detalle está organizado para evitar una lista extensa de marcadores vacíos:
+
+- **Datos principales** siempre muestra identidad, nacimiento, teléfono, ciudad y estatus.
+- **Información complementaria** muestra únicamente correo, ocupación, dirección y contactos de emergencia que sí fueron capturados.
+- Si no existe ningún dato complementario, aparece un solo aviso con **Completar datos**; esto no significa que se hayan eliminado campos.
+- **Seguimiento operativo** conserva Último pago y Siguiente cita incluso cuando no existe un registro, porque su ausencia es útil para la operación.
+
+Selecciona **Editar datos** para agregar o corregir la información omitida. No inventes valores sólo para eliminar el aviso: es preferible dejar un campo opcional vacío que registrar información no confirmada.
 
 ### Paciente inactivo
 

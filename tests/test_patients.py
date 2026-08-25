@@ -70,6 +70,63 @@ def test_invalid_patient_is_not_persisted(app, client, login):
         assert Paciente.query.count() == 0
 
 
+def test_patient_detail_collapses_uncaptured_optional_fields(app, client, login):
+    login()
+    with app.app_context():
+        patient = Paciente(
+            nombre="Sofía",
+            apellido_paterno="Mendoza",
+            genero="mujer",
+            fecha_nacimiento=date(1988, 2, 15),
+            telefono="5511112222",
+            ciudad="Querétaro",
+            status="activo",
+        )
+        db.session.add(patient)
+        db.session.commit()
+        patient_id = patient.id
+
+    page = client.get(f"/pacientes/{patient_id}").get_data(as_text=True)
+
+    assert 'data-patient-summary' in page
+    assert 'data-patient-complementary-empty' in page
+    assert 'data-patient-complementary-data' not in page
+    assert "Información complementaria no capturada." in page
+    assert "Completar datos" in page
+    assert "Último pago" in page and "No registrado" in page
+    assert "Siguiente cita" in page and "No programada" in page
+
+
+def test_patient_detail_renders_only_captured_optional_fields(app, client, login):
+    login()
+    with app.app_context():
+        patient = Paciente(
+            nombre="Luis",
+            apellido_paterno="Torres",
+            genero="hombre",
+            fecha_nacimiento=date(1979, 9, 20),
+            telefono="5533334444",
+            correo="luis@example.test",
+            ciudad="León",
+            ocupacion="Docente",
+            direccion="Calle Salud 10",
+            status="activo",
+        )
+        db.session.add(patient)
+        db.session.commit()
+        patient_id = patient.id
+
+    page = client.get(f"/pacientes/{patient_id}").get_data(as_text=True)
+
+    assert 'data-patient-complementary-data' in page
+    assert 'data-patient-complementary-empty' not in page
+    assert "luis@example.test" in page
+    assert "Docente" in page
+    assert "Calle Salud 10" in page
+    assert ">Contacto de emergencia<" not in page
+    assert ">Teléfono de emergencia<" not in page
+
+
 def test_excel_import_is_atomic(app, client, login):
     login()
     with app.app_context():

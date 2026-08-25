@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.9.0 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.9.1 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -70,6 +70,8 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 57. Una cita cerrada no puede volver a Programada; una cita futura no puede cerrarse como Atendida o No Asistió.
 58. Cancelación, inasistencia, atención y reagenda deben generar auditoría sin almacenar el motivo clínico completo.
 59. Recepción puede administrar citas, pero la Agenda no debe mostrarle motivos clínicos ni acciones de inicio de consulta.
+60. El detalle del paciente debe mantener visibles los datos principales y el seguimiento operativo, mostrar sólo los campos complementarios capturados y resumir su ausencia conjunta en un estado accionable.
+61. Los detalles desplegados de pendientes deben cumplir contraste WCAG AA en tema oscuro para texto principal, secundario, hover y foco visible.
 
 ## Requisitos de seguridad
 

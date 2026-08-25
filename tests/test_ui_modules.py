@@ -153,6 +153,28 @@ def test_dashboard_kpis_match_persisted_records(app, client, login):
     assert "WhatsApp / SMS" not in page
 
 
+def test_dashboard_pending_details_keep_readable_dark_theme_contrast():
+    root = Path(__file__).parents[1]
+    styles = (root / "app" / "static" / "css" / "dashboard.css").read_text(encoding="utf-8")
+
+    def luminance(color):
+        channels = [int(color[index : index + 2], 16) / 255 for index in (1, 3, 5)]
+        linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4 for value in channels]
+        return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2])
+
+    def contrast(foreground, background):
+        lighter, darker = sorted((luminance(foreground), luminance(background)), reverse=True)
+        return (lighter + 0.05) / (darker + 0.05)
+
+    assert 'html[data-theme="dark"] .dashboard-task-detail a {' in styles
+    assert 'html[data-theme="dark"] .dashboard-task-detail a:focus-visible' in styles
+    assert 'html[data-theme="dark"] .dashboard-task-detail a:hover small' in styles
+    assert contrast("#d8ebea", "#10262d") >= 4.5
+    assert contrast("#b9d2d3", "#10262d") >= 4.5
+    assert contrast("#f0fdfa", "#173a42") >= 4.5
+    assert contrast("#99f6e4", "#173a42") >= 4.5
+
+
 def test_shell_navigation_theme_and_planned_modules_are_accessible(client, login):
     login()
     page = client.get("/").get_data(as_text=True)

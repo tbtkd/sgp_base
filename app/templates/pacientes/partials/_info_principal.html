@@ -1,8 +1,51 @@
-<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {% for label, value in [('Nombre',paciente.nombre_completo),('Género',paciente.genero),('Fecha de nacimiento',paciente.fecha_nacimiento|format_date),('Teléfono',paciente.telefono),('Correo',paciente.correo or 'No registrado'),('Ocupación',paciente.ocupacion or 'No registrada'),('Ciudad',paciente.ciudad),('Dirección',paciente.direccion or 'No registrada'),('Contacto de emergencia',paciente.contacto_emergencia or 'No registrado'),('Teléfono de emergencia',paciente.telefono_emergencia or 'No registrado'),('Estatus',paciente.status),('Último pago',ultimo_pago.fecha_pago|format_date if ultimo_pago else 'No registrado')] %}
-        <div><p class="text-sm text-gray-500 font-medium">{{ label }}</p><p class="text-base font-semibold text-gray-900">{{ value }}</p></div>
-        {% endfor %}
-        <div><p class="text-sm text-gray-500 font-medium">Siguiente cita</p><p class="text-base font-semibold">{{ siguiente_cita.strftime('%d/%m/%Y %H:%M') if siguiente_cita and siguiente_cita > today else 'No programada' }}</p></div>
-    </div>
+<div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8" data-patient-summary>
+    <section aria-labelledby="datos-principales-title">
+        <h2 id="datos-principales-title" class="text-lg font-semibold text-gray-900 mb-5">Datos principales</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for label, value in [
+                ('Nombre', paciente.nombre_completo),
+                ('Género', paciente.genero),
+                ('Fecha de nacimiento', paciente.fecha_nacimiento|format_date),
+                ('Teléfono', paciente.telefono),
+                ('Ciudad', paciente.ciudad),
+                ('Estatus', paciente.status)
+            ] %}
+            <div data-patient-core-field>
+                <p class="text-sm text-gray-500 font-medium">{{ label }}</p>
+                <p class="text-base font-semibold text-gray-900">{{ value or 'Pendiente de actualización' }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% set has_complementary_data = paciente.correo or paciente.ocupacion or paciente.direccion or paciente.contacto_emergencia or paciente.telefono_emergencia %}
+    <section class="mt-8 pt-6 border-t border-gray-100" aria-labelledby="datos-complementarios-title">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <h2 id="datos-complementarios-title" class="text-lg font-semibold text-gray-900">Información complementaria</h2>
+            <a href="{{ url_for('pacientes.editar_paciente', id=paciente.id) }}" class="text-sm font-semibold text-teal-700 hover:text-teal-600">Editar datos</a>
+        </div>
+        {% if has_complementary_data %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-patient-complementary-data>
+            {% if paciente.correo %}<div><p class="text-sm text-gray-500 font-medium">Correo</p><p class="text-base font-semibold text-gray-900">{{ paciente.correo }}</p></div>{% endif %}
+            {% if paciente.ocupacion %}<div><p class="text-sm text-gray-500 font-medium">Ocupación</p><p class="text-base font-semibold text-gray-900">{{ paciente.ocupacion }}</p></div>{% endif %}
+            {% if paciente.direccion %}<div><p class="text-sm text-gray-500 font-medium">Dirección</p><p class="text-base font-semibold text-gray-900">{{ paciente.direccion }}</p></div>{% endif %}
+            {% if paciente.contacto_emergencia %}<div><p class="text-sm text-gray-500 font-medium">Contacto de emergencia</p><p class="text-base font-semibold text-gray-900">{{ paciente.contacto_emergencia }}</p></div>{% endif %}
+            {% if paciente.telefono_emergencia %}<div><p class="text-sm text-gray-500 font-medium">Teléfono de emergencia</p><p class="text-base font-semibold text-gray-900">{{ paciente.telefono_emergencia }}</p></div>{% endif %}
+        </div>
+        {% else %}
+        <div class="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600" data-patient-complementary-empty>
+            <i class="fas fa-circle-info text-teal-600" aria-hidden="true"></i>
+            <span>Información complementaria no capturada.</span>
+            <a href="{{ url_for('pacientes.editar_paciente', id=paciente.id) }}" class="font-semibold text-teal-700 hover:text-teal-600">Completar datos</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="mt-8 pt-6 border-t border-gray-100" aria-labelledby="seguimiento-operativo-title">
+        <h2 id="seguimiento-operativo-title" class="text-lg font-semibold text-gray-900 mb-5">Seguimiento operativo</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div><p class="text-sm text-gray-500 font-medium">Último pago</p><p class="text-base font-semibold text-gray-900">{{ ultimo_pago.fecha_pago|format_date if ultimo_pago else 'No registrado' }}</p></div>
+            <div><p class="text-sm text-gray-500 font-medium">Siguiente cita</p><p class="text-base font-semibold text-gray-900">{{ siguiente_cita.strftime('%d/%m/%Y %H:%M') if siguiente_cita and siguiente_cita > today else 'No programada' }}</p></div>
+        </div>
+    </section>
 </div>

@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.9.0
+# Matriz de pruebas — versión 1.9.1
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -96,6 +96,9 @@ python -m pytest -q
 | UI-DASH-06 | KPI accionables | Sin fila paralela; tres acciones separadas y enlaces informativos accesibles |
 | UI-SHELL-04 | Topbar persistente | Shell limitado al viewport, contenido desplazable y cabecera compacta visible |
 | UI-SHELL-05 | Legibilidad | Sidebar con tamaños reforzados y estados `hover` oscuros sin fondos blancos |
+| UI-DASH-07 | Contraste de pendientes | Texto principal/secundario y estados hover/foco cumplen contraste AA en el panel oscuro |
+| UI-PAT-01 | Detalle progresivo vacío | Los campos opcionales vacíos se resumen en un solo estado con acceso a edición |
+| UI-PAT-02 | Detalle progresivo parcial | Sólo se renderizan los campos complementarios que sí fueron capturados |
 
 ## Perfiles profesionales (`tests/test_professional_profiles.py`)
 

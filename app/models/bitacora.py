@@ -37,6 +37,19 @@ EVENT_NAMES = {
     "cita.create": "CREAR_CITA",
     "cita.update": "ACTUALIZAR_CITA",
     "cita.status": "CAMBIAR_ESTADO_CITA",
+    "backup.create": "CREAR_RESPALDO",
+    "backup.verify": "VERIFICAR_RESPALDO",
+    "backup.export": "DESCARGAR_RESPALDO",
+    "backup.restore": "RESTAURAR_RESPALDO",
+}
+
+CRITICAL_MUTATION_EVENTS = {
+    "system.bootstrap_admin", "usuario.create", "usuario.update", "usuario.status",
+    "usuario.password_change", "usuario.password_reset", "paciente.create", "paciente.update",
+    "paciente.status", "historial.create", "historial.update", "valoracion.create",
+    "valoracion.update", "valoracion.delete", "valoracion.import", "receta.create",
+    "receta.additional", "receta.replace", "pago.create", "pago.cancel", "cita.create",
+    "cita.update", "cita.status",
 }
 
 
@@ -90,6 +103,8 @@ class AuditLog(db.Model):
             metadata_json=json.dumps(metadata or {}, ensure_ascii=False, separators=(",", ":"))[:2000],
         )
         db.session.add(entry)
+        if has_request_context() and outcome == "success" and raw_action in CRITICAL_MUTATION_EVENTS:
+            g.critical_backup_reason = raw_action
         return entry
 
     @staticmethod

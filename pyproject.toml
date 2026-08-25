@@ -1,6 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = ["browser: pruebas E2E opcionales con Playwright y Chromium"]
 
 [tool.ruff]
 line-length = 120

@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.10.0 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.10.1 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -88,6 +88,12 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 80. La relación con cita debe ser explícita, opcional y limitada al mismo paciente; el sistema no debe inferirla por la mera existencia de una cita.
 81. Después de cancelar, el movimiento original debe permanecer visible mediante un retorno interno validado, búsqueda por folio y ancla cuando el filtro anterior lo ocultaría.
 82. El método de pago debe utilizarse para desglose operativo y no para decidir facturación. Hospitalización queda fuera del alcance de la edición para consultorios.
+83. Todos los recursos de presentación deben estar empaquetados localmente y funcionar sin Internet.
+84. La CSP no debe usar `unsafe-inline`, permitir CDN ni aceptar atributos ejecutables/de estilo; los bloques internos autorizados deben usar nonce por respuesta.
+85. Una mutación crítica confirmada debe intentar un respaldo consistente; una operación rechazada no debe crearlo.
+86. Sólo Administración puede crear, verificar, descargar o restaurar respaldos internos.
+87. Restaurar debe exigir reautenticación y frase explícita, validar integridad/esquema, crear una copia previa, reemplazar atómicamente y cerrar la sesión.
+88. Un respaldo corrupto, un nombre no interno, CSRF ausente o una confirmación incorrecta no debe modificar la base activa.
 
 ## Requisitos de seguridad
 
@@ -98,6 +104,8 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 - Registro de eventos críticos sin contraseñas ni contenido clínico completo.
 - Invalidación de sesiones tras cambios de credencial y cambio obligatorio para contraseñas temporales.
 - Escucha exclusiva en localhost.
+- CSP autocontenida con nonce y bloqueo de atributos ejecutables.
+- Respaldo y restauración SQLite verificables, auditados y restringidos a Administración.
 
 ## Requisitos no funcionales
 

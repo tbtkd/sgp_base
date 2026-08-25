@@ -6,7 +6,7 @@
     {% if current_user.puede_capturar_antropometria %}<button type="button" id="btnOpenExcelModal" class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-file-excel text-emerald-600 mr-1"></i>Importar Excel</button>{% endif %}
     {% endif %}
     <a href="{{ paciente.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 bg-emerald-600 text-white"><i class="fab fa-whatsapp"></i>WhatsApp</a>
-    <button type="button" onclick="abrirBitacoraWhatsApp()" class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-list mr-1"></i>Bitácora</button>
+    <button type="button" data-open-contact-log class="px-3 py-2.5 rounded-2xl text-xs font-semibold bg-white border"><i class="fas fa-list mr-1"></i>Bitácora</button>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 no-print">

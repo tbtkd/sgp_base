@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.10.1 — Endurecimiento local y continuidad operativa
+
+- Se eliminan Tailwind CDN, Font Awesome CDN, Google Fonts, Alpine CDN y SweetAlert CDN; utilidades, iconos y diálogos se sirven desde `app/static` y funcionan sin Internet.
+- `scripts/build_local_assets.py` genera de forma determinista `utilities.css` e `icons.css`; `--check` detecta recursos desactualizados.
+- La CSP deja de admitir `unsafe-inline` y orígenes externos: usa un nonce criptográfico por respuesta, bloquea atributos ejecutables y atributos de estilo.
+- Los flujos de Excel, confirmaciones, impresión, dashboard, plantillas y modales migran a eventos JavaScript locales sin atributos `onclick`, `onchange` o `style`.
+- Después de una mutación crítica confirmada se crea una copia SQLite consistente; los rechazos no generan copia y una falla del medio no revierte la transacción clínica ya confirmada.
+- Nuevo panel **Administración → Respaldos** para crear, verificar y descargar copias internas.
+- La restauración sólo acepta nombres internos, verifica integridad/esquema, exige contraseña administrativa y la frase `RESTAURAR`, crea una copia previa, reemplaza atómicamente la base y cierra la sesión.
+- Los eventos de creación, verificación, descarga y restauración quedan auditados sin almacenar contraseñas.
+- Se agregan pruebas positivas y negativas para CSP, recursos locales, respaldo por mutación, corrupción, autorización, CSRF, confirmaciones y restauración; se incluye una especificación E2E opcional con Playwright/Chromium.
+- Nueva guía `docs/ENDURECIMIENTO_LOCAL_1_10_1.md` y actualización de manual, arquitectura, matriz, seguridad y contexto.
+
 ## 1.10.0 — Integridad e historial operativo de pagos
 
 - Los importes nuevos se validan con `Decimal` y se guardan en centavos enteros; `monto` queda sólo como espejo de compatibilidad.
@@ -12,6 +25,7 @@
 - Administración dispone de resumen diario/mensual y exportaciones CSV del filtro o del historial por paciente, limitadas y neutralizadas contra fórmulas de hoja de cálculo.
 - Sólo Administración puede cancelar; la operación exige motivo y conserva monto, folio, autor y fila originales con auditoría.
 - Tras cancelar, el formulario permanece en el flujo de la tabla y el retorno conserva visible/resaltado el folio, aun si el filtro previo era Vigente.
+- La confirmación nativa se sustituye por un aviso visual con folio y lenguaje claro: explica que el pago no se elimina, ofrece **Volver** y rotula la decisión irreversible como **Sí, cancelar pago**; conserva un respaldo seguro si el componente visual no carga.
 - Doble envío protegido en interfaz y base; intentos repetidos se reconocen sin insertar un segundo movimiento.
 - `seed_demo.py --confirm` incorpora una cuenta administrativa, siete citas y dieciocho pagos para validar todos los estados, relaciones explícitas/sin cita, cancelación, periodos, responsables, métodos y CSV seguro.
 - La interfaz aclara que una cita no se relaciona automáticamente y que el método de pago es operativo, no una decisión de facturación.

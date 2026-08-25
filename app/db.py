@@ -1,18 +1,23 @@
 """Persistencia SQLite portable, respaldos y migraciones aditivas seguras."""
 
 import os
+import re
 import sqlite3
 import sys
 from contextlib import suppress
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
+from threading import Lock
 from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import String, cast, literal
 
 DATABASE_NAME = "pacientes.db"
 BACKUP_GLOB = "pacientes_backup_*.db"
+BACKUP_NAME_RE = re.compile(r"^pacientes_backup_\d{8}_\d{6}_\d{6}\.db$")
+REQUIRED_RESTORE_TABLES = {"usuarios", "pacientes", "audit_logs"}
+_BACKUP_LOCK = Lock()
 
 # Sólo se permiten sustituciones explícitas, reconocibles y no clínicas. Estas
 # estrategias mantienen operativas cuentas de versiones muy antiguas sin
@@ -74,13 +79,49 @@ def get_database_path() -> Path:
     return target
 
 
+def get_backup_directory(database_path=None) -> Path:
+    source = Path(database_path or get_database_path()).resolve()
+    return (source.parent.parent / "backups").resolve()
+
+
+def resolve_internal_backup(filename, *, database_path=None, backup_directory=None) -> Path:
+    """Resuelve únicamente respaldos con nombre interno dentro de ``backups``."""
+    name = str(filename or "")
+    if not BACKUP_NAME_RE.fullmatch(name):
+        raise ValueError("Nombre de respaldo inválido.")
+    directory = Path(backup_directory or get_backup_directory(database_path)).resolve()
+    candidate = (directory / name).resolve()
+    if candidate.parent != directory or not candidate.is_file():
+        raise FileNotFoundError(name)
+    return candidate
+
+
+def verify_sqlite_database(path, *, require_application_tables=True) -> dict:
+    """Abre una SQLite en modo lectura y valida integridad y esquema mínimo."""
+    source = Path(path).resolve()
+    if not source.is_file() or source.stat().st_size == 0:
+        raise sqlite3.DatabaseError("El archivo está vacío o no existe.")
+    connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
+    try:
+        integrity = connection.execute("PRAGMA integrity_check").fetchone()
+        if not integrity or integrity[0] != "ok":
+            raise sqlite3.DatabaseError("La base no superó la comprobación de integridad.")
+        tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        missing = REQUIRED_RESTORE_TABLES - tables if require_application_tables else set()
+        if missing:
+            raise sqlite3.DatabaseError("El archivo no contiene el esquema mínimo de SGPN.")
+        return {"integrity": "ok", "tables": len(tables), "size": source.stat().st_size}
+    finally:
+        connection.close()
+
+
 def respaldar_db(database_path=None, *, retention=10, backup_directory=None) -> Path | None:
     """Crea un respaldo consistente con la API nativa de SQLite y rota copias."""
     source = Path(database_path or get_database_path()).resolve()
     if not source.exists() or source.stat().st_size == 0:
         return None
 
-    target_dir = Path(backup_directory or (source.parent.parent / "backups")).resolve()
+    target_dir = Path(backup_directory or get_backup_directory(source)).resolve()
     target_dir.mkdir(parents=True, exist_ok=True)
     with suppress(OSError):
         target_dir.chmod(0o700)
@@ -88,27 +129,51 @@ def respaldar_db(database_path=None, *, retention=10, backup_directory=None) -> 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     destination = target_dir / f"pacientes_backup_{timestamp}.db"
     temporary = destination.with_suffix(".tmp")
-    try:
-        source_connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
-        backup_connection = sqlite3.connect(temporary)
+    with _BACKUP_LOCK:
         try:
-            source_connection.backup(backup_connection)
-            integrity = backup_connection.execute("PRAGMA integrity_check").fetchone()
-            if not integrity or integrity[0] != "ok":
-                raise sqlite3.DatabaseError("El respaldo no superó la comprobación de integridad.")
-            backup_connection.commit()
-        finally:
-            backup_connection.close()
-            source_connection.close()
-        temporary.replace(destination)
-    except Exception:
-        temporary.unlink(missing_ok=True)
-        raise
+            source_connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
+            backup_connection = sqlite3.connect(temporary)
+            try:
+                source_connection.backup(backup_connection)
+                backup_connection.commit()
+            finally:
+                backup_connection.close()
+                source_connection.close()
+            verify_sqlite_database(temporary, require_application_tables=False)
+            temporary.replace(destination)
+        except Exception:
+            temporary.unlink(missing_ok=True)
+            raise
 
     backups = sorted(target_dir.glob(BACKUP_GLOB), key=lambda item: item.stat().st_mtime, reverse=True)
     for old_backup in backups[max(1, int(retention)) :]:
         old_backup.unlink(missing_ok=True)
     return destination
+
+
+def restore_sqlite_database(source_backup, destination_database) -> None:
+    """Restaura atómicamente una copia validada; conserva intacto el destino ante error."""
+    source = Path(source_backup).resolve()
+    destination = Path(destination_database).resolve()
+    verify_sqlite_database(source)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(".restore.tmp")
+    temporary.unlink(missing_ok=True)
+    with _BACKUP_LOCK:
+        try:
+            source_connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
+            restored_connection = sqlite3.connect(temporary)
+            try:
+                source_connection.backup(restored_connection)
+                restored_connection.commit()
+            finally:
+                restored_connection.close()
+                source_connection.close()
+            verify_sqlite_database(temporary)
+            temporary.replace(destination)
+        except Exception:
+            temporary.unlink(missing_ok=True)
+            raise
 
 
 def _quote_identifier(value: str) -> str:

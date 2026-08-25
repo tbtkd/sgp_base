@@ -51,3 +51,9 @@ function activarPlantilla(id) {
         alert('Error de red.');
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-activate-template]').forEach((input) => {
+        input.addEventListener('change', () => activarPlantilla(input.dataset.activateTemplate));
+    });
+});

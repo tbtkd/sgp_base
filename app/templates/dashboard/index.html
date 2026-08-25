@@ -95,8 +95,8 @@
                             <summary aria-label="Más acciones para la cita" title="Más acciones"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></summary>
                             <div>
                                 <a href="{{ url_for('pacientes.detalle_paciente', id=cita.paciente_id) }}"><i class="fas fa-file-medical" aria-hidden="true"></i> Ver expediente</a>
-                                <button type="button" onclick="marcarEstatusCita('{{ cita.id }}', 'No Asistió')"><i class="fas fa-user-times" aria-hidden="true"></i> Marcar inasistencia</button>
-                                <button type="button" onclick="marcarEstatusCita('{{ cita.id }}', 'Cancelada')"><i class="fas fa-ban" aria-hidden="true"></i> Cancelar cita</button>
+                                <button type="button" data-dashboard-appointment="{{ cita.id }}" data-dashboard-status="No Asistió"><i class="fas fa-user-times" aria-hidden="true"></i> Marcar inasistencia</button>
+                                <button type="button" data-dashboard-appointment="{{ cita.id }}" data-dashboard-status="Cancelada"><i class="fas fa-ban" aria-hidden="true"></i> Cancelar cita</button>
                             </div>
                         </details>
                         {% endif %}
@@ -203,8 +203,8 @@
                             <td><span class="dashboard-status dashboard-status--{{ 'warning' if dias >= 15 else 'activo' }}">{{ dias }} días</span></td>
                             <td class="text-right">
                                 <div class="dashboard-followup-actions">
-                                    <button type="button" onclick="omitirSeguimiento('{{ val.id }}')" class="dashboard-icon-action" aria-label="Posponer seguimiento" title="Posponer seguimiento"><i class="fas fa-clock" aria-hidden="true"></i></button>
-                                    <button type="button" onclick="abrirModalWhatsAppDesdeBoton(this)" data-val-id="{{ val.id }}" data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" data-dias="{{ dias }}" class="dashboard-whatsapp-action"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar WhatsApp</button>
+                                    <button type="button" data-postpone-followup="{{ val.id }}" class="dashboard-icon-action" aria-label="Posponer seguimiento" title="Posponer seguimiento"><i class="fas fa-clock" aria-hidden="true"></i></button>
+                                    <button type="button" data-open-whatsapp data-val-id="{{ val.id }}" data-telefono="{{ val.paciente.telefono if val.paciente else '' }}" data-nombre="{{ val.paciente.nombre if val.paciente else 'Paciente' }}" data-dias="{{ dias }}" class="dashboard-whatsapp-action"><i class="fab fa-whatsapp" aria-hidden="true"></i> Enviar WhatsApp</button>
                                 </div>
                             </td>
                         </tr>
@@ -320,7 +320,7 @@
 
             <div class="dashboard-progress">
                 <div><span>Progreso de citas del día</span><strong>{{ progreso_citas_hoy }}%</strong></div>
-                <div class="dashboard-progress-track" role="progressbar" aria-label="Progreso de citas del día" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ progreso_citas_hoy }}"><span style="width: {{ progreso_citas_hoy }}%"></span></div>
+                <progress class="dashboard-progress-track" aria-label="Progreso de citas del día" max="100" value="{{ progreso_citas_hoy }}">{{ progreso_citas_hoy }}%</progress>
             </div>
         </article>
     </section>
@@ -358,8 +358,8 @@
     <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-md p-6 space-y-5">
         <h3 class="text-lg font-bold text-gray-900">Omitir o posponer seguimiento</h3>
         <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
-            <button type="button" onclick="cerrarModalOmitir()" class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs">Cancelar</button>
-            <button type="button" onclick="confirmarOmitirSeguimiento()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs">Aceptar</button>
+            <button type="button" data-close-postpone class="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-medium text-xs">Cancelar</button>
+            <button type="button" data-confirm-postpone class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs">Aceptar</button>
         </div>
     </div>
 </div>
@@ -370,10 +370,10 @@
         <p id="modalPacienteSub" class="text-xs text-gray-500"></p>
         <textarea id="modalMensajeTexto" rows="5" class="w-full rounded-2xl bg-gray-50 border border-gray-200 p-4 text-sm"></textarea>
         <div class="flex items-center justify-between pt-2">
-            <button type="button" onclick="copiarTextoModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100">Copiar texto</button>
+            <button type="button" data-copy-whatsapp class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100">Copiar texto</button>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="cerrarModalWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600">Cancelar</button>
-                <button type="button" onclick="confirmarEnviarWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold">Enviar por WhatsApp</button>
+                <button type="button" data-close-whatsapp class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600">Cancelar</button>
+                <button type="button" data-send-whatsapp class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold">Enviar por WhatsApp</button>
             </div>
         </div>
     </div>

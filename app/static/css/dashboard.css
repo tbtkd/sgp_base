@@ -375,3 +375,7 @@ html[data-theme="dark"] .dashboard-task-detail a:focus-visible small { color: #9
   .clinical-dashboard *::before,
   .clinical-dashboard *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+.dashboard-progress-track { width: 100%; height: .7rem; border: 0; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+.dashboard-progress-track::-webkit-progress-bar { background: #e2e8f0; }
+.dashboard-progress-track::-webkit-progress-value { background: #0d9488; border-radius: 999px; }
+.dashboard-progress-track::-moz-progress-bar { background: #0d9488; border-radius: 999px; }

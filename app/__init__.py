@@ -141,6 +141,29 @@ def create_app(config_name=None, test_config=None):
         response.headers["X-Request-ID"] = getattr(g, "request_id", "")
         return response
 
+    @app.after_request
+    def backup_after_critical_mutation(response):
+        reason = getattr(g, "critical_backup_reason", None)
+        if (
+            response.status_code < 400
+            and reason
+            and app.config.get("BACKUP_AFTER_CRITICAL_MUTATION")
+            and not app.config["SQLALCHEMY_DATABASE_URI"].endswith(":memory:")
+        ):
+            target = Path(app.config.get("BACKUP_DATABASE_PATH") or db_path)
+            try:
+                respaldo = respaldar_db(
+                    target,
+                    retention=app.config["BACKUP_RETENTION"],
+                    backup_directory=app.config.get("BACKUP_DIRECTORY"),
+                )
+                if respaldo:
+                    response.headers["X-SGPN-Backup"] = "created"
+            except Exception:  # noqa: BLE001 - el respaldo nunca debe invalidar la transacción ya confirmada
+                app.logger.exception("No fue posible respaldar después de la operación %s", reason)
+                response.headers["X-SGPN-Backup"] = "failed"
+        return response
+
     with app.app_context():
         if app.config.get("AUTO_BACKUP_DATABASE") and not app.config["SQLALCHEMY_DATABASE_URI"].endswith(":memory:"):
             try:

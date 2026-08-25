@@ -27,11 +27,15 @@ if not exist "app\static" (
     exit /b 1
 )
 
-echo [1/3] Validando sintaxis...
+echo [1/4] Generando y validando recursos locales...
+python scripts\build_local_assets.py
+if errorlevel 1 exit /b 1
+
+echo [2/4] Validando sintaxis...
 python -m compileall -q app run.py seed_admin.py
 if errorlevel 1 exit /b 1
 
-echo [2/3] Limpiando compilaciones anteriores...
+echo [3/4] Limpiando compilaciones anteriores...
 if exist "build" rmdir /s /q "build"
 if exist "dist" rmdir /s /q "dist"
 if exist "SistemaPacientes.spec" del /f /q "SistemaPacientes.spec"
@@ -41,7 +45,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/3] Generando ejecutable...
+echo [4/4] Generando ejecutable...
 pyinstaller --noconfirm --clean --onefile --console ^
   --icon "app/static/img/logo.ico" ^
   --add-data "app/templates;app/templates" ^

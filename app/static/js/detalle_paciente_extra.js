@@ -1,19 +1,21 @@
 function enviarExcel(event) {
+    event.preventDefault();
     const form = event.target;
     const fileInput = form.querySelector('input[name="file"]');
     if (!fileInput.files || fileInput.files.length === 0) {
-        // Alpine component error handling
-        form.__x.$data.error = 'Por favor, selecciona un archivo Excel antes de cargar.';
+        const error = document.getElementById('excelUploadError');
+        if (error) {
+            error.textContent = 'Selecciona un archivo Excel antes de cargar.';
+            error.hidden = false;
+        }
         return;
     }
 
     const formData = new FormData(form);
     
     // Ocultar modal de carga actual
-    const modalContainer = document.getElementById('formCargarExcel').closest('[x-data]');
-    if (modalContainer && modalContainer.__x) {
-        modalContainer.__x.$data.modalExcelOpen = false;
-    }
+    const modalContainer = document.getElementById('modalExcel');
+    if (modalContainer) modalContainer.hidden = true;
 
     fetch(form.action, {
         method: 'POST',
@@ -90,3 +92,10 @@ function cerrarModalResultadoCarga() {
     }
     window.location.reload();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('formCargarExcel')?.addEventListener('submit', enviarExcel);
+    document.querySelectorAll('[data-close-excel-result]').forEach((button) => {
+        button.addEventListener('click', cerrarModalResultadoCarga);
+    });
+});

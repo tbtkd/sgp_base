@@ -39,8 +39,8 @@ def _load_or_create_secret(target_directory=None) -> str:
 
 
 class Config:
-    APP_VERSION = "1.10.0"
-    ASSET_VERSION = "1.10.0"
+    APP_VERSION = "1.10.1"
+    ASSET_VERSION = "1.10.1"
     SECRET_KEY = None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
@@ -60,6 +60,7 @@ class Config:
     AUTO_CREATE_SCHEMA = True
     AUTO_BACKUP_DATABASE = True
     BACKUP_RETENTION = 10
+    BACKUP_AFTER_CRITICAL_MUTATION = True
     LOG_LEVEL = "INFO"
     LOG_TO_FILE = True
     LOG_MAX_BYTES = 1_048_576
@@ -87,6 +88,7 @@ class TestingConfig(Config):
     SECRET_KEY = "testing-secret-key-with-at-least-32-chars"  # nosec B105
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     AUTO_BACKUP_DATABASE = False
+    BACKUP_AFTER_CRITICAL_MUTATION = False
     LOG_LEVEL = "CRITICAL"
     LOG_TO_FILE = False
 

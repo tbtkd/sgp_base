@@ -53,7 +53,7 @@ export function validarFormularioPaciente(form) {
             if (group) {
                 const errorSpan = document.createElement("small");
                 errorSpan.className = "text-red-600 error-message";
-                errorSpan.style.display = "block";
+                errorSpan.classList.add('block');
                 errorSpan.innerText = mensajeError;
                 group.appendChild(errorSpan);
             }

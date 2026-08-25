@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.10.0:
+Resultado esperado para la versión 1.10.1 sin navegador E2E instalado:
 
 ```text
-109 passed
+118 passed, 1 skipped
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -85,6 +85,21 @@ Para validar login, cambio/restablecimiento de contraseña, invalidación de ses
 python -m pytest -q tests/test_security.py
 ```
 
+Para validar CSP, recursos locales, respaldos por mutación, panel administrativo y restauraciones válidas/incorrectas:
+
+```powershell
+python -m pytest -q tests/test_continuity_security.py
+```
+
+Para ejecutar también el escenario de navegador real:
+
+```powershell
+python -m playwright install chromium
+python -m pytest -q -m browser
+```
+
+Con Chromium disponible el resultado completo es `119 passed`. Si Playwright o su navegador no están instalados, el único E2E se marca `skipped`; las 118 verificaciones de servidor, plantillas y persistencia siguen siendo obligatorias.
+
 Para validar que la limpieza de actualizaciones no elimina datos ni el entorno virtual:
 
 ```powershell
@@ -120,6 +135,7 @@ Este comando sólo ejecuta `tests/test_sistema.py`; no incluye todos los casos m
 python -m ruff check app tests run.py seed_admin.py
 python -m bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 python -m pip_audit -r requirements.txt
+python scripts\build_local_assets.py --check
 ```
 
 ## 5. Consideraciones

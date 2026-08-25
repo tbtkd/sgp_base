@@ -1,7 +1,21 @@
 import logging
+import sqlite3
+from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -12,11 +26,41 @@ from app.core.auth import admin_required, login_required
 from app.core.password_recovery import reset_user_password
 from app.core.security import login_blocked, register_login_failure, reset_login_failures
 from app.core.validators import ValidationError, password_change_payload, user_payload
+from app.db import (
+    get_backup_directory,
+    get_database_path,
+    resolve_internal_backup,
+    respaldar_db,
+    restore_sqlite_database,
+    verify_sqlite_database,
+)
 from app.models.usuario import Usuario
 
 logger = logging.getLogger(__name__)
 auth = Blueprint("auth", __name__)
 DUMMY_HASH = generate_password_hash("dummy-password-never-used", method="scrypt")
+
+
+def _runtime_database_path():
+    configured = current_app.config.get("BACKUP_DATABASE_PATH")
+    if configured:
+        return Path(configured).resolve()
+    uri = str(current_app.config.get("SQLALCHEMY_DATABASE_URI", ""))
+    if uri.startswith("sqlite:////"):
+        return Path("/" + uri.removeprefix("sqlite:////")).resolve()
+    return get_database_path()
+
+
+def _backup_directory():
+    configured = current_app.config.get("BACKUP_DIRECTORY")
+    return Path(configured).resolve() if configured else get_backup_directory(_runtime_database_path())
+
+
+def _requested_backup(filename):
+    try:
+        return resolve_internal_backup(filename, backup_directory=_backup_directory())
+    except (ValueError, FileNotFoundError):
+        abort(404)
 
 
 def _safe_next(target):
@@ -330,3 +374,121 @@ def auditoria():
         query = query.filter(AuditEntry.outcome == outcome)
     events = query.order_by(AuditEntry.created_at.desc()).limit(500).all()
     return render_template("auth/auditoria.html", eventos=events, accion=action, modulo=module, resultado=outcome)
+
+
+@auth.route("/administracion/respaldos")
+@admin_required
+def respaldos():
+    directory = _backup_directory()
+    directory.mkdir(parents=True, exist_ok=True)
+    items = []
+    for path in sorted(directory.glob("pacientes_backup_*.db"), key=lambda item: item.stat().st_mtime, reverse=True):
+        try:
+            resolved = resolve_internal_backup(path.name, backup_directory=directory)
+        except (ValueError, FileNotFoundError):
+            continue
+        stat = resolved.stat()
+        items.append({"name": resolved.name, "size": stat.st_size, "modified": stat.st_mtime})
+    return render_template("auth/respaldos.html", respaldos=items, restore_phrase="RESTAURAR")
+
+
+@auth.route("/administracion/respaldos/crear", methods=["POST"])
+@admin_required
+def crear_respaldo():
+    try:
+        path = respaldar_db(
+            _runtime_database_path(),
+            retention=current_app.config["BACKUP_RETENTION"],
+            backup_directory=_backup_directory(),
+        )
+        if not path:
+            raise RuntimeError("La base todavía no contiene datos para respaldar.")
+        AuditLog.record("backup.create", entity_type="database", metadata={"archivo": path.name})
+        db.session.commit()
+        flash(f"Respaldo creado y verificado: {path.name}", "success")
+    except (OSError, RuntimeError, sqlite3.DatabaseError):
+        db.session.rollback()
+        logger.exception("No fue posible crear el respaldo manual")
+        flash("No fue posible crear un respaldo íntegro. La base activa no fue modificada.", "error")
+    return redirect(url_for("auth.respaldos"))
+
+
+@auth.route("/administracion/respaldos/<string:filename>/verificar", methods=["POST"])
+@admin_required
+def verificar_respaldo(filename):
+    path = _requested_backup(filename)
+    try:
+        result = verify_sqlite_database(path)
+        AuditLog.record("backup.verify", entity_type="database", metadata={"archivo": path.name})
+        db.session.commit()
+        flash(f"Respaldo íntegro: {result['tables']} tablas verificadas.", "success")
+        return redirect(url_for("auth.respaldos"))
+    except sqlite3.DatabaseError:
+        AuditLog.record("backup.verify", entity_type="database", outcome="failure", metadata={"archivo": path.name})
+        db.session.commit()
+        flash("El respaldo no es válido o está dañado; no puede restaurarse.", "error")
+        return render_template("auth/respaldos.html", respaldos=[], restore_phrase="RESTAURAR"), 422
+
+
+@auth.route("/administracion/respaldos/<string:filename>/descargar")
+@admin_required
+def descargar_respaldo(filename):
+    path = _requested_backup(filename)
+    AuditLog.record("backup.export", entity_type="database", metadata={"archivo": path.name})
+    db.session.commit()
+    response = send_file(path, as_attachment=True, download_name=path.name, mimetype="application/vnd.sqlite3")
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
+@auth.route("/administracion/respaldos/<string:filename>/restaurar", methods=["POST"])
+@admin_required
+def restaurar_respaldo(filename):
+    path = _requested_backup(filename)
+    phrase = str(request.form.get("confirmation_phrase", ""))[:20]
+    password = str(request.form.get("admin_password", ""))[:128]
+    if phrase != "RESTAURAR" or not current_user.check_password(password):
+        AuditLog.record(
+            "backup.restore", entity_type="database", outcome="denied",
+            metadata={"archivo": path.name, "frase_valida": phrase == "RESTAURAR"},
+            description="Restauración rechazada por confirmación inválida",
+        )
+        db.session.commit()
+        flash("No se confirmó la restauración. Verifica la contraseña y escribe RESTAURAR.", "error")
+        return redirect(url_for("auth.respaldos")), 422
+    try:
+        verify_sqlite_database(path)
+    except sqlite3.DatabaseError:
+        AuditLog.record("backup.restore", entity_type="database", outcome="failure", metadata={"archivo": path.name})
+        db.session.commit()
+        flash("El respaldo está dañado o no corresponde a SGPN. No se realizó ningún cambio.", "error")
+        return redirect(url_for("auth.respaldos")), 422
+
+    actor_id = current_user.id
+    destination = _runtime_database_path()
+    pre_restore = respaldar_db(
+        destination,
+        retention=current_app.config["BACKUP_RETENTION"],
+        backup_directory=_backup_directory(),
+    )
+    db.session.remove()
+    db.engine.dispose()
+    try:
+        restore_sqlite_database(path, destination)
+    except (OSError, sqlite3.DatabaseError):
+        logger.exception("Falló la restauración del respaldo %s", path.name)
+        flash("La restauración falló; la base activa permanece sin cambios.", "error")
+        return redirect(url_for("auth.respaldos")), 422
+    finally:
+        db.engine.dispose()
+
+    restored_actor = db.session.get(Usuario, actor_id)
+    AuditLog.record(
+        "backup.restore", entity_type="database", user_id=restored_actor.id if restored_actor else None,
+        metadata={"archivo": path.name, "respaldo_previo": pre_restore.name if pre_restore else None},
+    )
+    db.session.commit()
+    session.clear()
+    logout_user()
+    flash("Respaldo restaurado correctamente. Inicia sesión de nuevo para continuar.", "success")
+    return redirect(url_for("auth.login"))

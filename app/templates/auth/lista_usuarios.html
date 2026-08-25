@@ -60,7 +60,7 @@
                                         </a>
                                         {% if u.id != current_user.id %}
                                         <a href="{{ url_for('auth.restablecer_contrasena', id=u.id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg text-xs font-medium transition" title="Restablecer contraseña"><i class="fas fa-key"></i> Restablecer</a>
-                                        <button onclick="cambiarEstatus('{{ u.id }}')" id="btn-status-{{ u.id }}" class="inline-flex items-center px-3 py-1.5 {% if estatus_actual == 'activo' %}bg-red-50 hover:bg-red-100 text-red-700{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-700{% endif %} rounded-lg text-xs font-medium transition">
+                                        <button type="button" data-user-status="{{ u.id }}" id="btn-status-{{ u.id }}" class="inline-flex items-center px-3 py-1.5 {% if estatus_actual == 'activo' %}bg-red-50 hover:bg-red-100 text-red-700{% else %}bg-emerald-50 hover:bg-emerald-100 text-emerald-700{% endif %} rounded-lg text-xs font-medium transition">
                                             {% if estatus_actual == 'activo' %}Inhabilitar{% else %}Habilitar{% endif %}
                                         </button>
                                         {% endif %}
@@ -119,7 +119,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function cambiarEstatus(id) {
     confirmarAccion({
         titulo: '¿Cambiar estatus de usuario?',
@@ -174,5 +174,8 @@ function cambiarEstatus(id) {
         });
     });
 }
+document.querySelectorAll('[data-user-status]').forEach((button) => {
+    button.addEventListener('click', () => cambiarEstatus(button.dataset.userStatus));
+});
 </script>
 {% endblock %}

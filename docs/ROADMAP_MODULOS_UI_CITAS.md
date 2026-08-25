@@ -306,6 +306,16 @@ Módulos evaluados:
 - Dieciocho pagos demo, siete citas de todos los estados y cobertura de nombre completo/retorno visible tras cancelar.
 - Documentación detallada: [PAGOS_OPERATIVOS_1_10_0.md](PAGOS_OPERATIVOS_1_10_0.md).
 
+### Fase 1.23: endurecimiento local y continuidad — completada en 1.10.1
+
+- Autocontener recursos frontend y retirar dependencias CDN.
+- Reducir CSP `unsafe-inline` mediante scripts y estilos locales.
+- Respaldar después de operaciones críticas o por intervalo controlado, no únicamente al arrancar.
+- Probar exportación/restauración administrativa y documentar cifrado del equipo/medios.
+- Añadir pruebas de navegador y lista de comprobación para una instalación local segura.
+- 118 pruebas obligatorias y un E2E opcional validan recursos/CSP, permisos, CSRF, corrupción, respaldos y restauración.
+- La siguiente fase recomendada es cierre/versionado inmutable de notas clínicas antes de Facturación, recibos o caja formal.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -376,7 +386,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. Además de la cobertura clínica previa, la suite valida centavos, folio, UUID, doble envío, historial, último pago vigente, cancelación inmutable, permisos, búsqueda/filtros, totales, agrupación diaria/mensual, CSV seguro, auditoría de exportación, migración, cuarentena de filas legadas y `ON DELETE RESTRICT`.
+Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. La 1.10.1 amplía la aceptación principal a **118 pruebas**, más un E2E opcional con Chromium, para cubrir CSP local, respaldos por mutación, autorización, CSRF, corrupción y restauración atómica.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

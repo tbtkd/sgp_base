@@ -6,7 +6,7 @@
     <title>Receta {{ receta.folio }} - {{ receta.paciente_nombre }}</title>
     <link rel="icon" href="{{ url_for('static', filename='img/logo.png', v=config['ASSET_VERSION']) }}" type="image/png">
     <link rel="alternate icon" href="{{ url_for('static', filename='img/logo.ico', v=config['ASSET_VERSION']) }}" type="image/x-icon">
-    <style>
+    <style nonce="{{ csp_nonce }}">
         * { box-sizing: border-box; }
         body { margin: 0; background: #e5e7eb; color: #0f172a; font: 11px/1.35 Arial, sans-serif; }
         .toolbar { display: flex; justify-content: space-between; gap: 20px; padding: 12px 20px; background: #0f766e; color: white; }
@@ -57,7 +57,7 @@
 <body>
     <div class="toolbar">
         <p>Revisa la información, imprime y firma de forma autógrafa. La hoja aplica márgenes clínicos y una salida sin encabezado del navegador.</p>
-        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" onclick="printPrescription()">Imprimir / PDF</button></div>
+        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" data-print-prescription>Imprimir / PDF</button></div>
     </div>
     <main class="sheet{% if receta.medicamentos|length > 5 %} sheet--dense{% endif %}">
         <header class="header">
@@ -99,7 +99,7 @@
         <div class="signature" data-prescriber-signature>Firma autógrafa del profesional</div>
         <p class="warning">Documento para receta ordinaria. No válido para medicamentos sujetos a receta especial ni sin la firma autógrafa correspondiente. Verifica folio, vigencia, paciente, alergias, medicamento e instrucciones antes de entregarlo.</p>
     </main>
-    <script>
+    <script nonce="{{ csp_nonce }}">
         function printPrescription() {
             const originalTitle = document.title;
             const restoreTitle = () => { document.title = originalTitle; };
@@ -107,7 +107,8 @@
             window.addEventListener("afterprint", restoreTitle, { once: true });
             window.print();
             window.setTimeout(restoreTitle, 1000);
-        }
+    }
+    document.querySelector('[data-print-prescription]')?.addEventListener('click', printPrescription);
     </script>
 </body>
 </html>

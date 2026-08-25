@@ -10,9 +10,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnExcel = document.getElementById('btnOpenExcelModal');
     if (btnExcel) {
         btnExcel.addEventListener('click', () => {
-            window.dispatchEvent(new CustomEvent('open-excel-modal'));
+            const modal = document.getElementById('modalExcel');
+            if (modal) modal.hidden = false;
         });
     }
+
+    document.querySelectorAll('[data-close-excel]').forEach((button) => button.addEventListener('click', () => {
+        const modal = document.getElementById('modalExcel');
+        if (modal) modal.hidden = true;
+    }));
+    document.querySelectorAll('[data-open-contact-log]').forEach((button) => button.addEventListener('click', abrirBitacoraWhatsApp));
+    document.querySelectorAll('[data-close-contact-log]').forEach((button) => button.addEventListener('click', cerrarBitacoraWhatsApp));
 
     inicializarModalCita();
 });
@@ -56,7 +64,7 @@ function inicializarModalCita() {
 
     function sincronizarBloqueoPagina() {
         const hayModalVisible = modales.some((modal) => !modal.hidden);
-        document.body.style.overflow = hayModalVisible ? 'hidden' : '';
+        document.body.classList.toggle('modal-open', hayModalVisible);
     }
 
     function mostrar(modal) {

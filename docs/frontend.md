@@ -1,6 +1,6 @@
 # Frontend y UI/UX
 
-La interfaz conserva Jinja2, Tailwind CSS y la paleta teal/esmeralda del proyecto original. El shell responsive, sus popovers, el menú de cuenta y el selector de tema se controlan con JavaScript local; Alpine permanece cargado únicamente por compatibilidad con vistas legadas. El sidebar usa una escala tipográfica reforzada para marca, grupos, enlaces, submenús e identidad sin incrementar su ancho.
+La interfaz conserva Jinja2 y la paleta teal/esmeralda del proyecto original. Desde 1.10.1, las utilidades compatibles con las clases existentes, la iconografía y los diálogos se empaquetan localmente; no se cargan Tailwind, Alpine, SweetAlert, Font Awesome o fuentes desde CDN. El shell responsive, sus popovers, el menú de cuenta y el selector de tema se controlan con JavaScript local.
 
 ## Convenciones
 
@@ -32,7 +32,7 @@ El campo **Turno diario** es de sólo lectura. Al cambiar la fecha, `consulta_di
 
 El detalle del paciente contiene un formulario con fecha no futura, monto MXN positivo, concepto, método y cita opcional. La ayuda explica que la cita se selecciona explícitamente y que el método sirve para caja, no para decidir facturación. `payments.js` bloquea el botón después de una validación exitosa, mientras el UUID oculto aporta la defensa definitiva en servidor. El historial muestra folio, fecha, concepto, método, importe, responsable, estado y cita, sin permitir edición o eliminación.
 
-Administración y Recepción disponen del enlace **Pagos** bajo Gestión. La pantalla global inicia con el día actual, presenta cuatro KPI, desglose por método, filtros y una tabla paginada. La búsqueda por nombre completo funciona aunque sus términos estén almacenados en campos separados. Sólo Administración ve el control de cancelación; éste exige motivo y confirmación explícita, se despliega dentro del flujo de la tabla y después conserva el renglón visible/resaltado. `payments.css` define superficies, tablas, estados, menús, responsive y equivalentes oscuros propios.
+Administración y Recepción disponen del enlace **Pagos** bajo Gestión. La pantalla global inicia con el día actual, presenta cuatro KPI, desglose por método, filtros y una tabla paginada. La búsqueda por nombre completo funciona aunque sus términos estén almacenados en campos separados. Sólo Administración ve el control de cancelación; éste exige motivo y una confirmación visual con folio, explicación de conservación, **Volver** y **Sí, cancelar pago**. Existe un respaldo nativo si el componente visual no está disponible. El formulario se despliega dentro del flujo de la tabla y después conserva el renglón visible/resaltado. `payments.css` define superficies, tablas, estados, menús, responsive y equivalentes oscuros propios.
 
 Sólo Administración ve la agrupación diaria/mensual, **Exportar filtro CSV** y **Exportar historial CSV**. El resumen reutiliza el periodo filtrado; los archivos son reportes de cobros y no se rotulan como estado de cuenta porque no existen cargos ni saldos.
 
@@ -56,6 +56,6 @@ El shell ocupa la altura visible del navegador y el área principal es el único
 
 El foco visible se aplica a enlaces, botones, campos, selectores y `summary`. Sidebar, popovers, menú de cuenta y pestañas de gráfica responden a teclado y Escape. El cambio entre gráficas y los popovers no recarga la página; los cambios de módulo mantienen la navegación Flask tradicional para conservar seguridad y contratos existentes.
 
-## Pendiente para producción en red
+## Política de recursos
 
-Tailwind, Alpine, SweetAlert, Font Awesome y fuentes aún se consumen por CDN para preservar el diseño. Deben empaquetarse localmente antes de retirar excepciones CSP como `unsafe-inline`.
+`scripts/build_local_assets.py` genera `utilities.css` e `icons.css` de forma reproducible. Los bloques internos usan el nonce CSP de la respuesta; no se permiten atributos `onclick`, `onchange` o `style`. `alertas.js` utiliza `<dialog>` y mantiene la interfaz de confirmación consumida por Agenda, Dashboard, pagos y formularios destructivos. Un cambio de clases en Jinja debe acompañarse de `python scripts/build_local_assets.py` y de su comprobación `--check`.

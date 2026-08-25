@@ -20,21 +20,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tabs.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_modal.css') }}">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Recursos locales: sin dependencia de CDN o Internet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css', v=config['ASSET_VERSION']) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- SweetAlert2 CDN & Helper -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Diálogos locales compatibles con la interfaz existente -->
     <script src="{{ url_for('static', filename='js/alertas.js') }}"></script>
     
     <!-- Custom Theme -->
@@ -42,7 +33,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
     
     {% block extra_css %}{% endblock %}
-    <style>
+    <style nonce="{{ csp_nonce }}">
         [x-cloak] { display: none !important; }
         @media print {
             aside, header, .no-print, button, .modal, [role="dialog"] { display: none !important; }
@@ -72,7 +63,7 @@
                             {% for category, message in messages %}
                                 <div class="flash-alert p-4 rounded-xl text-sm font-medium shadow-sm border {% if category == 'error' %}bg-red-50 text-red-700 border-red-200{% elif category == 'success' %}bg-teal-50 text-teal-700 border-teal-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %} flex items-center justify-between">
                                     <span><i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} mr-2"></i>{{ message }}</span>
-                                    <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600" aria-label="Cerrar mensaje"><i class="fas fa-times" aria-hidden="true"></i></button>
+                                    <button type="button" data-dismiss-parent class="text-gray-400 hover:text-gray-600" aria-label="Cerrar mensaje"><i class="fas fa-times" aria-hidden="true"></i></button>
                                 </div>
                             {% endfor %}
                         </div>

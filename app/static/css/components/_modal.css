@@ -32,3 +32,19 @@
     color: black;
     text-decoration: none;
 } 
+.sgpn-dialog { width: min(92vw, 32rem); padding: 0; border: 0; border-radius: 1rem; color: #1f2937; background: transparent; box-shadow: 0 24px 60px rgb(15 23 42 / .28); }
+.sgpn-dialog::backdrop { background: rgb(15 23 42 / .62); backdrop-filter: blur(2px); }
+.sgpn-dialog-card { display: grid; gap: 1rem; margin: 0; padding: 1.5rem; background: #fff; }
+.sgpn-dialog-card h2 { margin: 0; font-size: 1.25rem; }
+.sgpn-dialog-icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 999px; color: #0f766e; background: #ccfbf1; font-weight: 800; }
+.sgpn-dialog-icon--warning,.sgpn-dialog-icon--error { color: #b91c1c; background: #fee2e2; }
+.sgpn-dialog-icon--success { color: #047857; background: #d1fae5; }
+.sgpn-dialog-message,.sgpn-dialog-validation { margin: 0; line-height: 1.5; }
+.sgpn-dialog-message { color: #475569; }
+.sgpn-dialog-label { display: grid; gap: .5rem; color: #334155; font-size: .875rem; font-weight: 600; }
+.sgpn-dialog-input { min-height: 7rem; resize: vertical; border: 1px solid #cbd5e1; border-radius: .75rem; padding: .75rem; }
+.sgpn-dialog-validation { color: #b91c1c; font-size: .875rem; font-weight: 600; }
+.sgpn-dialog-actions { display: flex; justify-content: flex-end; gap: .75rem; margin-top: .25rem; }
+.sgpn-dialog-actions button { border: 0; border-radius: .75rem; padding: .7rem 1.1rem; font-weight: 700; cursor: pointer; }
+.sgpn-dialog-cancel { color: #334155; background: #e2e8f0; }
+.sgpn-dialog-confirm { color: #fff; background: #0d9488; }

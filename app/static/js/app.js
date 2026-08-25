@@ -46,6 +46,29 @@ function setupDisclosure(root, toggleSelector, panelSelector) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-dismiss-parent]').forEach((button) => {
+        button.addEventListener('click', () => button.parentElement?.remove());
+    });
+    document.querySelectorAll('[data-copy-target]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const source = document.getElementById(button.dataset.copyTarget);
+            if (!source) return;
+            await navigator.clipboard.writeText(source.textContent || '');
+            button.textContent = 'Copiado';
+        });
+    });
+    document.querySelectorAll('[data-print]').forEach((button) => button.addEventListener('click', () => window.print()));
+    document.querySelectorAll('[data-confirm-submit]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            if (form.dataset.confirmed === 'true') return;
+            event.preventDefault();
+            const result = await confirmarAccion({ titulo: 'Confirmar eliminación', mensaje: form.dataset.confirmSubmit, textoConfirmar: 'Eliminar' });
+            if (result.isConfirmed) {
+                form.dataset.confirmed = 'true';
+                form.requestSubmit();
+            }
+        });
+    });
     const sidebar = document.querySelector('[data-sidebar]');
     const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
     const sidebarClose = document.querySelector('[data-sidebar-close]');
@@ -159,8 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.flash-alert').forEach(alert => {
         window.setTimeout(() => {
-            alert.style.transition = 'opacity 0.5s ease';
-            alert.style.opacity = '0';
+            alert.classList.add('flash-alert--leaving');
             window.setTimeout(() => alert.remove(), 500);
         }, 5000);
     });

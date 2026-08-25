@@ -239,6 +239,8 @@ def test_global_payment_module_roles_filters_and_totals(app, client):
     assert report.status_code == 200
     assert "Resumen por mes" in report_html
     assert "Exportar filtro CSV" in report_html
+    assert "Cancelar este pago" in report_html
+    assert f'data-payment-folio="{cash_folio}"' in report_html
     full_name_result = client.get(
         "/pagos/",
         query_string={
@@ -435,4 +437,9 @@ def test_payment_ui_is_integrated_and_has_dark_theme_contract(app, client, login
     assert ".payment-table tbody tr:target" in css
     assert ".payment-cancel-menu form { position: static" in css
     assert "data-payment-form" in script
+    assert "typeof confirmarAccion" in script
+    assert "¿Cancelar este pago?" in script
+    assert "El pago no se eliminará" in script
+    assert "Sí, cancelar pago" in script
+    assert "textoCancelar: 'Volver'" in script
     assert "window.confirm" in script

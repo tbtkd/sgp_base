@@ -21,18 +21,18 @@
 </div>
 
 <!-- Modales -->
-<div x-data="{ modalExcelOpen: false }" @open-excel-modal.window="modalExcelOpen = true">
+<div>
 
     {% if current_user.puede_capturar_antropometria %}
     <!-- Modal Excel -->
-    <div x-show="modalExcelOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" style="display: none;" x-cloak>
-        <div @click.away="modalExcelOpen = false" class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all">
+    <div id="modalExcel" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" hidden>
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all">
             <h3 class="text-xl font-bold text-gray-900 mb-6">Importar desde Excel</h3>
-            <form id="formCargarExcel" action="{{ url_for('pacientes.cargar_excel', id=paciente['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4" x-data="{ error: '' }" @submit.prevent="enviarExcel(event)">
-                <input type="file" name="file" accept=".xlsx" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100" @change="error = ''">
-                <p x-show="error" class="text-sm text-red-600 bg-red-50 p-2 rounded-lg" x-text="error" x-cloak></p>
+            <form id="formCargarExcel" action="{{ url_for('pacientes.cargar_excel', id=paciente['id']) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="file" accept=".xlsx" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                <p id="excelUploadError" class="text-sm text-red-600 bg-red-50 p-2 rounded-lg" hidden></p>
                 <div class="flex gap-4 mt-6">
-                    <button type="button" @click="modalExcelOpen = false; error = ''" class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                    <button type="button" data-close-excel class="w-full py-3 text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
                     <button type="submit" class="w-full py-3 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 flex items-center justify-center gap-2">
                         <span>Cargar</span>
                     </button>
@@ -51,7 +51,7 @@
             <i id="modalResultadoIcono" class="fas fa-check-circle"></i>
             <span>Resultado del Procesamiento</span>
           </h3>
-          <button type="button" onclick="cerrarModalResultadoCarga()" class="text-white hover:text-gray-200 text-2xl font-bold leading-none focus:outline-none">&times;</button>
+          <button type="button" data-close-excel-result class="text-white hover:text-gray-200 text-2xl font-bold leading-none focus:outline-none">&times;</button>
         </div>
 
         <!-- Cuerpo del Modal -->
@@ -83,7 +83,7 @@
 
         <!-- Pie del Modal -->
         <div class="bg-gray-50 px-6 py-3 flex justify-end">
-          <button type="button" onclick="cerrarModalResultadoCarga()" class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg shadow transition-colors focus:outline-none">
+          <button type="button" data-close-excel-result class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-semibold rounded-lg shadow transition-colors focus:outline-none">
             Aceptar
           </button>
         </div>
@@ -174,7 +174,7 @@
                         <p class="text-xs text-gray-500">Paciente: {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }} {{ paciente['apellido_materno'] }}</p>
                     </div>
                 </div>
-                <button onclick="cerrarBitacoraWhatsApp()" class="text-gray-400 hover:text-gray-600 transition p-1">
+                <button type="button" data-close-contact-log class="text-gray-400 hover:text-gray-600 transition p-1">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
@@ -210,7 +210,7 @@
                 <a href="{{ paciente.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2.5 text-xs font-semibold shadow-sm shadow-emerald-600/20 flex items-center gap-2 transition">
                     <i class="fab fa-whatsapp text-sm"></i> Abrir Chat WhatsApp
                 </a>
-                <button type="button" onclick="cerrarBitacoraWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
+                <button type="button" data-close-contact-log class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">
                     Cerrar
                 </button>
             </div>

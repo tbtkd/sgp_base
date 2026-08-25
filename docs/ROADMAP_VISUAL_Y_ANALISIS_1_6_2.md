@@ -1,5 +1,7 @@
 # Análisis de etapa y roadmap visual — versión 1.6.2
 
+> Estado 1.10.1: la Fase 1 quedó completada. Los recursos son locales, Alpine/CDN fueron retirados, la CSP no usa `unsafe-inline` y existe una prueba E2E Playwright opcional. Los hallazgos siguientes se conservan como registro histórico de la decisión.
+
 ## 1. Alcance del ajuste
 
 La cabecera superior se conserva porque concentra el contexto de la página y la cuenta autenticada. Lo que debía permanecer oculto era el panel detallado de la cuenta; además, el saludo del dashboard duplicaba innecesariamente la identidad ya visible a la derecha.
@@ -52,7 +54,7 @@ La base funcional está madura para pruebas y para un piloto de una sola estaci�
 - Interacción local, accesible y con fallo seguro.
 - Regresión automatizada de la estructura de la cabecera.
 
-### Fase 1 — frontend autocontenido (prioridad inmediata)
+### Fase 1 — frontend autocontenido (completada en 1.10.1)
 
 - Compilar Tailwind y retirar el script CDN.
 - Empaquetar iconos localmente o sustituirlos por SVG internos controlados.
@@ -109,4 +111,4 @@ La base funcional está madura para pruebas y para un piloto de una sola estaci�
 
 ## 5. Próximo lote recomendado
 
-Después del dashboard 1.6.3, el siguiente cambio debe autocontener el frontend y migrar el sidebar móvil/menús secundarios a JavaScript local. El sidebar y el top bar se mantienen deliberadamente fuera de este ciclo y podrán rediseñarse una vez eliminada su dependencia externa.
+Completado el frontend autocontenido en 1.10.1, el siguiente ciclo visual puede concentrarse en tokens/componentes comunes y regresión visual, sin reintroducir dependencias externas.

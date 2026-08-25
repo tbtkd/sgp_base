@@ -16,7 +16,7 @@
 </div>
 
 <!-- CARGA DE VALIDACIONES COMO MÓDULO -->
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
     import { validarFormularioPaciente } from "{{ url_for('static', filename='js/validaciones/pacienteValidacion.js') }}";
 
     document.getElementById("form-nuevo-paciente").addEventListener("submit", function(event) {

@@ -680,3 +680,11 @@ select.form-input option {
   box-shadow: none;
 }
 
+.flash-alert { transition: opacity .5s ease; }
+.flash-alert--leaving { opacity: 0; }
+.validation-alert { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding: .75rem 1.25rem; border-radius: .75rem; color: #fff; background: rgb(220 53 69 / .9); box-shadow: 0 2px 4px rgb(0 0 0 / .1); font-weight: 700; backdrop-filter: blur(2px); }
+.validation-alert__content { display: flex; align-items: center; }
+.validation-alert__icon { margin-right: .625rem; font-size: 1.1em; }
+.validation-alert__close { margin-left: .9rem; padding: 0; border: 0; color: #fff; background: none; cursor: pointer; font-size: 1.3em; font-weight: 700; opacity: .8; transition: opacity .2s; }
+.validation-alert__close:hover { opacity: 1; }
+.print-clinical-note { margin-top: 18px; text-align: center; font-size: 10px; }

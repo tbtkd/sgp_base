@@ -6,6 +6,16 @@ let currentValId = null;
 let currentTelefono = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-dashboard-appointment]').forEach((button) => {
+        button.addEventListener('click', () => marcarEstatusCita(button.dataset.dashboardAppointment, button.dataset.dashboardStatus));
+    });
+    document.querySelectorAll('[data-postpone-followup]').forEach((button) => button.addEventListener('click', () => omitirSeguimiento(button.dataset.postponeFollowup)));
+    document.querySelectorAll('[data-open-whatsapp]').forEach((button) => button.addEventListener('click', () => abrirModalWhatsAppDesdeBoton(button)));
+    document.querySelectorAll('[data-close-postpone]').forEach((button) => button.addEventListener('click', cerrarModalOmitir));
+    document.querySelectorAll('[data-confirm-postpone]').forEach((button) => button.addEventListener('click', confirmarOmitirSeguimiento));
+    document.querySelectorAll('[data-copy-whatsapp]').forEach((button) => button.addEventListener('click', copiarTextoModal));
+    document.querySelectorAll('[data-close-whatsapp]').forEach((button) => button.addEventListener('click', cerrarModalWhatsApp));
+    document.querySelectorAll('[data-send-whatsapp]').forEach((button) => button.addEventListener('click', confirmarEnviarWhatsApp));
     document.querySelectorAll('[data-dashboard-charts]').forEach((chartGroup) => {
         const tabs = Array.from(chartGroup.querySelectorAll('[data-dashboard-chart-tab]'));
         const panels = Array.from(chartGroup.querySelectorAll('[data-dashboard-chart-panel]'));

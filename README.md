@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.10.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos operativos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.10.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos operativos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -23,6 +23,9 @@ Versión **1.10.0**. Aplicación local para consultorios médicos, dentales, nut
 - Perfiles clínicos: Medicina general, Odontología/Dentista y Nutrición.
 - Nombre, perfil y cédula del autor conservados dentro de cada consulta nueva.
 - Auditoría administrativa de accesos y operaciones críticas.
+- Recursos visuales y diálogos completamente locales, sin CDN ni conexión a Internet.
+- CSP estricta con nonce por respuesta, sin `unsafe-inline`, scripts remotos o atributos ejecutables.
+- Respaldo verificado después de operaciones críticas y panel administrativo para crear, verificar, descargar y restaurar copias internas.
 - Enlaces directos a WhatsApp e impresión limpia de notas y recetas como PDF.
 - Shell clínico responsive con búsqueda global, sede local, notificaciones vacías explícitas, breadcrumb y tema claro/oscuro persistente.
 - Identidad y menú de cuenta concentrados al pie del sidebar; el botón `...` despliega datos profesionales, cambio de contraseña y cierre de sesión.
@@ -124,6 +127,9 @@ El comando agrega cuentas ficticias para Administración, Medicina, Odontología
 - Secreto de sesión: `instance/.secret_key`, generado con 32 bytes criptográficos.
 - Respaldos: `backups/pacientes_backup_YYYYMMDD_HHMMSS_microsegundos.db`.
 - Retención: últimas 10 copias verificadas mediante `PRAGMA integrity_check`.
+- Frecuencia: al iniciar y después de una mutación crítica confirmada; una solicitud rechazada no genera copia.
+
+Administración dispone de **Administración → Respaldos**. Restaurar exige la contraseña actual y la frase `RESTAURAR`; antes de reemplazar la base se crea otra copia, se valida el esquema y al finalizar se cierra la sesión. Una descarga contiene datos personales y clínicos: debe tratarse como la base activa. Consulta [docs/ENDURECIMIENTO_LOCAL_1_10_1.md](docs/ENDURECIMIENTO_LOCAL_1_10_1.md).
 
 Si una base muy antigua no contiene el correo de sus usuarios, la migración conserva las cuentas y asigna valores únicos `usuario-migrado-<id>@local.invalid`. Son marcadores locales que no reciben mensajes y deben reemplazarse desde el panel **Usuarios**.
 
@@ -154,6 +160,7 @@ La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombr
 | Emitir receta ordinaria | Sólo con perfil Medicina/Odontología y datos completos | Sólo con perfil Medicina/Odontología y datos completos | No |
 | Antropometría e importación | Sólo con perfil Nutrición | Sólo con perfil Nutrición | No |
 | Usuarios y auditoría | Sí | No | No |
+| Crear, verificar, descargar o restaurar respaldos | Sí | No | No |
 
 ## Pruebas y calidad
 
@@ -166,7 +173,7 @@ bandit -q -r app run.py seed_admin.py seed_demo.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 109 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), la Agenda en [docs/AGENDA_OPERATIVA_1_8_0.md](docs/AGENDA_OPERATIVA_1_8_0.md), Consultas/datos demo en [docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md](docs/CONSULTAS_Y_DATOS_DEMO_1_9_0.md) y Pagos en [docs/PAGOS_OPERATIVOS_1_10_0.md](docs/PAGOS_OPERATIVOS_1_10_0.md).
+La aceptación principal incluye **118 casos** (15 heredados de `unittest`). Existe un caso E2E adicional que eleva el total a 119 cuando Playwright y Chromium están instalados; de lo contrario se omite de forma explícita. El detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md).
 
 ## Compilación para Windows
 
@@ -179,4 +186,4 @@ El ejecutable se genera sin base de datos, secretos, registros ni respaldos. `Py
 
 ## Seguridad y límites
 
-Consulta [SECURITY_REVIEW.md](SECURITY_REVIEW.md) antes de utilizar datos reales. Esta versión está pensada para una estación local controlada; para despliegue en red aún se requiere cifrado en reposo, HTTPS mediante proxy local confiable, gestión formal de respaldos y una evaluación de privacidad aplicable al consultorio.
+Consulta [SECURITY_REVIEW.md](SECURITY_REVIEW.md) antes de utilizar datos reales. La 1.10.1 alcanza el mínimo técnico de aplicación definido para un piloto local controlado: autenticación/roles, CSRF, validación, auditoría, CSP local y restauración verificada. No equivale a una autorización para exponerla en red; siguen pendientes cifrado en reposo, HTTPS, gobernanza de privacidad y evaluación legal/operativa.

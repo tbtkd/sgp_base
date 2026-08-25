@@ -1,4 +1,19 @@
-# Matriz de pruebas — versión 1.10.0
+# Matriz de pruebas — versión 1.10.1
+
+## Endurecimiento y continuidad 1.10.1
+
+| Escenario | Correcto | Incorrecto / adversarial | Evidencia |
+| --- | --- | --- | --- |
+| Recursos frontend | CSS, iconos y diálogo se sirven desde `/static` | Plantillas con URL remota o recurso generado obsoleto fallan la comprobación | `test_continuity_security.py`, `build_local_assets.py --check` |
+| CSP | nonce único y directivas sólo de mismo origen | `unsafe-inline`, CDN, `onclick` y `style` quedan prohibidos | `test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes` |
+| Respaldo crítico | mutación confirmada crea copia íntegra | mutación rechazada no crea copia | `test_successful_critical_mutation_creates_backup_but_rejected_one_does_not` |
+| Falla del medio | el cambio confirmado permanece y se informa `X-SGPN-Backup: failed` | no se presenta una copia inexistente como exitosa | `test_backup_failure_does_not_rollback_successful_mutation` |
+| Panel de respaldos | Administración lista, crea, verifica y descarga | anónimo redirigido, Recepción 403, POST sin CSRF 400, nombre inválido 404 | pruebas `test_backup_admin_*` y `test_backup_create_*` |
+| Integridad | base SGPN válida supera `integrity_check` y esquema mínimo | archivo vacío/corrupto se rechaza sin tocar el destino | pruebas `test_database_verification_*` y `test_atomic_restore_*` |
+| Restauración | contraseña + `RESTAURAR`, copia previa, reemplazo atómico y logout | contraseña/frase erróneas o copia corrupta producen 422 | pruebas `test_*restore*` |
+| Navegador real | login, recursos locales y diálogo nativo funcionan con CSP | consola CSP o solicitud a otro origen falla el caso | `tests/e2e/test_browser_security.py` |
+
+Aceptación: 118 pruebas obligatorias; 119 con Playwright/Chromium. Los casos de error no reutilizan la base real.
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -173,7 +188,7 @@ python -m pytest -q
 | PAY-CAN-01 | Cancelación | Motivo obligatorio, segundo intento denegado, responsable, auditoría y retorno visible por folio/ancla |
 | PAY-RANGE-01 | Fechas | Rangos invertidos o mayores de 366 días rechazados |
 | PAY-MIG-01 | Migración | Conversión a centavos, cuarentena de incompletos, unicidad, `RESTRICT` e integridad |
-| PAY-UI-01 | Interfaz | Historial, cita opcional explícita, método no fiscal, cancelación dentro del flujo, resaltado, idempotencia visual y tema oscuro |
+| PAY-UI-01 | Interfaz | Historial, cita opcional explícita, método no fiscal, confirmación amigable con salida segura/respaldo, cancelación dentro del flujo, resaltado, idempotencia visual y tema oscuro |
 
 Resultados esperados:
 

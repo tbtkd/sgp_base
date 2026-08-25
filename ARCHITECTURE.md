@@ -1,16 +1,16 @@
-# Arquitectura técnica — versión 1.10.0
+# Arquitectura técnica — versión 1.10.1
 
 ## Componentes
 
 - `app/__init__.py`: fábrica Flask, extensiones, blueprints, errores, cabeceras y ciclo de arranque.
-- `app/db.py`: ruta persistente, respaldo nativo y migración aditiva de columnas.
+- `app/db.py`: ruta persistente, respaldo/restauración nativos, verificación de integridad y migración aditiva de columnas.
 - `app/config.py`: secreto, cookies, límites y configuraciones de ambiente.
 - `app/core/validators.py`: normalización y validación autoritativa del servidor.
 - `app/core/auth.py`, `app/core/security.py` y `app/core/password_recovery.py`: sesión, RBAC, limitación de intentos y recuperación local.
 - `app/models/`: esquema SQLAlchemy.
 - `app/controllers/`: transacciones y casos de uso.
 - `app/controllers/pagos.py`: consulta operativa, agregados filtrados y cancelación administrativa de pagos.
-- `app/templates/` y `app/static/`: interfaz actual preservada y adaptada al dominio clínico general.
+- `app/templates/` y `app/static/`: interfaz autocontenida, utilidades/iconos generados y controladores locales.
 
 El dashboard agrega consultas de lectura acotadas para altas de seis meses, actividad de siete días, próximas citas, pacientes recientes y expedientes pendientes. La consulta de pacientes sin atención reciente se ejecuta únicamente para el perfil profesional de Nutrición; Medicina general y Odontología no reciben ese dato en el contexto de la plantilla. Las gráficas se generan como SVG local a partir de series construidas en servidor; no incorporan bibliotecas de visualización ni servicios externos.
 
@@ -24,7 +24,7 @@ El índice clínico `/valoraciones/` usa `row_number()` particionado por pacient
 
 El detalle de paciente usa revelado progresivo en la vista de lectura: identidad, datos requeridos y seguimiento operativo se renderizan siempre; correo, ocupación, dirección y contacto de emergencia sólo se renderizan cuando tienen contenido. La ausencia conjunta se representa con un único estado vacío y un enlace al formulario de edición. Esto es una decisión de presentación: el modelo, los formularios, las consultas y los datos almacenados no cambian.
 
-Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
+Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente. Alpine y los CDN fueron retirados; `build_local_assets.py` genera utilidades/iconos y `alertas.js` aporta diálogos nativos.
 
 La escala visual del sidebar se concentra en `shell.css`: marca, títulos de grupo, enlaces, submenús, iconos y cuenta usan tamaños reforzados sin ampliar el ancho fijo. El mismo archivo traduce los `hover:bg-*` heredados de Tailwind a fondos azul petróleo, teal y tonos semánticos oscuros mediante reglas `!important`; esto evita que el tema oscuro combine un fondo blanco con texto ya convertido a claro.
 
@@ -35,12 +35,13 @@ flowchart TD
     A["Inicio"] --> B{"¿PyInstaller?"}
     B -- No --> C["proyecto/instance/pacientes.db"]
     B -- Sí --> D["directorio del EXE/instance/pacientes.db"]
-    C --> E["Respaldo SQLite"]
+    C --> E["Respaldo SQLite verificado"]
     D --> E
     E --> F["backups/ últimos 10"]
+    F --> G["Restauración administrativa atómica"]
 ```
 
-`_MEIPASS` se utiliza solamente para plantillas y recursos incluidos en el ejecutable. Nunca recibe la base de datos o el secreto.
+`_MEIPASS` se utiliza solamente para plantillas y recursos incluidos en el ejecutable. Nunca recibe la base de datos o el secreto. Las mutaciones auditadas como exitosas disparan una copia posterior al `commit`; el panel administrativo restaura sólo tras reautenticación, frase explícita, verificación y copia previa.
 
 ## Esquema clínico
 
@@ -101,7 +102,8 @@ Si existe `instance/sgpn.db` y aún no existe `pacientes.db`, la API nativa de S
 - `auth_version` invalida sesiones después de un cambio/restablecimiento.
 - Credenciales temporales obligan a elegir una definitiva; la recuperación local sólo opera sobre administradores con acceso al equipo.
 - Bloqueo de cuenta y de IP después de cinco fallos.
-- Cabeceras CSP, anti-frame, `nosniff`, políticas de origen y no-cache.
+- CSP por respuesta con nonce, sin `unsafe-inline`, CDN o atributos ejecutables; anti-frame, `nosniff`, políticas de origen y no-cache.
+- Respaldo posterior a mutaciones críticas y restauración interna exclusiva de Administración, con CSRF, validación, copia previa, reemplazo atómico y logout.
 - Errores genéricos con `X-Request-ID`.
 - Auditoría con usuario, módulo, acción, entidad, IP y resultado.
 - Transacciones completas en controladores; los modelos no hacen `commit`.

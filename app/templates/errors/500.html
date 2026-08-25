@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Error 500</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css', v=config['ASSET_VERSION']) }}">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="text-center">

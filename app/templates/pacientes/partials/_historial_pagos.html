@@ -34,12 +34,12 @@
                         {% if current_user.rol_clinico == 'admin' and pago.estatus != 'cancelado' %}
                         <details class="payment-cancel-menu">
                             <summary aria-label="Cancelar pago {{ pago.folio }}"><i class="fas fa-ban" aria-hidden="true"></i></summary>
-                            <form action="{{ url_for('pagos.cancelar', pago_id=pago.id) }}" method="POST" data-payment-cancel-form>
+                            <form action="{{ url_for('pagos.cancelar', pago_id=pago.id) }}" method="POST" data-payment-cancel-form data-payment-folio="{{ pago.folio }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="return_to" value="{{ request.path }}">
                                 <label for="cancel-reason-patient-{{ pago.id }}">Motivo de cancelación</label>
                                 <textarea id="cancel-reason-patient-{{ pago.id }}" name="motivo_cancelacion" minlength="5" maxlength="500" required></textarea>
-                                <button type="submit">Conservar original y cancelar</button>
+                                <button type="submit">Cancelar este pago</button>
                             </form>
                         </details>
                         {% endif %}

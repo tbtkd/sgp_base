@@ -2,7 +2,11 @@
 
 ## Dictamen
 
-La versión 1.10.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red hasta completar los pendientes prioritarios descritos al final.
+La versión 1.10.1 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. En el alcance de la aplicación cumple el nivel técnico mínimo definido: autenticación, roles, CSRF, validación, sesiones revocables, auditoría, frontend autocontenido, CSP estricta y restauración verificada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red.
+
+### Nivel mínimo para utilizar información real en una estación local
+
+La evaluación de esta entrega deja fuera los requisitos físicos y del sistema operativo del equipo. El dictamen es **mínimo técnico de aplicación cumplido para piloto local controlado**. No incluye una prueba de penetración, una certificación, cifrado en reposo ni la evaluación legal/organizacional necesaria para decidir el uso de información clínica real.
 
 ## Controles implementados
 
@@ -25,7 +29,7 @@ La versión 1.10.0 es adecuada para pruebas funcionales y para un piloto en una 
 - CSRF en formularios, cierre de sesión y solicitudes AJAX mutables.
 - Límite global de petición de 16 MB y límite XLSX específico de 5 MB.
 - Escucha exclusiva en `127.0.0.1` mediante Waitress.
-- CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, políticas de permisos y no-cache para HTML. Estos valores son más estrictos que `SAMEORIGIN` y `strict-origin-when-cross-origin`.
+- CSP por respuesta sin `unsafe-inline` ni CDN, `script-src-attr/style-src-attr 'none'`, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, políticas de permisos y no-cache para HTML.
 
 ### Validaciones
 
@@ -100,6 +104,8 @@ La versión 1.10.0 es adecuada para pruebas funcionales y para un piloto en una 
 - Base `pacientes.db` fuera de `_MEIPASS`.
 - Respaldos consistentes mediante `sqlite3.Connection.backup()` y verificación de integridad.
 - Retención automática de 10 respaldos.
+- Respaldo consistente al arrancar y después de mutaciones críticas aceptadas; los rechazos no generan copia.
+- Panel administrativo para crear, verificar y descargar; restauración con reautenticación, frase explícita, copia previa, reemplazo atómico y cierre de sesión.
 - Migración aditiva guardada, migraciones transaccionales para recetas, turno diario y pagos 1.10.0, con `foreign_key_check` e `integrity_check`.
 - ZIP y compilación excluyen bases, secretos, logs, cachés, entorno virtual y respaldos.
 - La limpieza de actualizaciones sólo elimina el SVG, la hoja de sidebar legada no referenciada y cachés conocidas dentro del código; no recorre el entorno virtual ni los directorios de datos.
@@ -114,18 +120,22 @@ No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyect
 2. HTTPS y terminación TLS confiable si deja de ser exclusivamente localhost.
 3. Política formal de consentimiento, acceso, retención, anonimización y eliminación.
 4. Aislamiento por consultorio/tenant si varias organizaciones comparten una instalación.
-5. Recursos frontend autocontenidos y CSP sin `unsafe-inline`/CDN.
-6. Restauraciones programadas y comprobadas en otra estación.
-7. Versionado inmutable de notas clínicas y firma/cierre profesional.
-8. Revisión legal y clínica según jurisdicción y especialidad.
-9. Firma electrónica regulada, si se desea sustituir la firma autógrafa en papel.
-10. Flujo independiente para medicamentos controlados o recetas especiales; no reutilizar la receta ordinaria.
-11. Definición formal de cargos, adeudos, reembolsos, recibos, conciliación y corte de caja antes de presentar el módulo de pagos como sistema contable.
+5. Versionado inmutable de notas clínicas y firma/cierre profesional.
+6. Revisión legal y clínica según jurisdicción y especialidad.
+7. Firma electrónica regulada, si se desea sustituir la firma autógrafa en papel.
+8. Flujo independiente para medicamentos controlados o recetas especiales; no reutilizar la receta ordinaria.
+9. Definición formal de cargos, adeudos, reembolsos, recibos, conciliación y corte de caja antes de presentar el módulo de pagos como sistema contable.
+
+## Siguiente fase recomendada
+
+El siguiente paso recomendado es **1.11 — cierre y versionado inmutable de notas clínicas**: estados borrador/cerrada, autor y momento de cierre, correcciones mediante addendum trazable y prohibición de sobrescribir una nota firmada. Es el riesgo de integridad clínica más importante que permanece y debe resolverse antes de ampliar Facturación o exponer el sistema en red.
+
+La solicitud de factura, recibos no fiscales y datos fiscales deberá diseñarse después como flujo separado; nunca se inferirá a partir del método de pago.
 
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 109 pruebas totales.
+- `python -m pytest -q`: 118 pruebas obligatorias aprobadas; un E2E adicional queda disponible con Playwright/Chromium.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en las dependencias instaladas; el entorno de verificación usa `pip 26.2.1`.

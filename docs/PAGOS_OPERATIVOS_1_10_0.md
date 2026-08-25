@@ -24,7 +24,7 @@ El **método de pago** describe cómo ingresó el dinero —efectivo, tarjeta, t
 | `cancelado` | Movimiento invalidado por Administración, conservando el original | No |
 | `requiere_revision` | Registro legado incompleto o monetariamente no confiable | No |
 
-Los pagos no se editan ni eliminan. Si una captura es incorrecta, Administración debe cancelarla con un motivo mínimo de cinco caracteres y registrar un movimiento nuevo. La cancelación conserva importe, concepto, método, folio, fecha, autor original, responsable y momento de cancelación. Al confirmar, la interfaz vuelve al renglón por su folio y lo resalta; si el filtro anterior lo ocultaría, se retira ese filtro para no perder de vista el movimiento.
+Los pagos no se editan ni eliminan. Si una captura es incorrecta, Administración debe cancelarla con un motivo mínimo de cinco caracteres y registrar un movimiento nuevo. La cancelación conserva importe, concepto, método, folio, fecha, autor original, responsable y momento de cancelación. La confirmación explica que el pago no se borrará, ofrece **Volver** como salida segura y rotula la acción definitiva como **Sí, cancelar pago**. Al confirmar, la interfaz vuelve al renglón por su folio y lo resalta; si el filtro anterior lo ocultaría, se retira ese filtro para no perder de vista el movimiento.
 
 No se implementa todavía el estado **Reembolsado**. Un reembolso futuro deberá representarse como un movimiento separado enlazado con el pago original, después de definir reglas de caja y responsabilidades.
 

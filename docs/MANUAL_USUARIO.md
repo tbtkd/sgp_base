@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.10.0
+# Manual de usuario — Sistema Clínico 1.10.1
 
 ## 1. Propósito
 
@@ -320,7 +320,7 @@ Sólo Administración puede cancelar:
 
 1. Abre el menú rojo del movimiento.
 2. Captura un motivo específico de al menos cinco caracteres.
-3. Confirma la advertencia.
+3. Revisa el aviso: el pago no se eliminará, quedará como **Cancelado** y la operación no se puede deshacer. Elige **Volver** si necesitas revisar los datos o **Sí, cancelar pago** para continuar.
 4. Comprueba que el estado cambió a **Cancelado**. La pantalla vuelve al mismo folio y resalta el renglón; si estaba activo el filtro Vigente, lo sustituye por la búsqueda del folio para conservarlo visible.
 
 Cancelar no elimina ni edita el pago original. Si el cobro correcto es diferente, registra después un pago nuevo. No utilices la cancelación para representar un reembolso; esa operación todavía no está implementada.
@@ -382,11 +382,14 @@ Este procedimiento sólo funciona para administradores y obliga a cambiar la con
 
 ### Respaldos
 
-El sistema mantiene hasta 10 respaldos en `backups/`. Antes de actualizar, mover el sistema o intervenir la base:
+El sistema mantiene hasta 10 respaldos verificados en `backups/`: crea uno al iniciar y después de operaciones críticas aceptadas. Administración puede abrir **Administración → Respaldos** para:
 
-1. cierra la aplicación;
-2. conserva una copia de `instance/` y `backups/`;
-3. verifica que la copia se encuentre en otro medio seguro.
+1. crear una copia inmediata;
+2. comprobar su integridad;
+3. descargarla como archivo SQLite;
+4. restaurarla cuando sea necesario.
+
+Para restaurar, selecciona una copia, captura tu contraseña y escribe exactamente `RESTAURAR`. SGPN valida el archivo, crea una copia del estado vigente, reemplaza la base y cierra la sesión. Si la contraseña, frase, integridad o esquema no son válidos, la base activa permanece sin cambios. Practica el flujo primero con datos de demostración.
 
 ### Registros técnicos
 
@@ -403,11 +406,13 @@ No edites la base con herramientas externas mientras la aplicación está abiert
 
 - Usa una cuenta individual; no compartas usuarios.
 - Bloquea Windows cuando te alejes del equipo.
+- Activa BitLocker o Cifrado de dispositivo y resguarda la clave de recuperación fuera del equipo.
+- Mantén Windows, navegador y protección antimalware actualizados.
 - No envíes bases, respaldos o recetas por canales públicos.
 - No guardes contraseñas en notas pegadas al monitor o archivos sin protección.
 - Verifica siempre al paciente antes de modificar datos o iniciar una consulta.
 - Revisa folio y vigencia antes de imprimir una receta.
-- Conserva respaldos en un medio protegido.
+- Conserva respaldos cifrados en otro medio, mantén una copia desconectada y prueba que pueda restaurarse antes de usar información real.
 - No expongas el puerto de la aplicación a Internet.
 - Cierra sesión cuando otra persona vaya a utilizar la computadora.
 

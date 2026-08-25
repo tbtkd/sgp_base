@@ -2,11 +2,11 @@
 
 ## Estado actual
 
-La versión 1.10.0 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. La tabla y el blueprint de `valoracion` conservan el nombre histórico por compatibilidad, pero la interfaz usa “consulta clínica”. La receta ordinaria es un documento separado de la nota y mantiene un historial de folios. Agenda y citas cuenta con una superficie operativa diaria/semanal independiente; Consultas muestra la última nota de cada paciente sin repetir expedientes. Pagos conserva movimientos monetarios exactos, foliados e inmutables, con historial por paciente y módulo operativo global para Administración/Recepción.
+La versión 1.10.1 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. Conserva Agenda, Consultas, Recetas y Pagos 1.10.0, y añade frontend autocontenido, CSP estricta, respaldo posterior a mutaciones críticas y restauración administrativa verificada.
 
 ## Reglas que deben preservarse
 
-1. El diseño actual conserva Tailwind; el shell 1.10.0 combina azul petróleo/teal, JavaScript local, sidebar de lectura reforzada y tema claro/oscuro persistente. Alpine queda sólo por compatibilidad con vistas legadas.
+1. El shell combina azul petróleo/teal, JavaScript local, utilidades e iconos generados en `app/static`, sidebar de lectura reforzada y tema claro/oscuro persistente. No se permiten CDN ni dependencia de Alpine.
 2. Ninguna ruta clínica funciona sin autenticación.
 3. Roles únicos: `admin`, `medico`, `recepcion`.
 4. Recepción no accede a expediente, diagnóstico, tratamiento o receta.
@@ -78,9 +78,14 @@ La versión 1.10.0 es un expediente clínico general para servicios médicos, de
 70. La búsqueda global de Pagos aplica todos los términos normalizados aunque nombre y apellidos vivan en columnas distintas. **Ver en Pagos** debe funcionar con el nombre completo.
 71. Tras cancelar, el pago original debe permanecer visible. El retorno sólo admite rutas internas autorizadas, ancla el folio y elimina filtros que ocultarían el nuevo estado.
 72. Hospitalización no forma parte del producto dirigido a consultorios y no debe reaparecer en la navegación actual.
+73. La CSP no admite `unsafe-inline`, CDN ni atributos ejecutables/de estilo. Todo bloque interno legítimo usa el nonce de la respuesta.
+74. `scripts/build_local_assets.py --check` debe pasar después de cambiar clases o iconos; los archivos generados sí forman parte de la entrega.
+75. Una auditoría exitosa de mutación crítica dispara un respaldo; una operación rechazada no debe hacerlo. Una falla del medio se registra sin falsear el resultado de la transacción ya confirmada.
+76. Sólo Administración gestiona respaldos. Restaurar exige copia interna válida, CSRF, contraseña, `RESTAURAR`, copia previa, reemplazo atómico y cierre de sesión.
 
 ## Próximas fases
 
+- Prioridad inmediata 1.10.1: recursos frontend autocontenidos, CSP más estricta, respaldos posteriores a operaciones críticas, restauración verificada y pruebas de navegador.
 - Cifrado en reposo y administración de llaves.
 - Firma electrónica jurídicamente evaluada y cierre/versionado de notas clínicas.
 - Flujos regulatorios separados para medicamentos controlados, sólo tras revisión jurídica y operativa.

@@ -11,7 +11,7 @@
 
 ## Blueprints
 
-- `auth`: bootstrap, login/logout, usuarios, cambio/restablecimiento de contraseña y auditoría.
+- `auth`: bootstrap, login/logout, usuarios, cambio/restablecimiento de contraseña, auditoría y administración de respaldos.
 - `main`: dashboard y seguimiento.
 - `pacientes`: pacientes, citas, alta contextual de pagos e importación.
 - `pagos`: listado global, agregados filtrados y cancelación administrativa.
@@ -29,7 +29,8 @@
 4. `validators.py` normaliza y valida.
 5. La operación y su evento de auditoría se confirman en una sola transacción.
 6. Errores internos se registran, pero no se exponen.
-7. Se añaden cabeceras de seguridad y no-cache.
+7. Si una auditoría exitosa marcó una mutación crítica, se crea una copia SQLite verificada.
+8. Se añaden cabeceras de seguridad, CSP con nonce y no-cache.
 
 ## Agenda rápida y operativa
 
@@ -53,7 +54,9 @@ Cada cambio o restablecimiento de contraseña incrementa `auth_version`, de modo
 
 ## Datos
 
-`app/db.py` resuelve la ruta persistente, crea un respaldo consistente y ejecuta migraciones aditivas seguras. Para retirar la antigua unicidad de una receta por consulta, normalizar turnos y reconstruir pagos 1.10.0 existen migraciones específicas, transaccionales y verificadas que preservan filas e índices. El respaldo rota a 10 copias. Los cambios estructurales futuros requieren scripts versionados y una restauración probada.
+`app/db.py` resuelve la ruta persistente, crea respaldos consistentes, valida bases en modo lectura y restaura mediante archivo temporal y reemplazo atómico. Para retirar la antigua unicidad de una receta por consulta, normalizar turnos y reconstruir pagos 1.10.0 existen migraciones específicas, transaccionales y verificadas que preservan filas e índices. El respaldo rota a 10 copias y desde 1.10.1 se ejecuta al arrancar, después de mutaciones críticas y a solicitud administrativa.
+
+Las rutas `/administracion/respaldos` exigen Administración. El nombre se valida con una expresión cerrada y debe resolver dentro de `backups/`; no hay carga arbitraria. La restauración exige CSRF, contraseña actual y `RESTAURAR`, verifica `integrity_check` y tablas mínimas, crea una copia previa, libera conexiones SQLAlchemy, reemplaza la base y cierra la sesión.
 
 ## Pagos operativos
 

@@ -1,9 +1,10 @@
+import secrets
 from collections import defaultdict, deque
 from datetime import timedelta
 from functools import wraps
 from threading import Lock
 
-from flask import abort
+from flask import abort, g
 from flask_login import current_user
 
 from app.core.time import utcnow_naive
@@ -64,8 +65,17 @@ def roles_required(*roles):
 
 
 def configure_security_headers(app):
+    @app.before_request
+    def create_csp_nonce():
+        g.csp_nonce = secrets.token_urlsafe(18)
+
+    @app.context_processor
+    def expose_csp_nonce():
+        return {"csp_nonce": getattr(g, "csp_nonce", "")}
+
     @app.after_request
     def add_security_headers(response):
+        nonce = getattr(g, "csp_nonce", "")
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
@@ -75,11 +85,9 @@ def configure_security_headers(app):
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; "
             "object-src 'none'; img-src 'self' data:; connect-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com "
-            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com "
-            "https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com "
-            "https://fonts.gstatic.com data:"
+            f"script-src 'self' 'nonce-{nonce}'; script-src-attr 'none'; "
+            f"style-src 'self' 'nonce-{nonce}'; style-src-attr 'none'; "
+            "font-src 'self'; manifest-src 'self'; worker-src 'self'"
         )
         if response.content_type and "text/html" in response.content_type:
             response.headers["Cache-Control"] = "no-store, max-age=0"

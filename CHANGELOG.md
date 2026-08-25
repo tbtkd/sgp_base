@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.7.6 — Legibilidad del sidebar y contraste interactivo
+
+- La receta sustituye el rótulo visual **Domicilio profesional** por **Domicilio**, sin modificar el dato persistido ni su instantánea histórica.
+- Se incrementan de forma moderada los tamaños de marca, secciones, enlaces, submenús, iconos e identidad del sidebar, conservando su ancho y navegación adaptable.
+- El tema oscuro redefine los estados `hover` claros de tablas, tarjetas y controles para evitar fondos blancos con texto de bajo contraste.
+- Se mantienen rutas, permisos, esquema, dependencias y comportamiento clínico.
+- Se incorpora un manual operativo para usuarios médicos, administradores y asistentes/recepción.
+- Verificación: 80 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
+## 1.7.5 — Impresión de receta sin metadatos del navegador
+
+- La receta reemplaza las cajas de margen superiores e inferiores del navegador por contenido vacío, retirando fecha/hora, título, URL y paginación automáticos en navegadores Chromium modernos.
+- La impresión conserva un margen clínico moderado de 14 mm arriba y 12 mm a los lados y abajo.
+- El botón oculta temporalmente el título del documento como respaldo y lo restaura al cerrar la impresión.
+- El cambio se limita a la vista de receta: no modifica folios, datos profesionales, tratamiento, firma, orden, permisos ni persistencia.
+- Verificación: 80 pruebas `pytest`; 15 casos heredados compatibles con `unittest`.
+
 ## 1.7.4 — Firma simplificada y favicon vigente
 
 - La receta declara explícitamente el favicon sanitario vigente y versiona la URL del recurso para evitar que el navegador conserve el icono anterior.

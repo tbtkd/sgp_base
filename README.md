@@ -1,6 +1,6 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.7.4**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.7.6**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
@@ -12,6 +12,7 @@ Versión **1.7.4**. Aplicación local para consultorios médicos, dentales, nutr
 - Captura de medicamentos con altas nuevas en la parte superior y orden clínico final estable `1, 2, 3…`.
 - Receta A4 compacta, sin tarjetas repetidas, con densidad automática para tratamientos extensos y saltos de página por medicamento.
 - Firma autógrafa única y centrada; identificación profesional completa exclusivamente en el encabezado.
+- Impresión de receta con márgenes clínicos propios y sin fecha, título, URL o paginación agregados por navegadores Chromium modernos.
 - Antropometría y pliegues opcionales, habilitados exclusivamente para perfiles de Nutrición.
 - Citas con motivo y estado; pagos con monto, concepto y método.
 - Usuarios con roles `admin`, `medico` y `recepcion`, separados de su perfil profesional.
@@ -30,6 +31,7 @@ Versión **1.7.4**. Aplicación local para consultorios médicos, dentales, nutr
 - Agenda rápida exclusiva del KPI **Citas de hoy**: búsqueda bajo demanda de paciente activo —sin precargar el padrón—, ficha única del paciente seleccionado, calendario de 21 días, consulta de fechas posteriores y selección visual de horarios disponibles.
 - Topbar compacto que permanece visible mientras el área principal se desplaza, sin alterar el sidebar ni las vistas de impresión.
 - Formulario clínico con pestañas, botones secundarios y divisores adaptados a la paleta oscura, sin controles blancos de bajo contraste.
+- Sidebar con tipografía e iconografía reforzadas y estados interactivos de tablas, tarjetas y botones legibles en tema oscuro.
 - Resumen del historial ordenado por relevancia clínica: Historial médico, Alimentación y Actividad física.
 - El pendiente **Sin consulta reciente** se calcula y muestra sólo para perfiles de Nutrición.
 - Navegación que diferencia enlaces operativos, acceso contextual funcional a recetas, grupo desplegable de Administración y módulos planificados sin crear rutas ficticias.
@@ -112,11 +114,11 @@ El directorio que contiene el ejecutable debe ser escribible. Los datos, respald
 
 ## Impresión de notas clínicas y recetas
 
-Desde el detalle de una consulta selecciona **Imprimir nota / PDF**. La aplicación abre una hoja A4 independiente; después pulsa **Imprimir / guardar PDF**, elige **Guardar como PDF** y desactiva **Encabezados y pies de página** en las opciones del navegador. La nota imprimible no depende de Tailwind, Alpine ni recursos CDN.
+Desde el detalle de una consulta selecciona **Imprimir nota / PDF**. La aplicación abre una hoja A4 independiente; después pulsa **Imprimir / guardar PDF** y elige **Guardar como PDF**. La nota imprimible no depende de Tailwind, Alpine ni recursos CDN.
 
 La nota clínica y la receta son documentos distintos. Cuando el usuario tiene perfil de Medicina general u Odontología, cédula y domicilio profesional, el detalle ofrece **Generar receta**. El formulario exige por medicamento denominación genérica, presentación, dosis, vía, frecuencia y duración. **Agregar** inserta la nueva tarjeta arriba para no obligar a regresar al inicio; un orden de captura oculto, validado por el servidor, hace que la receta emitida siempre se muestre en secuencia `1, 2, 3…`. La salida conserva una instantánea del paciente y del profesional.
 
-La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombre y presentación; vía y cantidad cuando exista; dosis, frecuencia y duración; e indicaciones sólo cuando fueron capturadas. No usa cajas entre medicamentos, activa una densidad mayor desde seis elementos y evita dividir un medicamento entre páginas. El nombre, perfil, cédula y domicilio del profesional aparecen una sola vez en el encabezado; al final queda únicamente una línea centrada para la firma autógrafa, separada suficientemente del tratamiento. La receta implementada es únicamente **ordinaria**: debe revisarse, imprimirse y llevar firma autógrafa. Una receta emitida no se edita; una corrección crea un folio de sustitución y marca el anterior como no vigente. Desde una misma consulta pueden emitirse recetas adicionales con folio independiente. No admite estupefacientes, psicotrópicos ni otros flujos sujetos a receta especial. Consulta [docs/RECETA_COMPACTA_1_7_3.md](docs/RECETA_COMPACTA_1_7_3.md), [docs/FIRMA_FAVICON_RECETA_1_7_4.md](docs/FIRMA_FAVICON_RECETA_1_7_4.md) y [docs/RECETA_MEDICA_MEXICO.md](docs/RECETA_MEDICA_MEXICO.md) antes de usarla con datos reales.
+La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombre y presentación; vía y cantidad cuando exista; dosis, frecuencia y duración; e indicaciones sólo cuando fueron capturadas. No usa cajas entre medicamentos, activa una densidad mayor desde seis elementos y evita dividir un medicamento entre páginas. El nombre, perfil, cédula y domicilio del profesional aparecen una sola vez en el encabezado; el rótulo visible se simplifica a **Domicilio**. Al final queda únicamente una línea centrada para la firma autógrafa, separada suficientemente del tratamiento. En Opera, Chrome y Edge modernos, la receta sustituye las cajas de margen del navegador para evitar fecha, título, URL y paginación automáticos, conservando 14 mm arriba y 12 mm en los demás lados. En navegadores sin soporte de cajas de margen todavía debe desactivarse manualmente **Encabezados y pies de página**. La receta implementada es únicamente **ordinaria**: debe revisarse, imprimirse y llevar firma autógrafa. Una receta emitida no se edita; una corrección crea un folio de sustitución y marca el anterior como no vigente. Desde una misma consulta pueden emitirse recetas adicionales con folio independiente. No admite estupefacientes, psicotrópicos ni otros flujos sujetos a receta especial. Consulta [docs/RECETA_COMPACTA_1_7_3.md](docs/RECETA_COMPACTA_1_7_3.md), [docs/FIRMA_FAVICON_RECETA_1_7_4.md](docs/FIRMA_FAVICON_RECETA_1_7_4.md), [docs/IMPRESION_RECETA_LIMPIA_1_7_5.md](docs/IMPRESION_RECETA_LIMPIA_1_7_5.md) y [docs/RECETA_MEDICA_MEXICO.md](docs/RECETA_MEDICA_MEXICO.md) antes de usarla con datos reales.
 
 ## Roles
 
@@ -140,7 +142,7 @@ bandit -q -r app run.py seed_admin.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación funcional incluye 80 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el cambio vigente se documenta en [docs/FIRMA_FAVICON_RECETA_1_7_4.md](docs/FIRMA_FAVICON_RECETA_1_7_4.md).
+La aceptación funcional incluye 80 casos, de los cuales 15 también pueden ejecutarse directamente con `unittest`; el detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md). El uso cotidiano se explica en [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md), el roadmap funcional está en [docs/ROADMAP_MODULOS_UI_CITAS.md](docs/ROADMAP_MODULOS_UI_CITAS.md) y el cambio vigente se documenta en [docs/LEGIBILIDAD_INTERFAZ_1_7_6.md](docs/LEGIBILIDAD_INTERFAZ_1_7_6.md).
 
 ## Compilación para Windows
 

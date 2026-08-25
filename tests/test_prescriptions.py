@@ -210,13 +210,24 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
         assert required in printable
     assert "99999999" not in printable
     assert "Domicilio modificado" not in printable
+    assert f"<strong>Domicilio:</strong> {address}" in printable
+    assert "Domicilio profesional:" not in printable
     assert "Cerrar Sesión" not in printable
     assert "cdn.tailwindcss.com" not in printable
     assert printable.count("Elena Profesional") == 1
     assert printable.count("12345678") == 1
     assert "Fecha y sello" not in printable
     assert "data-prescriber-signature" in printable
-    assert "/static/img/logo.png?v=1.7.4" in printable
+    assert "/static/img/logo.png?v=1.7.6" in printable
+    assert 'margin: 14mm 12mm 12mm' in printable
+    assert '@top-left { content: ""; }' in printable
+    assert '@top-center { content: ""; }' in printable
+    assert '@top-right { content: ""; }' in printable
+    assert '@bottom-left { content: ""; }' in printable
+    assert '@bottom-center { content: ""; }' in printable
+    assert '@bottom-right { content: ""; }' in printable
+    assert 'onclick="printPrescription()"' in printable
+    assert 'document.title = " ";' in printable
 
     repeated = client.get(f"/recetas/valoracion/{assessment_id}/nueva")
     assert repeated.status_code == 302
@@ -379,7 +390,7 @@ def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login
     assert favicon.status_code == 200
     assert favicon.mimetype == "image/vnd.microsoft.icon"
     assert favicon.headers["Cache-Control"] == "no-cache, max-age=0, must-revalidate"
-    assert "/static/img/logo.png?v=1.7.4" in page
+    assert "/static/img/logo.png?v=1.7.6" in page
 
 
 def test_additional_and_replacement_prescriptions_preserve_every_folio(app):

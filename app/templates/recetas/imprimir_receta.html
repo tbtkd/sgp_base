@@ -40,15 +40,24 @@
         .sheet--dense .medicine-title { font-size: 10.7px; }
         .sheet--dense .medicine-line { font-size: 9.5px; line-height: 1.23; }
         .sheet--dense .signature { margin-top: 36px; }
-        @page { size: A4; margin: 9mm; }
+        @page {
+            size: A4;
+            margin: 14mm 12mm 12mm;
+            @top-left { content: ""; }
+            @top-center { content: ""; }
+            @top-right { content: ""; }
+            @bottom-left { content: ""; }
+            @bottom-center { content: ""; }
+            @bottom-right { content: ""; }
+        }
         @media print { body { background: white; } .toolbar { display: none; } .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; } }
         @media (max-width: 700px) { .sheet { width: 100%; margin: 0; padding: 18px; } .header, .patient { grid-template-columns: 1fr; } .meta { text-align: left; } }
     </style>
 </head>
 <body>
     <div class="toolbar">
-        <p>Revisa la información, imprime y firma de forma autógrafa. En el diálogo puedes elegir “Guardar como PDF”.</p>
-        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" onclick="window.print()">Imprimir / PDF</button></div>
+        <p>Revisa la información, imprime y firma de forma autógrafa. La hoja aplica márgenes clínicos y una salida sin encabezado del navegador.</p>
+        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" onclick="printPrescription()">Imprimir / PDF</button></div>
     </div>
     <main class="sheet{% if receta.medicamentos|length > 5 %} sheet--dense{% endif %}">
         <header class="header">
@@ -57,7 +66,7 @@
                 <div class="professional">
                     <p><strong>{{ receta.profesional_nombre }}</strong> · {{ receta.profesional_perfil_etiqueta }}</p>
                     {% if receta.profesional_cedula %}<p><strong>Cédula profesional:</strong> {{ receta.profesional_cedula }}</p>{% endif %}
-                    <p><strong>Domicilio profesional:</strong> {{ receta.domicilio_profesional }}</p>
+                    <p><strong>Domicilio:</strong> {{ receta.domicilio_profesional }}</p>
                 </div>
             </div>
             <div class="meta"><p><strong>Folio:</strong> {{ receta.folio }}</p><p><strong>Documento:</strong> {{ receta.tipo_etiqueta }} · v{{ receta.version }}</p><p><strong>Fecha de emisión:</strong> {{ receta.fecha_emision|format_date }}</p><p><strong>Expediente:</strong> #{{ receta.paciente_id }}</p></div>
@@ -90,5 +99,15 @@
         <div class="signature" data-prescriber-signature>Firma autógrafa del profesional</div>
         <p class="warning">Documento para receta ordinaria. No válido para medicamentos sujetos a receta especial ni sin la firma autógrafa correspondiente. Verifica folio, vigencia, paciente, alergias, medicamento e instrucciones antes de entregarlo.</p>
     </main>
+    <script>
+        function printPrescription() {
+            const originalTitle = document.title;
+            const restoreTitle = () => { document.title = originalTitle; };
+            document.title = " ";
+            window.addEventListener("afterprint", restoreTitle, { once: true });
+            window.print();
+            window.setTimeout(restoreTitle, 1000);
+        }
+    </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-# Matriz de pruebas — versión 1.7.4
+# Matriz de pruebas — versión 1.7.6
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -87,6 +87,7 @@ python -m pytest -q
 | UI-DASH-05 | Densidad y tema | Acciones no duplicadas, seguimiento junto a próximas citas y separadores oscuros consistentes |
 | UI-DASH-06 | KPI accionables | Sin fila paralela; tres acciones separadas y enlaces informativos accesibles |
 | UI-SHELL-04 | Topbar persistente | Shell limitado al viewport, contenido desplazable y cabecera compacta visible |
+| UI-SHELL-05 | Legibilidad | Sidebar con tamaños reforzados y estados `hover` oscuros sin fondos blancos |
 
 ## Perfiles profesionales (`tests/test_professional_profiles.py`)
 
@@ -107,7 +108,7 @@ python -m pytest -q
 | --- | --- | --- |
 | RX-SEC-01 | Acceso | Anónimo redirigido, Nutrición rechazada y profesional incompleto bloqueado |
 | RX-CRUD-01 | Emisión | Folio, medicamento, alergias, snapshots y evento `CREAR_RECETA` |
-| RX-PRINT-01 | Documento | A4 compacto con identidad profesional única en encabezado, favicon vigente, orden `1..n` y firma autógrafa centrada |
+| RX-PRINT-01 | Documento | A4 compacto con identidad única, rótulo Domicilio, orden `1..n`, firma centrada, cajas de margen vacías y márgenes clínicos 14/12 mm |
 | RX-IMM-01 | Inmutabilidad | Cambios al usuario no reescriben la receta y la consulta asociada no se elimina |
 | RX-VAL-01 | Servidor | Filas desalineadas, más de 10 medicamentos y receta especial rechazados |
 | RX-HIS-01 | Historial | Original, adicional y sustitución conservan folios/versiones y vigencia independiente |

@@ -35,7 +35,7 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.7.4:
+Resultado esperado para la versión 1.7.6:
 
 ```text
 80 passed
@@ -43,7 +43,7 @@ Resultado esperado para la versión 1.7.4:
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
 
-Para ejecutar únicamente los casos de interfaz, shell, tema, pestañas, impresión, KPIs y estados vacíos:
+Para ejecutar únicamente los casos de interfaz, shell, tema, contraste de estados interactivos, pestañas, impresión, KPIs y estados vacíos:
 
 ```powershell
 python -m pytest -q tests/test_ui_modules.py

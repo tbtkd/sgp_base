@@ -1,4 +1,4 @@
-# Arquitectura técnica — versión 1.7.4
+# Arquitectura técnica — versión 1.7.6
 
 ## Componentes
 
@@ -16,6 +16,8 @@ El dashboard agrega consultas de lectura acotadas para altas de seis meses, acti
 La acción de agenda del KPI reutiliza el blueprint `pacientes` mediante `GET/POST /pacientes/agendar-cita`. El HTML inicial no recibe el padrón. `GET /pacientes/buscar_para_cita` busca bajo demanda sobre pacientes activos, limita a ocho filas y sólo devuelve identidad operativa mínima; `GET /pacientes/disponibilidad_citas` obtiene los 21 bloques diarios con estado `disponible`, `ocupado` o `transcurrido`. Ambas respuestas usan `Cache-Control: no-store`. El POST vuelve a validar paciente activo, fecha, rango, hora, cita previa y conflicto; la comprobación y escritura se serializan dentro del proceso local de Waitress antes del `commit` y la auditoría.
 
 Los popovers usan HTML nativo (`hidden`) como estado seguro. El menú de cuenta reside en el footer del sidebar y se despliega hacia arriba mediante el botón `...`; el topbar no renderiza identidad. El grupo nativo `details/summary` de Administración reduce accesos visibles sin alterar permisos. Recetas enlaza al listado existente con `origen=recetas`, por lo que reutiliza el contrato de consultas sin crear un controlador paralelo. El shell ocupa `100dvh`, mantiene el topbar como elemento no desplazable y reserva `overflow-y` al contenido principal. `app.js` controla sidebar móvil, foco, Escape, búsqueda/navegación, estados planificados y tema persistente; también distingue anclas del mismo documento de una navegación real. Alpine sigue presente en componentes legados, pero no gobierna el shell.
+
+La escala visual del sidebar se concentra en `shell.css`: marca, títulos de grupo, enlaces, submenús, iconos y cuenta usan tamaños reforzados sin ampliar el ancho fijo. El mismo archivo traduce los `hover:bg-*` heredados de Tailwind a fondos azul petróleo, teal y tonos semánticos oscuros mediante reglas `!important`; esto evita que el tema oscuro combine un fondo blanco con texto ya convertido a claro.
 
 ## Persistencia portable
 
@@ -45,11 +47,15 @@ La denominación interna `valoracion_antropometrica` se conserva para compatibil
 
 Cada receta ordinaria emitida es un documento independiente e inmutable. La consulta admite un original, recetas adicionales y sustituciones versionadas. Una sustitución marca el folio anterior como no vigente sin reescribirlo y enlaza ambos documentos. Los snapshots almacenan nombre, nacimiento y alergias del paciente, además de nombre, cédula, perfil, establecimiento y domicilio del profesional. La bitácora sólo conserva identificadores, tipo, versión y conteos, nunca el contenido farmacológico.
 
+El campo persistente y el snapshot continúan denominados `domicilio_profesional`; la plantilla de impresión sólo cambia su etiqueta visible a **Domicilio**. No existe migración de esquema ni reescritura de recetas anteriores.
+
 La interfaz de receta inserta visualmente cada medicamento nuevo al inicio para mantener accesible el botón de alta. Cada fila transporta `orden_medicamento[]`; el validador exige una permutación exacta `1..n`, ordena los datos antes de crear los modelos y la relación los recupera por ID. De este modo, la conveniencia visual no altera el orden clínico persistido o impreso.
 
 La plantilla imprimible representa cada medicamento como un bloque semántico `article` de tres líneas, sin cuadrículas ni contenedores decorativos repetidos. La cantidad e indicaciones sólo se renderizan cuando existen; presentación, dosis, vía, frecuencia y duración permanecen siempre visibles. CSS aplica `break-inside: avoid` a cada medicamento y una clase de mayor densidad cuando la receta supera cinco elementos, reduciendo páginas sin mezclar instrucciones entre medicamentos.
 
 La identificación del prescriptor vive exclusivamente en el encabezado de la receta; el pie contiene un único bloque centrado de firma autógrafa con separación propia. `APP_VERSION` y `ASSET_VERSION` centralizan la versión vigente. Las páginas normales y la vista independiente de receta agregan esa versión al favicon; la ruta legada `/favicon.ico` exige revalidación para desplazar copias antiguas del navegador.
+
+La receta define seis cajas de margen `@page` vacías para sustituir los encabezados y pies integrados de Chromium 131 o posterior. El área paginada conserva 14 mm superiores y 12 mm laterales/inferiores. `printPrescription()` borra temporalmente `document.title` como defensa adicional y lo restaura después del evento `afterprint`; ningún dato de la receta se modifica.
 
 ## Turno diario de atención
 

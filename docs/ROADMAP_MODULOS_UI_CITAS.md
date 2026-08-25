@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.7.4 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado y reserva una firma centrada. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
+La versión 1.7.6 completa la primera fase de consistencia funcional, perfiles profesionales, historial de recetas, recuperación de acceso e identidad de navegación. El panel central presenta KPI accionables, agenda, próximas citas junto a acompañamiento, gráficas locales, pacientes recientes, pendientes únicos y actividad con datos reales, sin incluir ingresos. La acción de Citas de hoy incorpora una agenda rápida que no precarga el padrón: busca bajo demanda, conserva una única ficha seleccionada y mantiene calendario/horarios sin duplicarse en el sidebar ni retirar el modal individual. Top bar y sidebar cuentan con shell responsive y tema persistente; la cabecera compacta permanece visible, la cuenta reside en el footer del sidebar, Administración concentra sus accesos secundarios y los iconos canónicos permanecen sin cambios. El sidebar usa una escala legible y los estados interactivos oscuros ya no heredan fondos blancos. El formulario clínico ya no hereda botones ni divisores blancos en tema oscuro; el resumen del paciente prioriza Historial Médico y el seguimiento sin consulta reciente es exclusivo de Nutrición. La receta inserta nuevas tarjetas arriba sin alterar su orden final, imprime los medicamentos en una lista compacta, concentra la identidad profesional en el encabezado, rotula el domicilio de forma breve, reserva una firma centrada y sustituye los metadatos automáticos de impresión en Chromium moderno. El favicon vigente se declara con versión para desplazar copias anteriores del navegador. Las consultas reciben un turno global diario asignado en servidor. Las columnas nuevas se incorporan mediante migración aditiva; las restricciones legadas de recetas y turnos se actualizan mediante migraciones transaccionales específicas que conservan y verifican los datos.
 
 Módulos evaluados:
 
@@ -242,6 +242,21 @@ Módulos evaluados:
 - Se amplía el espacio entre el tratamiento y la firma sin romper el modo denso.
 - El shell y la receta independiente declaran el mismo favicon con versión; la ruta legada exige revalidación.
 
+### Fase 1.17: impresión limpia con margen clínico — completada en 1.7.5
+
+- Cajas de margen CSS vacías sustituyen fecha/hora, título, URL y paginación integrados de Chromium moderno.
+- El área A4 conserva 14 mm superiores y 12 mm laterales/inferiores.
+- El título del documento queda vacío sólo durante la impresión y se restaura al finalizar.
+- No se altera el contenido clínico, la fecha de emisión propia de la receta ni la composición compacta.
+
+### Fase 1.18: legibilidad y contraste transversal — completada en 1.7.6
+
+- La receta conserva el snapshot `domicilio_profesional`, pero muestra el rótulo breve **Domicilio**.
+- Marca, secciones, enlaces, submenús, iconos e identidad del sidebar aumentan de forma moderada sin cambiar el ancho ni las rutas.
+- Tablas, tarjetas y controles con variantes Tailwind reciben estados `hover` oscuros explícitos; desaparece el fondo blanco sobre texto claro.
+- Se agrega un manual de usuario orientado a Medicina, Administración y Asistente/Recepción.
+- No se modifican esquema, permisos, rutas, dependencias ni lógica clínica.
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -260,7 +275,7 @@ Módulos evaluados:
 3. Revisa que los datos de la nota sean correctos.
 4. Pulsa **Imprimir / guardar PDF**.
 5. En Chrome, Edge u Opera selecciona **Guardar como PDF** como destino.
-6. En **Más ajustes**, desactiva **Encabezados y pies de página** para eliminar URL, fecha y número de página generados por el navegador.
+6. Verifica que no aparezcan encabezados del navegador. En versiones antiguas o Firefox, desactiva **Encabezados y pies de página** si todavía se muestran.
 7. Mantén escala en 100 %; activa gráficos de fondo sólo si deseas conservar tonos de tablas.
 
 La aplicación prepara la vista imprimible; el archivo PDF lo genera el navegador. No se añadió una biblioteca de PDF porque no es necesaria para este flujo y aumentaría dependencias y superficie de mantenimiento.
@@ -294,6 +309,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | UI-DASH-06 | KPI accionables | Información y captura unificadas en tarjetas con controles separados |
 | UI-SHELL-04 | Topbar persistente | Viewport estable, contenido desplazable y cabecera compacta visible |
 | UI-THEME-05 | Consulta oscura | Pestañas, botones secundarios y divisores sin fondos/líneas blancas |
+| UI-SHELL-05 | Legibilidad general | Sidebar ampliado y estados `hover` oscuros sin pérdida de contraste |
 | PRO-08 | Seguimiento nutricional | Ausencia de consulta reciente visible sólo para Nutrición |
 | CITA-KPI-01 | Agenda rápida | Paciente, calendario, horarios, revalidación y auditoría sin duplicar navegación |
 | CITA-SEARCH-01 | Búsqueda privada | Sin padrón inicial, máximo ocho resultados, ficha única y respuesta sin datos clínicos |
@@ -305,7 +321,7 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.7.4: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
+Resultado de aceptación de 1.7.6: **80 pruebas aprobadas**, incluyendo 15 casos `unittest`. Las pruebas cubren perfiles, recetas originales/adicionales/sustituidas, orden y salida compacta de medicamentos, firma única, rótulo Domicilio, impresión sin metadatos del navegador, margen A4 propio, favicon versionado, turno diario, cédula/domicilio, snapshots, inmutabilidad, migraciones, recuperación de contraseñas, invalidación de sesiones, restricción de antropometría, seguimiento nutricional, orden del historial, contraste clínico oscuro, legibilidad del sidebar, búsqueda privada de pacientes, agenda rápida, calendario y conflictos de citas, KPI accionables, shell persistente, tema, navegación contextual, agrupación administrativa, cabecera, iconos, limpieza segura y compatibilidad de SQLite en Windows.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 

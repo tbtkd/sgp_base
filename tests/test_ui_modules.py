@@ -193,6 +193,12 @@ def test_shell_navigation_theme_and_planned_modules_are_accessible(client, login
     assert "min-height: 3.65rem" in shell_css
     assert ".shell-main { min-height: 0" in shell_css
     assert "sameDocumentAnchor" in app_script
+    assert "font-size: 0.82rem" in shell_css
+    assert "font-size: 0.76rem" in shell_css
+    assert '.hover\\:bg-gray-50:hover' in shell_css
+    assert '.hover\\:bg-teal-100:hover' in shell_css
+    assert "background-color: #112f36 !important" in shell_css
+    assert "background-color: #134e4a !important" in shell_css
 
 
 def test_recipe_sidebar_context_and_dashboard_layout(client, login):

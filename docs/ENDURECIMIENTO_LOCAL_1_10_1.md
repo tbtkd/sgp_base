@@ -40,16 +40,18 @@ No existe carga arbitraria de archivos. Sólo pueden restaurarse copias ya ubica
 1. Descomprime la versión en una carpeta nueva; no mezcles código de versiones distintas.
 2. Conserva `instance/` y `backups/`, pero no copies `.venv`, cachés ni archivos temporales.
 3. Instala `requirements.txt` y ejecuta `python scripts/build_local_assets.py --check`.
-4. Ejecuta `python -m pytest -q`; exige 118 aprobadas. El único `skipped` permitido es el E2E cuando Chromium no está instalado.
+4. Ejecuta `python -m pytest -q`; exige 122 aprobadas. El único `skipped` permitido es el E2E cuando Chromium no está instalado.
 5. Inicia sesión como Administración y abre **Administración → Respaldos**.
 6. Crea una copia, pulsa **Verificar** y descarga una copia de prueba.
 7. En una base de demostración, modifica un dato, restaura una copia anterior y confirma que la sesión se cierre y el dato vuelva a su estado anterior.
 8. Revisa **Auditoría** para comprobar `CREAR_RESPALDO`, `VERIFICAR_RESPALDO`, `DESCARGAR_RESPALDO` y `RESTAURAR_RESPALDO`.
 9. No uses datos reales si la creación/verificación/restauración de prueba falla.
 
+Si la prueba CSP informa un atributo como `style=` en una plantilla, conserva la prueba: el archivo señalado es antiguo o necesita corregirse. La salida incluye ruta y línea. Cuando la actualización se copió sobre una carpeta anterior, descomprime 1.10.1 completa en una carpeta nueva y copia únicamente `instance/` y `backups/`; una entrega limpia no contiene atributos de evento o estilo incrustados.
+
 ## Pruebas positivas y negativas
 
-`tests/test_continuity_security.py` cubre recursos/CSP, base válida y corrupta, restauración atómica, respaldo tras éxito, ausencia de copia tras rechazo, falla de almacenamiento, roles, CSRF, creación, verificación, descarga, nombre inválido, contraseña/frase incorrectas, copia corrupta y restauración correcta. `tests/e2e/test_browser_security.py` abre un servidor temporal y valida login, mismo origen, consola CSP y confirmación local con Chromium.
+`tests/test_continuity_security.py` cubre recursos/CSP, detección de atributos bloqueados con ubicación exacta, ausencia de mensajes técnicos conocidos en las pantallas, base válida y corrupta, restauración atómica, respaldo tras éxito, ausencia de copia tras rechazo, falla de almacenamiento, roles, CSRF, creación, verificación, descarga, nombre inválido, contraseña/frase incorrectas, copia corrupta y restauración correcta. `tests/e2e/test_browser_security.py` abre un servidor temporal y valida login, mismo origen, consola CSP y confirmación local con Chromium.
 
 ## Estatus mínimo de seguridad
 

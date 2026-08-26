@@ -86,11 +86,14 @@ def _handle_maintenance_command(argv=None):
     arguments = list(sys.argv[1:] if argv is None else argv)
     if not arguments:
         return False
-    if arguments[0] != "--reset-password" or len(arguments) != 2:
-        raise RuntimeError("Uso: python run.py --reset-password NOMBRE_USUARIO")
+    if arguments[0] not in {"--reset-password", "--recover-admin"} or len(arguments) != 2:
+        raise RuntimeError(
+            "Uso: python run.py --reset-password NOMBRE_USUARIO "
+            "o python run.py --recover-admin NOMBRE_USUARIO"
+        )
 
     from app import create_app
-    from app.core.password_recovery import reset_password_offline
+    from app.core.password_recovery import recover_admin_offline, reset_password_offline
 
     recovery_password = getpass("Nueva contraseña de recuperación: ")
     confirmation = getpass("Confirma la contraseña: ")
@@ -98,9 +101,16 @@ def _handle_maintenance_command(argv=None):
         raise RuntimeError("Las contraseñas no coinciden.")
     app = create_app(os.environ.get("SGPN_ENV", "default"))
     with app.app_context():
-        user = reset_password_offline(arguments[1], recovery_password)
+        user = (
+            recover_admin_offline(arguments[1], recovery_password)
+            if arguments[0] == "--recover-admin"
+            else reset_password_offline(arguments[1], recovery_password)
+        )
         app.logger.warning("Recuperación local completada; usuario_id=%s", user.id)
-    print("Contraseña restablecida. Inicia sesión y establece una contraseña definitiva.")
+    if arguments[0] == "--recover-admin":
+        print("Acceso de Administración recuperado. Inicia sesión y establece una contraseña definitiva.")
+    else:
+        print("Contraseña restablecida. Inicia sesión y establece una contraseña definitiva.")
     return True
 
 

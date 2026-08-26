@@ -154,7 +154,7 @@ class ValoracionAntropometrica(db.Model):
         turno diario e ID. El filtrado y la paginación también se ejecutan en
         servidor para no exponer ni cargar el historial completo en el cliente.
         """
-        from app.core.text import search_key
+        from app.core.text import search_terms
         from app.models.paciente import Paciente
 
         ranked = (
@@ -189,8 +189,8 @@ class ValoracionAntropometrica(db.Model):
                 + func.coalesce(Paciente.apellido_materno, "")
             )
         )
-        for term in search_key(busqueda).split():
-            query = query.filter(full_name.contains(term))
+        for term in search_terms(busqueda):
+            query = query.filter(full_name.contains(term, autoescape=True))
 
         descending = orden != "fecha_asc"
         direction = desc if descending else asc

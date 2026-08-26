@@ -123,7 +123,7 @@
 function cambiarEstatus(id) {
     confirmarAccion({
         titulo: '¿Cambiar estatus de usuario?',
-        mensaje: '¿Estás seguro de que deseas modificar el estatus de este usuario en el sistema?',
+        mensaje: 'La cuenta cambiará entre Activa e Inactiva. Cuando esté inactiva, la persona no podrá entrar al sistema.',
         textoConfirmar: 'Sí, cambiar',
         textoCancelar: 'Cancelar',
         icono: 'question'
@@ -165,12 +165,12 @@ function cambiarEstatus(id) {
                     }
                 }
             } else {
-                alert(data.error || 'Error al cambiar el estatus');
+                alert(data.error || 'No se pudo realizar el cambio. Inténtalo de nuevo.');
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Error de conexión al cambiar el estatus.');
+            alert('No se pudo realizar el cambio. Revisa la conexión e inténtalo de nuevo.');
         });
     });
 }

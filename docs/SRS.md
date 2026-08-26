@@ -94,6 +94,13 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 86. Sólo Administración puede crear, verificar, descargar o restaurar respaldos internos.
 87. Restaurar debe exigir reautenticación y frase explícita, validar integridad/esquema, crear una copia previa, reemplazar atómicamente y cerrar la sesión.
 88. Un respaldo corrupto, un nombre no interno, CSRF ausente o una confirmación incorrecta no debe modificar la base activa.
+89. Las búsquedas de Pacientes, Agenda, Consultas y Pagos deben aceptar términos parciales sin distinguir mayúsculas ni acentos, incluso cuando nombre y apellidos estén en campos distintos.
+90. El texto de búsqueda debe mantenerse parametrizado; los caracteres `%` y `_` proporcionados por el usuario no deben convertirse en comodines SQL.
+91. Una cuenta de Administración no debe poder cambiar su propio rol ni desactivarse; un administrador clínico conserva Administración y configura su área mediante el perfil profesional.
+92. Ninguna operación debe dejar al sistema sin un administrador activo. Un cambio de rol o estado hecho por otro administrador debe invalidar las sesiones anteriores de la cuenta afectada.
+93. La recuperación local de un rol administrativo sólo debe habilitarse cuando no quede ninguna cuenta de Administración activa; debe operar sobre una cuenta existente, exigir contraseña segura, invalidar sesiones y quedar auditada sin guardar la credencial.
+94. El tema oscuro debe utilizar superficies suaves, texto secundario legible y bordes decorativos discretos, sin eliminar el foco visible requerido para operar con teclado.
+95. La acción **Sustituir** de una receta vigente debe distinguirse de **Ver / imprimir**, conservar contraste suficiente en tema claro y oscuro e incluir una etiqueta accesible que identifique el folio.
 
 ## Requisitos de seguridad
 
@@ -102,7 +109,7 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 - CSRF, cookies protegidas, secreto persistente y bloqueo por intentos.
 - Validación autoritativa de todos los datos mutables.
 - Registro de eventos críticos sin contraseñas ni contenido clínico completo.
-- Invalidación de sesiones tras cambios de credencial y cambio obligatorio para contraseñas temporales.
+- Invalidación de sesiones tras cambios de credencial, rol o estado y cambio obligatorio para contraseñas temporales.
 - Escucha exclusiva en localhost.
 - CSP autocontenida con nonce y bloqueo de atributos ejecutables.
 - Respaldo y restauración SQLite verificables, auditados y restringidos a Administración.

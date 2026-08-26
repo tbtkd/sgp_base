@@ -80,7 +80,7 @@ def test_professional_profile_and_license_are_validated():
         "rol": "medico",
         "cedula_profesional": "12345678",
     }
-    with pytest.raises(ValidationError, match="perfil profesional"):
+    with pytest.raises(ValidationError, match="área de atención"):
         user_payload(base, include_password=False)
 
     data = user_payload({**base, "perfil_profesional": "dentista"}, include_password=False)

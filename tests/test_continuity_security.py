@@ -80,8 +80,26 @@ def test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes(ap
     assert all(f'nonce="{authenticated_nonce}"' in tag for tag in inline_tags)
 
     root = Path(__file__).parents[1]
-    templates = "\n".join(path.read_text(encoding="utf-8") for path in (root / "app/templates").rglob("*.html"))
-    assert not re.search(r"\b(?:onclick|onchange|onsubmit|onmouseover|onmouseout|style)=", templates)
+    template_paths = sorted((root / "app/templates").rglob("*.html"))
+    template_sources = []
+    unsafe_attributes = []
+    attribute_pattern = re.compile(
+        r"\b(?:onclick|onchange|onsubmit|onmouseover|onmouseout|style)\s*=",
+        flags=re.IGNORECASE,
+    )
+    for path in template_paths:
+        source = path.read_text(encoding="utf-8")
+        template_sources.append(source)
+        for match in attribute_pattern.finditer(source):
+            line = source.count("\n", 0, match.start()) + 1
+            attribute = match.group(0).split("=", maxsplit=1)[0].strip()
+            unsafe_attributes.append(f"{path.relative_to(root)}:{line} ({attribute})")
+    assert not unsafe_attributes, (
+        "Se encontraron atributos que la política de seguridad no permite:\n"
+        + "\n".join(unsafe_attributes)
+        + "\nSi actualizaste sobre una carpeta anterior, extrae la entrega completa en una carpeta nueva y vacía."
+    )
+    templates = "\n".join(template_sources)
     assert not re.search(r"(?:src|href)=[\"']https?://", templates)
     assert (root / "app/static/css/utilities.css").stat().st_size > 5_000
     assert (root / "app/static/css/icons.css").stat().st_size > 1_000
@@ -89,6 +107,32 @@ def test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes(ap
     utilities = (root / "app/static/css/utilities.css").read_text(encoding="utf-8")
     for selector in (".bg-opacity-50", ".max-h-36", ".mx-auto", ".sm\\:w-auto", ".text-\\[11px\\]"):
         assert selector in utilities
+
+    user_surface_paths = [
+        *template_paths,
+        *(root / "app/static/js").rglob("*.js"),
+        *(root / "app/controllers").rglob("*.py"),
+        *(root / "app/core").rglob("*.py"),
+    ]
+    user_surface = "\n".join(path.read_text(encoding="utf-8") for path in user_surface_paths)
+    technical_messages_replaced = (
+        "mantener la trazabilidad",
+        "movimientos íntegros",
+        "Registros legados no sumados",
+        "Registro migrado",
+        "Error interno del servidor",
+        "El servidor volverá a validar",
+        "validan fisiológicamente en el servidor",
+        "Respaldo íntegro",
+        "base activa",
+        "vuelve a autenticarte",
+        "identificador de la operación",
+        "relación de compresión",
+        "contenido descomprimido",
+        "recetas emitidas e inmutables",
+    )
+    for old_message in technical_messages_replaced:
+        assert old_message not in user_surface
 
 
 def test_database_verification_accepts_sgpn_and_rejects_corrupt_file(continuity_app, tmp_path):
@@ -124,6 +168,10 @@ def test_successful_critical_mutation_creates_backup_but_rejected_one_does_not(c
     )
     assert changed.status_code == 200
     assert changed.headers["X-SGPN-Backup"] == "created"
+    with continuity_app.app_context():
+        updated = db.session.get(Usuario, target_id)
+        assert updated.status == "inactivo"
+        assert updated.auth_version == 1
     after_success = _backup_names(continuity_app)
     assert len(after_success - before) == 1
     rejected = client.post(

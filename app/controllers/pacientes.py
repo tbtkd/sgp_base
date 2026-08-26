@@ -351,7 +351,7 @@ def registrar_pago_paciente(id):
         )
         db.session.commit()
         if duplicate and duplicate.paciente_id == patient.id:
-            flash(f"La operación ya había sido registrada con el folio {duplicate.folio}.", "warning")
+            flash(f"Este pago ya se registró con el folio {duplicate.folio}. No se creó otro.", "warning")
         else:
             flash("No fue posible registrar el pago. Recarga el formulario e inténtalo nuevamente.", "error")
     return redirect(url_for("pacientes.detalle_paciente", id=id))
@@ -381,7 +381,7 @@ def _excel_date(value):
             return datetime.strptime(str(value).strip(), fmt).date()
         except (TypeError, ValueError):
             continue
-    raise ValidationError("Formato de fecha inválido.")
+    raise ValidationError("Revisa la fecha; usa una fecha válida.")
 
 
 def _extract_number(text, key):
@@ -400,26 +400,26 @@ def _extract_number(text, key):
 def _validate_xlsx_archive(blob):
     stream = io.BytesIO(blob)
     if not zipfile.is_zipfile(stream):
-        raise ValidationError("El archivo no tiene una estructura XLSX válida.")
+        raise ValidationError("El archivo no se puede leer como Excel. Guarda una copia en formato .xlsx e inténtalo de nuevo.")
     stream.seek(0)
     with zipfile.ZipFile(stream) as archive:
         members = archive.infolist()
         if len(members) > 500:
-            raise ValidationError("El archivo contiene demasiados componentes internos.")
+            raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
         total = 0
         for member in members:
             path = PurePosixPath(member.filename)
             if path.is_absolute() or ".." in path.parts:
-                raise ValidationError("El archivo contiene rutas internas no permitidas.")
+                raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
             total += member.file_size
             if member.file_size > 10 * 1024 * 1024:
-                raise ValidationError("El archivo contiene un componente interno demasiado grande.")
+                raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
             if member.file_size and member.compress_size == 0:
-                raise ValidationError("El archivo tiene una relación de compresión inválida.")
+                raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
             if member.compress_size and member.file_size / member.compress_size > 100:
-                raise ValidationError("El archivo tiene una relación de compresión no permitida.")
+                raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
         if total > MAX_XLSX_UNCOMPRESSED:
-            raise ValidationError("El contenido descomprimido excede el límite permitido.")
+            raise ValidationError("El archivo de Excel no se puede procesar. Revisa que no esté dañado y vuelve a guardarlo como .xlsx.")
 
 
 @pacientes.route("/<int:id>/cargar-excel", methods=["POST"])
@@ -448,18 +448,18 @@ def cargar_excel(id):
         return jsonify({"success": False, "message": "Paciente no encontrado"}), 404
     uploaded = request.files.get("excel_file") or request.files.get("file")
     if not uploaded or not uploaded.filename:
-        return jsonify({"success": False, "message": "Selecciona un archivo XLSX"}), 400
+        return jsonify({"success": False, "message": "Selecciona un archivo de Excel (.xlsx)."}), 400
     if not uploaded.filename.lower().endswith(".xlsx"):
-        return jsonify({"success": False, "message": "Solo se permiten archivos .xlsx"}), 400
+        return jsonify({"success": False, "message": "Elige un archivo de Excel guardado en formato .xlsx."}), 400
     blob = uploaded.read(5 * 1024 * 1024 + 1)
     if len(blob) > 5 * 1024 * 1024:
-        return jsonify({"success": False, "message": "El archivo excede el límite de 5 MB"}), 413
+        return jsonify({"success": False, "message": "El archivo es demasiado grande. Elige uno de hasta 5 MB."}), 413
     try:
         _validate_xlsx_archive(blob)
         workbook = openpyxl.load_workbook(io.BytesIO(blob), read_only=True, data_only=True, keep_links=False)
         sheet = workbook.active
         if sheet.max_row > MAX_EXCEL_ROWS or sheet.max_column > 100:
-            raise ValidationError(f"La hoja excede el máximo de {MAX_EXCEL_ROWS} filas o 100 columnas.")
+            raise ValidationError(f"El archivo tiene demasiadas filas o columnas. Usa hasta {MAX_EXCEL_ROWS} filas y vuelve a intentarlo.")
         height_raw = sheet["M8"].value
         height = number(height_raw, "Estatura", minimum=0.5, maximum=250)
         if height > 3:
@@ -478,7 +478,7 @@ def cargar_excel(id):
             try:
                 visit_number = number(visit_raw, "Número de cita", minimum=1, maximum=10000)
                 if not visit_number.is_integer():
-                    raise ValidationError("El número de cita debe ser entero.")
+                    raise ValidationError("Revisa la columna Número de cita; debe contener números sin decimales.")
                 visit_number = int(visit_number)
                 assessment_date = _excel_date(date_raw)
                 key = (visit_number, assessment_date)
@@ -519,7 +519,7 @@ def cargar_excel(id):
             return jsonify(
                 {
                     "success": False,
-                    "message": "El archivo contiene datos inválidos; no se importó ningún registro.",
+                    "message": "Hay datos que necesitan corregirse. No se agregó ninguna consulta.",
                     "errores": errors[:20],
                 }
             ), 400
@@ -548,7 +548,7 @@ def cargar_excel(id):
         return jsonify(
             {
                 "success": True,
-                "message": f"Se agregaron {len(pending)} registros; {duplicates} duplicados fueron omitidos.",
+                "message": f"Se agregaron {len(pending)} consultas. {duplicates} ya existían y no se volvieron a agregar.",
                 "registros_duplicados": duplicates,
                 "registros_procesados": len(pending),
                 "errores": [],
@@ -562,12 +562,12 @@ def cargar_excel(id):
         return jsonify(
             {
                 "success": False,
-                "message": "No fue posible reservar los turnos diarios de la importación. Inténtalo nuevamente.",
+                "message": "No se pudieron ordenar las consultas importadas. Inténtalo de nuevo.",
             }
         ), 409
     except (OSError, ValueError, TypeError):
         db.session.rollback()
-        return jsonify({"success": False, "message": "No fue posible procesar el archivo XLSX."}), 400
+        return jsonify({"success": False, "message": "No se pudo leer el archivo de Excel. Revisa que sea un .xlsx válido."}), 400
 
 
 def _appointment_values(form):
@@ -762,25 +762,34 @@ def buscar_para_cita():
         response.headers["Cache-Control"] = "no-store"
         return response
 
-    lowered = search.casefold()
-    full_name = func.lower(
-        Paciente.nombre + " " + Paciente.apellido_paterno + " " + func.coalesce(Paciente.apellido_materno, "")
+    from app.core.text import search_key, search_terms
+
+    normalized = search_key(search)
+    searchable_fields = (
+        func.sgpn_search_key(Paciente.nombre),
+        func.sgpn_search_key(Paciente.apellido_paterno),
+        func.sgpn_search_key(Paciente.apellido_materno),
+        func.sgpn_search_key(Paciente.telefono),
+        func.sgpn_search_key(Paciente.correo),
     )
+    terms = search_terms(search)
     filters = [
-        full_name.contains(lowered, autoescape=True),
-        func.lower(Paciente.nombre).contains(lowered, autoescape=True),
-        func.lower(Paciente.apellido_paterno).contains(lowered, autoescape=True),
-        func.lower(func.coalesce(Paciente.apellido_materno, "")).contains(lowered, autoescape=True),
+        or_(*(field.contains(term, autoescape=True) for field in searchable_fields))
+        for term in terms
     ]
-    phone_search = re.sub(r"\D", "", search)
-    if phone_search:
-        filters.append(Paciente.telefono.contains(phone_search, autoescape=True))
-    record_match = re.fullmatch(r"exp[\s-]*0*(\d{1,9})", lowered)
+    record_match = re.fullmatch(r"exp[\s-]*0*(\d{1,9})", normalized)
     if record_match:
         filters = [Paciente.id == int(record_match.group(1))]
+    elif not terms:
+        response = jsonify({"success": True, "resultados": []})
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
+    query = Paciente.query.filter(Paciente.status == "activo")
+    for term_filter in filters:
+        query = query.filter(term_filter)
     matches = (
-        Paciente.query.filter(Paciente.status == "activo", or_(*filters))
+        query
         .order_by(Paciente.nombre.asc(), Paciente.apellido_paterno.asc(), Paciente.id.asc())
         .limit(8)
         .all()

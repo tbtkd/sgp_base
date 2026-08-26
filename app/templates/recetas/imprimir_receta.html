@@ -13,6 +13,8 @@
         .toolbar p { margin: 0; }
         .toolbar a, .toolbar button { border-radius: 8px; padding: 9px 14px; font-weight: 700; text-decoration: none; cursor: pointer; }
         .toolbar a { color: white; border: 1px solid #fff; } .toolbar button { border: 0; color: #0f766e; background: white; }
+        .toolbar a.toolbar-replace { border-color: #f59e0b; background: #f59e0b; color: #172027; }
+        .toolbar a.toolbar-replace:hover { border-color: #fbbf24; background: #fbbf24; }
         .sheet { width: min(210mm, calc(100% - 32px)); min-height: 270mm; margin: 18px auto; padding: 11mm; background: white; box-shadow: 0 8px 28px #0f172a24; }
         .brand { display: flex; gap: 9px; align-items: center; } .brand img { width: 38px; height: 38px; }
         .header { display: grid; grid-template-columns: 1fr auto; gap: 18px; padding-bottom: 8px; border-bottom: 1.5px solid #0f766e; }
@@ -57,7 +59,7 @@
 <body>
     <div class="toolbar">
         <p>Revisa la información, imprime y firma de forma autógrafa. La hoja aplica márgenes clínicos y una salida sin encabezado del navegador.</p>
-        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}">Sustituir</a>{% endif %} <button type="button" data-print-prescription>Imprimir / PDF</button></div>
+        <div><a href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=receta.valoracion_id) }}">Volver</a>{% if receta.esta_vigente and current_user.puede_emitir_receta_ordinaria %} <a href="{{ url_for('recetas.sustituir_receta', receta_id=receta.id) }}" class="toolbar-replace" aria-label="Sustituir receta {{ receta.folio }}">Sustituir</a>{% endif %} <button type="button" data-print-prescription>Imprimir / PDF</button></div>
     </div>
     <main class="sheet{% if receta.medicamentos|length > 5 %} sheet--dense{% endif %}">
         <header class="header">

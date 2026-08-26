@@ -179,6 +179,7 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
     with app.app_context():
         prescription = Receta.query.one()
         prescription_id = prescription.id
+        prescription_folio = prescription.folio
         assert prescription.folio.startswith("RX-")
         assert prescription.profesional_nombre == "Elena Profesional"
         assert prescription.profesional_cedula == "12345678"
@@ -191,6 +192,13 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
         doctor.cedula_profesional = "99999999"
         doctor.domicilio_profesional = "Domicilio modificado"
         db.session.commit()
+
+    detail_with_prescription = client.get(
+        f"/valoraciones/valoraciones/{assessment_id}"
+    ).get_data(as_text=True)
+    assert "prescription-replace-action" in detail_with_prescription
+    assert f'aria-label="Sustituir receta {prescription_folio}"' in detail_with_prescription
+    assert '<i class="fas fa-edit" aria-hidden="true"></i><span>Sustituir</span>' in detail_with_prescription
 
     printable = client.get(f"/recetas/{prescription_id}/imprimir").get_data(as_text=True)
     for required in (
@@ -218,6 +226,8 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
     assert printable.count("12345678") == 1
     assert "Fecha y sello" not in printable
     assert "data-prescriber-signature" in printable
+    assert 'class="toolbar-replace"' in printable
+    assert f'aria-label="Sustituir receta {prescription_folio}"' in printable
     assert "/static/img/logo.png?v=1.10.1" in printable
     assert 'margin: 14mm 12mm 12mm' in printable
     assert '@top-left { content: ""; }' in printable

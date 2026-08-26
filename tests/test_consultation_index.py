@@ -100,7 +100,7 @@ def test_consultation_search_order_and_invalid_parameters_are_server_controlled(
         _assessment(second, date.today(), 1, "Segunda")
         db.session.commit()
 
-    filtered = client.get("/valoraciones/?q=ANA+ÁLVArez").get_data(as_text=True)
+    filtered = client.get("/valoraciones/?q=ana+alva").get_data(as_text=True)
     assert "Ana Álvarez Demo" in filtered
     assert "Brenda Zúñiga Demo" not in filtered
     assert "1 paciente encontrado" in filtered

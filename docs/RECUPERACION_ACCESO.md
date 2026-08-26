@@ -19,7 +19,7 @@ En el menú de cuenta selecciona **Cambiar contraseña**. Debe capturar la actua
 
 La contraseña temporal se guarda únicamente como hash Scrypt. Los logs y la auditoría registran IDs, resultado e invalidación de sesiones, nunca el valor.
 
-### Nadie puede acceder como administrador
+### Existe una cuenta administradora, pero nadie conoce su contraseña
 
 La persona autorizada debe tener acceso al mismo equipo y a la carpeta de datos. Cierra el servidor y ejecuta desde la raíz:
 
@@ -34,6 +34,24 @@ SistemaPacientes.exe --reset-password NOMBRE_USUARIO
 ```
 
 El comando solicita dos veces una contraseña de recuperación sin mostrarla en pantalla. Sólo acepta una cuenta con rol administrador, reactiva la cuenta, elimina bloqueos, invalida sesiones y obliga a reemplazar esa contraseña en el siguiente login. No abre el navegador ni inicia Waitress.
+
+### Una instalación anterior quedó sin cuentas de Administración
+
+La versión actual impide que un administrador cambie su propio rol o que se retire el acceso a la última cuenta de Administración activa. Si una versión anterior, una edición manual de la base o una restauración antigua ya dejó al sistema sin administradores, cierra el servidor y elige una cuenta existente:
+
+```powershell
+python run.py --recover-admin NOMBRE_USUARIO
+```
+
+Con PyInstaller:
+
+```powershell
+SistemaPacientes.exe --recover-admin NOMBRE_USUARIO
+```
+
+El comando se niega a continuar cuando todavía existe una cuenta de Administración activa. Si realmente no queda ninguna, convierte la cuenta indicada en administradora, la activa, cierra sus sesiones anteriores y obliga a establecer una contraseña definitiva en el siguiente ingreso. La operación queda registrada sin guardar la contraseña.
+
+Un administrador que también atiende pacientes no necesita cambiar su rol: debe conservar **Administración** y elegir Medicina general, Odontología o Nutrición como **Perfil clínico**.
 
 ## Límites y operación
 

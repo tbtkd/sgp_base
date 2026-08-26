@@ -38,26 +38,26 @@ def register_error_handlers(app):
     def database_error(error):
         db.session.rollback()
         logger.exception("Error de base de datos")
-        return _response("No fue posible completar la operación en la base de datos.", 500)
+        return _response("No fue posible guardar los cambios. Inténtalo de nuevo.", 500)
 
     @app.errorhandler(413)
     def too_large(error):
-        return _response("La solicitud excede el límite permitido de 16 MB.", 413)
+        return _response("El archivo es demasiado grande. Elige uno de hasta 16 MB.", 413)
 
     @app.errorhandler(HTTPException)
     def http_error(error):
         messages = {
-            400: "La solicitud contiene datos inválidos.",
+            400: "Revisa la información capturada e inténtalo de nuevo.",
             401: "Debes iniciar sesión para continuar.",
             403: "No tienes permiso para realizar esta acción.",
-            404: "El recurso solicitado no existe.",
-            405: "El método solicitado no está permitido.",
+            404: "No encontramos la página o información solicitada.",
+            405: "Esta acción no está disponible desde aquí.",
             429: "Demasiados intentos. Espera antes de intentarlo nuevamente.",
         }
-        return _response(messages.get(error.code, "No fue posible procesar la solicitud."), error.code)
+        return _response(messages.get(error.code, "No pudimos completar esta acción."), error.code)
 
     @app.errorhandler(Exception)
     def unhandled_error(error):
         db.session.rollback()
         logger.exception("Excepción no controlada")
-        return _response("Ocurrió un error inesperado. El incidente quedó registrado.", 500)
+        return _response("Ocurrió algo inesperado. Inténtalo de nuevo; si continúa, avisa a Administración.", 500)

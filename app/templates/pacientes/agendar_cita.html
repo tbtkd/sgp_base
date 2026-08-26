@@ -146,7 +146,7 @@
                 <div><dt>Fecha</dt><dd data-summary-date>—</dd></div>
                 <div><dt>Horario</dt><dd data-summary-time>—</dd></div>
             </dl>
-            <p class="appointment-summary-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> El servidor volverá a validar el espacio al confirmar para evitar citas duplicadas.</p>
+            <p class="appointment-summary-note"><i class="fas fa-shield-alt" aria-hidden="true"></i> Antes de guardar, el sistema comprobará de nuevo que el horario siga disponible.</p>
             <button type="submit" class="appointment-submit" data-appointment-submit data-submit-loading="{{ 'Guardando…' if modo_reagenda else 'Agendando…' }}" disabled>
                 <i class="fas {{ 'fa-calendar-alt' if modo_reagenda else 'fa-calendar-plus' }}" aria-hidden="true"></i><span>{{ 'Confirmar reagenda' if modo_reagenda else 'Confirmar cita' }}</span>
             </button>

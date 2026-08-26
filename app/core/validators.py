@@ -55,7 +55,7 @@ def clean_text(value, field, *, minimum=0, maximum=200, required=False):
     if text and len(text) < minimum:
         raise ValidationError(f"{field} debe contener al menos {minimum} caracteres.")
     if len(text) > maximum:
-        raise ValidationError(f"{field} excede el máximo de {maximum} caracteres.")
+        raise ValidationError(f"{field} no puede tener más de {maximum} caracteres.")
     return text
 
 
@@ -67,7 +67,7 @@ def multiline_text(value, field, *, minimum=0, maximum=2000, required=False):
     if text and len(text) < minimum:
         raise ValidationError(f"{field} debe contener al menos {minimum} caracteres.")
     if len(text) > maximum:
-        raise ValidationError(f"{field} excede el máximo de {maximum} caracteres.")
+        raise ValidationError(f"{field} no puede tener más de {maximum} caracteres.")
     return text
 
 
@@ -107,7 +107,7 @@ def email_address(value, *, required=True):
 def enum_value(value, field, allowed):
     text = str(value or "").strip()
     if text not in allowed:
-        raise ValidationError(f"{field} contiene una opción inválida.")
+        raise ValidationError(f"Selecciona una opción válida en {field}.")
     return text
 
 
@@ -115,9 +115,9 @@ def date_value(value, field, *, allow_future=False, oldest_year=1900):
     try:
         parsed = value if isinstance(value, date) else datetime.strptime(str(value), "%Y-%m-%d").date()
     except (TypeError, ValueError):
-        raise ValidationError(f"{field} no tiene una fecha válida.") from None
+        raise ValidationError(f"Revisa {field}; la fecha no es válida.") from None
     if parsed.year < oldest_year:
-        raise ValidationError(f"{field} está fuera del rango permitido.")
+        raise ValidationError(f"Revisa {field}; el valor no está dentro de los límites permitidos.")
     if not allow_future and parsed > date.today():
         raise ValidationError(f"{field} no puede ser futura.")
     return parsed
@@ -129,7 +129,7 @@ def integer(value, field, *, minimum=None, maximum=None):
     except (TypeError, ValueError):
         raise ValidationError(f"{field} debe ser un número entero.") from None
     if (minimum is not None and parsed < minimum) or (maximum is not None and parsed > maximum):
-        raise ValidationError(f"{field} está fuera del rango permitido.")
+        raise ValidationError(f"Revisa {field}; el valor no está dentro de los límites permitidos.")
     return parsed
 
 
@@ -141,11 +141,11 @@ def number(value, field, *, minimum=None, maximum=None, required=True):
     try:
         parsed = float(str(value).replace(",", ".").strip())
     except (TypeError, ValueError):
-        raise ValidationError(f"{field} debe ser numérico.") from None
+        raise ValidationError(f"Escribe un número válido en {field}.") from None
     if not math.isfinite(parsed):
-        raise ValidationError(f"{field} debe ser un número finito.")
+        raise ValidationError(f"Escribe un número válido en {field}.")
     if (minimum is not None and parsed < minimum) or (maximum is not None and parsed > maximum):
-        raise ValidationError(f"{field} está fuera del rango permitido.")
+        raise ValidationError(f"Revisa {field}; el valor no está dentro de los límites permitidos.")
     return parsed
 
 
@@ -154,24 +154,26 @@ def money_centavos(value, field="Monto", *, maximum=10_000_000):
     if not text:
         raise ValidationError(f"{field} es obligatorio.")
     if not re.fullmatch(r"\d{1,8}(?:\.\d{1,2})?", text):
-        raise ValidationError(f"{field} debe ser un importe positivo con máximo dos decimales.")
+        raise ValidationError(f"{field} debe ser mayor que cero y puede tener hasta dos decimales.")
     try:
         amount = Decimal(text).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     except InvalidOperation:
-        raise ValidationError(f"{field} debe ser un importe monetario válido.") from None
+        raise ValidationError(f"{field} no es válido. Escribe, por ejemplo, 850 o 850.50.") from None
     if amount <= 0 or amount > Decimal(str(maximum)):
         raise ValidationError(f"{field} debe ser mayor que cero y no exceder {maximum:,.2f}.")
     return int(amount * 100)
 
 
 def operation_key(value):
-    text = clean_text(value, "Identificador de operación", maximum=36, required=True)
+    text = unicodedata.normalize("NFKC", str(value or "")).strip()
+    if not text or len(text) > 36:
+        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.")
     try:
         parsed = UUID(text)
     except (ValueError, AttributeError):
-        raise ValidationError("El identificador de la operación no es válido. Recarga el formulario.") from None
+        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.") from None
     if parsed.version != 4:
-        raise ValidationError("El identificador de la operación no es válido. Recarga el formulario.")
+        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.")
     return str(parsed)
 
 
@@ -214,7 +216,7 @@ def professional_profile(value, role):
     text = clean_text(value, "Perfil profesional", maximum=30)
     if not text:
         if role == "medico":
-            raise ValidationError("Selecciona el perfil profesional del usuario clínico.")
+            raise ValidationError("Selecciona el área de atención del usuario.")
         return None
     return enum_value(text, "Perfil profesional", ALLOWED_PROFESSIONAL_PROFILES)
 
@@ -238,7 +240,7 @@ def blood_pressure(value):
         raise ValidationError("La tensión arterial debe usar el formato 120/80.")
     systolic, diastolic = map(int, match.groups())
     if not 60 <= systolic <= 260 or not 30 <= diastolic <= 160 or systolic <= diastolic:
-        raise ValidationError("La tensión arterial está fuera del rango permitido.")
+        raise ValidationError("Revisa la tensión arterial; los valores capturados no son válidos.")
     return text
 
 
@@ -414,7 +416,7 @@ def assessment_payload(form, *, allow_anthropometry=True):
     if height is not None and height <= 3:
         height *= 100
     if height is not None and height < 30:
-        raise ValidationError("Estatura está fuera del rango permitido.")
+        raise ValidationError("Revisa la estatura; el valor capturado no es válido.")
     weight = number(form.get("peso"), "Peso", minimum=0.1, maximum=500, required=False)
     bmi = round(weight / ((height / 100) ** 2), 2) if height and weight else None
     data = {

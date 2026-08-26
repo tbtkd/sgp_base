@@ -82,14 +82,19 @@ La versión 1.10.1 es un expediente clínico general para servicios médicos, de
 74. `scripts/build_local_assets.py --check` debe pasar después de cambiar clases o iconos; los archivos generados sí forman parte de la entrega.
 75. Una auditoría exitosa de mutación crítica dispara un respaldo; una operación rechazada no debe hacerlo. Una falla del medio se registra sin falsear el resultado de la transacción ya confirmada.
 76. Sólo Administración gestiona respaldos. Restaurar exige copia interna válida, CSRF, contraseña, `RESTAURAR`, copia previa, reemplazo atómico y cierre de sesión.
+77. Los mensajes visibles deben explicar en lenguaje cotidiano qué ocurrió, qué información se conserva y qué debe hacer el usuario. Los detalles internos se reservan para logs y documentación técnica; no muestres términos como trazabilidad, registro legado, base activa, autenticación, servidor o relación de compresión.
+78. Pacientes, búsqueda global, Agenda, Consultas y Pagos comparten normalización sin mayúsculas ni acentos y coincidencia por fragmentos. Aplica cada término de forma parametrizada y escapa `%`/`_`; un nombre puede coincidir entre columnas distintas.
+79. Una cuenta administrativa no cambia su propio rol ni estado. Si también atiende, conserva `admin` y configura `perfil_profesional`; otro administrador puede cambiarle el acceso y ese cambio incrementa `auth_version`.
+80. Nunca permitas cero administradores activos. `--recover-admin` es una contingencia local exclusiva del estado `active_admin_count() == 0`, opera sobre una cuenta existente, obliga a cambiar la contraseña y se audita sin guardar el secreto.
+81. En tema oscuro, los bordes decorativos deben ser transparentes o de baja opacidad y las superficies deben evitar grises claros agresivos. Conserva un foco de teclado claramente visible y no permitas estilos nativos inesperados en botones o enlaces.
+82. **Sustituir receta** es una acción correctiva disponible sólo para folios vigentes autorizados. Debe usar estilo ámbar sólido, texto de alto contraste, icono, etiqueta con folio y estados claros de hover/foco en ambos temas; nunca la confundas visualmente con **Ver / imprimir**.
 
 ## Próximas fases
 
-- Prioridad inmediata 1.10.1: recursos frontend autocontenidos, CSP más estricta, respaldos posteriores a operaciones críticas, restauración verificada y pruebas de navegador.
+- Prioridad siguiente 1.11: cierre y versionado inmutable de notas clínicas, con addenda para correcciones.
 - Cifrado en reposo y administración de llaves.
 - Firma electrónica jurídicamente evaluada y cierre/versionado de notas clínicas.
 - Flujos regulatorios separados para medicamentos controlados, sólo tras revisión jurídica y operativa.
-- Recursos frontend autocontenidos.
 - Reportes y métricas configurables por especialidad.
 - Recibos no fiscales, exportación XLSX, reembolsos como movimientos separados y caja formal después de definir cargos, conciliación y responsables.
 - Multi-consultorio únicamente después de incorporar aislamiento por tenant.

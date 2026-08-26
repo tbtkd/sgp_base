@@ -168,6 +168,7 @@ def test_scheduler_patient_search_is_private_limited_and_returns_only_matches(ap
     with app.app_context():
         selected = _patient("Laura", "5512345601")
         unrelated = _patient("Mario", "5512345602")
+        accented = _patient("Sofía", "5512345604")
         inactive = _patient("LauraOculta", "5512345603")
         inactive.status = "inactivo"
         db.session.add(
@@ -184,6 +185,7 @@ def test_scheduler_patient_search_is_private_limited_and_returns_only_matches(ap
             _patient(f"Coincide{index}", f"55200000{index:02d}")
         db.session.commit()
         selected_id = selected.id
+        accented_id = accented.id
         unrelated_name = unrelated.nombre_completo
 
     response = client.get("/pacientes/buscar_para_cita?busqueda=Laura")
@@ -210,6 +212,8 @@ def test_scheduler_patient_search_is_private_limited_and_returns_only_matches(ap
 
     by_record = client.get(f"/pacientes/buscar_para_cita?busqueda=EXP-{selected_id:04d}").get_json()
     assert [item["id"] for item in by_record["resultados"]] == [selected_id]
+    by_partial_name = client.get("/pacientes/buscar_para_cita?busqueda=sofi+prue").get_json()
+    assert [item["id"] for item in by_partial_name["resultados"]] == [accented_id]
     assert len(client.get("/pacientes/buscar_para_cita?busqueda=Coincide").get_json()["resultados"]) == 8
     assert client.get("/pacientes/buscar_para_cita?busqueda=L").get_json()["resultados"] == []
     assert client.get("/pacientes/buscar_para_cita?busqueda=%25").get_json()["resultados"] == []
@@ -508,7 +512,7 @@ def test_dedicated_agenda_requires_login_and_supports_day_week_navigation(app, c
     assert "Revisión programada" in week_page
 
     invalid = client.get("/agenda?fecha=no-es-fecha&vista=desconocida").get_data(as_text=True)
-    assert "Fecha de agenda no tiene una fecha válida" in invalid
+    assert "Revisa Fecha de agenda; la fecha no es válida" in invalid
     assert "La vista solicitada no es válida" in invalid
 
 
@@ -768,7 +772,7 @@ def test_agenda_blocks_future_closure_and_requires_cancellation_reason(app, clie
     assert "motivo de cancelación" in missing_reason.get_json()["error"]
     invalid = _change_status(client, appointment_id, "Eliminada")
     assert invalid.status_code == 400
-    assert "opción inválida" in invalid.get_json()["error"]
+    assert "Selecciona una opción válida en Estatus" in invalid.get_json()["error"]
 
     cancelled = _change_status(client, appointment_id, "Cancelada", "Solicitud del paciente")
     assert cancelled.status_code == 200

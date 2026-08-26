@@ -238,13 +238,13 @@ function confirmarOmitirSeguimiento() {
     .then(data => {
         if (!data.success) {
             console.error('Error al omitir seguimiento:', data.message);
-            alert('Error al registrar en el servidor.');
+            alert('No fue posible guardar el seguimiento. Inténtalo de nuevo.');
             location.reload();
         }
     })
     .catch(error => {
         console.error('Error en la petición AJAX:', error);
-        alert('Error de red.');
+        alert('No hay conexión en este momento. Revisa tu conexión e inténtalo de nuevo.');
         location.reload();
     });
 }

@@ -28,7 +28,7 @@ function enviarExcel(event) {
     .catch(() => {
         mostrarModalResultadoCarga({
             success: false,
-            message: 'No fue posible procesar la solicitud. Intenta nuevamente.',
+            message: 'No se pudo importar el archivo. Revisa tu conexión e inténtalo de nuevo.',
             registros_procesados: 0,
             registros_duplicados: 0,
             errores: []
@@ -75,11 +75,11 @@ function mostrarModalResultadoCarga(data) {
     if (data.success) {
         header.className = 'px-6 py-4 flex justify-between items-center bg-emerald-600 text-white';
         icono.className = 'fas fa-check-circle';
-        titulo.querySelector('span').textContent = 'Procesamiento Exitoso';
+        titulo.querySelector('span').textContent = 'Archivo importado';
     } else {
         header.className = 'px-6 py-4 flex justify-between items-center bg-rose-600 text-white';
         icono.className = 'fas fa-exclamation-triangle';
-        titulo.querySelector('span').textContent = 'Aviso / Error en Carga';
+        titulo.querySelector('span').textContent = 'No se pudo importar';
     }
 
     modal.classList.remove('hidden');

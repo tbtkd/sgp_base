@@ -69,7 +69,7 @@ def nueva_valoracion(paciente_id):
             flash(str(error), "error")
         except IntegrityError:
             db.session.rollback()
-            flash("No fue posible reservar el turno diario. Recarga la página e inténtalo nuevamente.", "error")
+            flash("No se pudo asignar el turno de la consulta. Actualiza la página e inténtalo de nuevo.", "error")
         return render_template(
             "valoraciones/nueva_valoracion.html",
             paciente=patient,
@@ -224,7 +224,7 @@ def editar_valoracion(valoracion_id):
             flash(str(error), "error")
         except IntegrityError:
             db.session.rollback()
-            flash("No fue posible reservar el turno diario para la nueva fecha.", "error")
+            flash("No se pudo asignar un turno para la nueva fecha. Actualiza la página e inténtalo de nuevo.", "error")
     return render_template(
         "valoraciones/editar_valoracion.html",
         valoracion=assessment,
@@ -240,7 +240,7 @@ def editar_valoracion(valoracion_id):
 def eliminar_valoracion(valoracion_id):
     assessment = db.get_or_404(ValoracionAntropometrica, valoracion_id)
     if assessment.recetas:
-        flash("La consulta no puede eliminarse porque tiene recetas emitidas e inmutables.", "warning")
+        flash("Esta consulta no puede eliminarse porque tiene recetas guardadas. Para conservarlas, la consulta debe permanecer.", "warning")
         return redirect(url_for("valoracion.detalle_valoracion", valoracion_id=assessment.id))
     patient_id = assessment.paciente_id
     AuditLog.record(

@@ -10,7 +10,15 @@
 - Nuevo panel **Administración → Respaldos** para crear, verificar y descargar copias internas.
 - La restauración sólo acepta nombres internos, verifica integridad/esquema, exige contraseña administrativa y la frase `RESTAURAR`, crea una copia previa, reemplaza atómicamente la base y cierra la sesión.
 - Los eventos de creación, verificación, descarga y restauración quedan auditados sin almacenar contraseñas.
-- Se agregan pruebas positivas y negativas para CSP, recursos locales, respaldo por mutación, corrupción, autorización, CSRF, confirmaciones y restauración; se incluye una especificación E2E opcional con Playwright/Chromium.
+- Los avisos visibles se reescriben en lenguaje cotidiano: explican qué ocurrió, qué información se conserva y qué debe hacer la persona, sin términos internos como trazabilidad, registro legado, base activa o relación de compresión.
+- La cancelación de pagos aclara que el pago seguirá en el historial, quedará como **Cancelado**, dejará de contar en los totales y no podrá reactivarse.
+- El tema oscuro suaviza contornos y superficies, evita tarjetas grises agresivas, mejora la lectura del texto secundario y elimina los estilos nativos que hacían ver grises los módulos planificados o morados algunos enlaces.
+- **Sustituir receta** utiliza ahora una acción ámbar sólida, texto de alto contraste, icono y estados de puntero/foco propios en tema claro y oscuro; la vista previa de impresión aplica la misma jerarquía visual.
+- Pacientes, búsqueda global, agenda rápida, Consultas y Pagos comparten una búsqueda parcial que no distingue mayúsculas ni acentos; `sofia`, `SOFI` o varios fragmentos encuentran a **Sofía** aunque los términos estén distribuidos entre nombre y apellidos.
+- Una cuenta de Administración ya no puede cambiar su propio tipo de acceso ni desactivarse. Puede conservar Administración y elegir un perfil clínico para atender pacientes; otra cuenta administrativa sí puede cambiarla y el sistema cierra sus sesiones anteriores.
+- Si una instalación anterior quedó sin cuentas de Administración, `--recover-admin` puede recuperar una cuenta existente desde el equipo local y sólo se habilita cuando realmente no queda ningún administrador activo.
+- La prueba CSP conserva el bloqueo estricto de atributos ejecutables y ahora informa cada plantilla y línea afectadas; la guía explica cómo corregir una instalación donde se mezclaron archivos de versiones distintas.
+- Se agregan pruebas positivas y negativas para CSP, recursos locales, respaldo por mutación, corrupción, autorización, CSRF, confirmaciones, restauración, búsqueda flexible, protección del administrador y recuperación del rol; se incluye una especificación E2E opcional con Playwright/Chromium.
 - Nueva guía `docs/ENDURECIMIENTO_LOCAL_1_10_1.md` y actualización de manual, arquitectura, matriz, seguridad y contexto.
 
 ## 1.10.0 — Integridad e historial operativo de pagos

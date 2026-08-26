@@ -22,7 +22,7 @@
             <div>
                 <label class="block text-sm font-medium mb-2" for="numero_cita">Turno diario</label>
                 <input class="{{ field_class }} bg-gray-50" type="number" id="numero_cita" name="numero_cita" min="1" max="10000" required readonly aria-describedby="numero-cita-ayuda numero-cita-estado" value="{{ numero_diario }}">
-                <p id="numero-cita-ayuda" class="text-xs text-gray-500 mt-2">Consecutivo global de atención para la fecha. El servidor confirma el valor definitivo al guardar.</p>
+                <p id="numero-cita-ayuda" class="text-xs text-gray-500 mt-2">Número de atención del día. El sistema mostrará el número definitivo al guardar.</p>
                 <p id="numero-cita-estado" class="text-xs text-teal-700 mt-1" data-daily-number-status aria-live="polite"></p>
             </div>
             <div><label class="block text-sm font-medium mb-2" for="fecha">Fecha</label><input class="{{ field_class }}" type="date" id="fecha" name="fecha" required max="{{ fecha_consulta_default or registro.fecha.isoformat() }}" value="{{ request.form.get('fecha', registro.fecha.isoformat() if registro and registro.fecha else fecha_consulta_default) }}"></div>
@@ -32,7 +32,7 @@
     </section>
 
     <section id="panel-vitales" role="tabpanel" aria-labelledby="tab-vitales" data-tab-panel="vitales" class="space-y-5" hidden>
-        <p class="text-sm text-gray-500">Los signos vitales son opcionales; si se capturan, se validan fisiológicamente en el servidor.</p>
+        <p class="text-sm text-gray-500">Los signos vitales son opcionales. Si los capturas, el sistema comprobará que los valores sean válidos.</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             {% for field, label, type, step, placeholder in [
                 ('tension_arterial','Tensión arterial (mmHg)','text','','120/80'),

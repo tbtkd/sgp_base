@@ -246,7 +246,7 @@ def test_global_payment_module_roles_filters_and_totals(app, client):
         query_string={
             "desde": date.today().isoformat(),
             "hasta": date.today().isoformat(),
-            "q": patient.nombre_completo,
+            "q": "ange garc lope",
         },
     )
     full_name_html = full_name_result.get_data(as_text=True)
@@ -439,7 +439,10 @@ def test_payment_ui_is_integrated_and_has_dark_theme_contract(app, client, login
     assert "data-payment-form" in script
     assert "typeof confirmarAccion" in script
     assert "¿Cancelar este pago?" in script
-    assert "El pago no se eliminará" in script
+    assert "seguirá apareciendo en el historial" in script
+    assert "ya no contará en los totales" in script
+    assert "no podrás volver a activarlo" in script
+    assert "mantener la trazabilidad" not in script
     assert "Sí, cancelar pago" in script
     assert "textoCancelar: 'Volver'" in script
     assert "window.confirm" in script

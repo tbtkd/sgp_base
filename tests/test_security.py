@@ -5,7 +5,7 @@ import pytest
 
 from app import db_orm as db
 from app.core.audit import AuditLog
-from app.core.password_recovery import reset_password_offline
+from app.core.password_recovery import recover_admin_offline, reset_password_offline
 from app.core.time import utcnow_naive
 from app.core.validators import ValidationError
 from app.models.usuario import Usuario
@@ -53,7 +53,7 @@ def test_temporary_migration_email_displays_update_warning(app, client, login):
         db.session.commit()
     assert login().status_code == 302
     response = client.get("/", follow_redirects=True)
-    assert b"correo temporal de migraci" in response.data
+    assert b"correo registrado en tu cuenta necesita actualizarse" in response.data
 
 
 def test_inactive_user_cannot_login(app, client):
@@ -130,7 +130,75 @@ def test_recovery_help_is_public_and_does_not_enumerate_accounts(client):
     page = response.get_data(as_text=True)
     assert response.status_code == 200
     assert "python run.py --reset-password NOMBRE_USUARIO" in page
+    assert "python run.py --recover-admin NOMBRE_USUARIO" in page
     assert "name=\"username\"" not in page
+
+
+def test_admin_cannot_change_own_role_but_another_admin_can(app, client, login):
+    login()
+    with app.app_context():
+        current_admin = Usuario.find_by_username("administrator")
+        current_admin_id = current_admin.id
+        other_admin = Usuario(
+            username="second-admin",
+            nombre="Segunda",
+            apellido_paterno="Administradora",
+            email="second-admin@example.test",
+            rol="admin",
+            status="activo",
+        )
+        other_admin.set_password("SecondAdmin!Pass2026")
+        db.session.add(other_admin)
+        db.session.commit()
+        other_admin_id = other_admin.id
+
+    own_page = client.get(f"/usuarios/{current_admin_id}/editar")
+    own_html = own_page.get_data(as_text=True)
+    assert "no necesitas dejar de ser administrador" in own_html
+    assert '<input type="hidden" id="rol" name="rol" value="admin">' in own_html
+    rejected = client.post(
+        f"/usuarios/{current_admin_id}/editar",
+        data={
+            "csrf_token": csrf_from(own_page),
+            "nombre": "Admin",
+            "apellido_paterno": "Pruebas",
+            "apellido_materno": "Sistema",
+            "email": "admin@example.test",
+            "rol": "medico",
+            "perfil_profesional": "medico_general",
+            "cedula_profesional": "12345678",
+            "nombre_establecimiento": "",
+            "domicilio_profesional": "",
+            "status": "activo",
+        },
+    )
+    assert rejected.status_code == 200
+    assert "No puedes cambiar tu propio rol de Administración" in rejected.get_data(as_text=True)
+    with app.app_context():
+        assert db.session.get(Usuario, current_admin_id).rol_clinico == "admin"
+
+    other_page = client.get(f"/usuarios/{other_admin_id}/editar")
+    changed = client.post(
+        f"/usuarios/{other_admin_id}/editar",
+        data={
+            "csrf_token": csrf_from(other_page),
+            "nombre": "Segunda",
+            "apellido_paterno": "Administradora",
+            "apellido_materno": "",
+            "email": "second-admin@example.test",
+            "rol": "medico",
+            "perfil_profesional": "medico_general",
+            "cedula_profesional": "87654321",
+            "nombre_establecimiento": "",
+            "domicilio_profesional": "",
+            "status": "activo",
+        },
+    )
+    assert changed.status_code == 302
+    with app.app_context():
+        updated = db.session.get(Usuario, other_admin_id)
+        assert updated.rol_clinico == "medico"
+        assert updated.auth_version == 1
 
 
 def test_user_can_change_password_and_other_credentials_stop_working(app, client, login):
@@ -271,3 +339,35 @@ def test_offline_recovery_is_limited_to_admin_and_audited(app):
         assert user.check_password("Offline!Pass2026Z")
         event = AuditLog.query.filter_by(action="RESTABLECER_CONTRASENA_LOCAL").one()
         assert "Offline!Pass2026Z" not in (event.metadata_json or "")
+
+
+def test_offline_admin_role_recovery_only_works_when_no_admin_remains(app):
+    with app.app_context():
+        candidate = Usuario(
+            username="recovery-owner",
+            nombre="Dueña",
+            apellido_paterno="Local",
+            email="recovery-owner@example.test",
+            rol="medico",
+            perfil_profesional="medico_general",
+            status="activo",
+        )
+        candidate.set_password("Previous!Pass2026")
+        db.session.add(candidate)
+        db.session.commit()
+
+        with pytest.raises(ValidationError, match="Todavía existe una cuenta de Administración activa"):
+            recover_admin_offline("recovery-owner", "Recovered!Pass2026Z")
+
+        admin = Usuario.find_by_username("administrator")
+        admin.rol = Usuario.role_for_storage("medico")
+        db.session.commit()
+
+        recovered = recover_admin_offline("recovery-owner", "Recovered!Pass2026Z")
+        assert recovered.rol_clinico == "admin"
+        assert recovered.status == "activo"
+        assert recovered.must_change_password is True
+        assert recovered.auth_version == 1
+        assert recovered.check_password("Recovered!Pass2026Z")
+        event = AuditLog.query.filter_by(action="RECUPERAR_ADMIN_LOCAL").one()
+        assert "Recovered!Pass2026Z" not in (event.metadata_json or "")

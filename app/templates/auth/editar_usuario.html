@@ -3,6 +3,9 @@
 {% block title %}Editar Usuario | SGPN{% endblock %}
 
 {% block content %}
+{% set cuenta_admin_propia = usuario.id == current_user.id and usuario.rol_clinico == 'admin' %}
+{% set rol_seleccionado = request.form.get('rol', usuario.rol_clinico) %}
+{% set estatus_seleccionado = request.form.get('status', usuario.status) %}
 <div class="max-w-7xl mx-auto space-y-6">
     <!-- Encabezado -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -70,12 +73,18 @@
                 <!-- Rol -->
                 <div class="space-y-2">
                     <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
+                    {% if cuenta_admin_propia %}
+                    <input type="hidden" id="rol" name="rol" value="admin">
+                    <div class="protected-admin-field" aria-label="Rol: Administrador"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Administrador</span></div>
+                    <p class="text-xs text-gray-500">Tu cuenta conservará el acceso de Administración. Si también atiendes pacientes, elige tu área en “Perfil clínico”; no necesitas dejar de ser administrador.</p>
+                    {% else %}
                     <select id="rol" name="rol" required
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
-                        <option value="admin" {% if usuario.rol_clinico == 'admin' %}selected{% endif %}>Administrador</option>
-                        <option value="medico" {% if usuario.rol_clinico == 'medico' %}selected{% endif %}>Médico / Profesional clínico</option>
-                        <option value="recepcion" {% if usuario.rol_clinico == 'recepcion' %}selected{% endif %}>Recepción</option>
+                        <option value="admin" {% if rol_seleccionado == 'admin' %}selected{% endif %}>Administrador</option>
+                        <option value="medico" {% if rol_seleccionado == 'medico' %}selected{% endif %}>Médico / Profesional clínico</option>
+                        <option value="recepcion" {% if rol_seleccionado == 'recepcion' %}selected{% endif %}>Recepción</option>
                     </select>
+                    {% endif %}
                 </div>
 
                 <div class="space-y-2" data-professional-profile-field>
@@ -117,11 +126,17 @@
                 <!-- Estatus -->
                 <div class="space-y-2 md:col-span-2">
                     <label for="status" class="block text-sm font-medium text-gray-700">Estatus</label>
+                    {% if cuenta_admin_propia %}
+                    <input type="hidden" id="status" name="status" value="activo">
+                    <div class="protected-admin-field" aria-label="Estatus: Activo"><i class="fas fa-check-circle" aria-hidden="true"></i><span>Activo</span></div>
+                    <p class="text-xs text-gray-500">Tu cuenta no puede desactivarse mientras la estás utilizando.</p>
+                    {% else %}
                     <select id="status" name="status" required
                             class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition">
-                        <option value="activo" {% if usuario.status == 'activo' %}selected{% endif %}>Activo</option>
-                        <option value="inactivo" {% if usuario.status == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                        <option value="activo" {% if estatus_seleccionado == 'activo' %}selected{% endif %}>Activo</option>
+                        <option value="inactivo" {% if estatus_seleccionado == 'inactivo' %}selected{% endif %}>Inactivo</option>
                     </select>
+                    {% endif %}
                 </div>
             </div>
 

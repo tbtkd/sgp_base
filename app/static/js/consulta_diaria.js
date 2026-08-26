@@ -45,7 +45,7 @@
             setStatus(`Siguiente turno proyectado: ${payload.numero}.`, false);
         } catch (error) {
             if (error.name === 'AbortError') return;
-            setStatus('No fue posible actualizar la proyección. El servidor asignará el turno al guardar.', true);
+            setStatus('No pudimos mostrar el siguiente turno. Al guardar, el sistema asignará el turno correcto.', true);
         }
     }
 

@@ -3,7 +3,7 @@
         <div>
             <p class="payment-eyebrow">Seguimiento financiero operativo</p>
             <h2 id="payment-history-title">Historial de pagos</h2>
-            <p>Movimientos inmutables asociados con este paciente.</p>
+            <p>Aquí aparecen todos los pagos del paciente, incluidos los cancelados.</p>
         </div>
         <div class="payment-heading-actions">
             {% if current_user.rol_clinico == 'admin' %}<a href="{{ url_for('pagos.exportar_paciente_csv', paciente_id=paciente.id) }}" class="payment-secondary-action"><i class="fas fa-file-csv" aria-hidden="true"></i>Exportar historial CSV</a>{% endif %}
@@ -25,7 +25,7 @@
                     <td class="payment-concept">{{ pago.concepto }}</td>
                     <td>{{ pago.metodo_pago|capitalize }}</td>
                     <td class="payment-amount">{% if pago.monto_centavos > 0 %}{{ pago.monto_centavos|money_cents }} {{ pago.moneda }}{% else %}No disponible{% endif %}</td>
-                    <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Registro migrado' }}</td>
+                    <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Responsable no disponible' }}</td>
                     <td>
                         <span class="payment-status payment-status--{{ pago.estatus|replace('_', '-') }}">{{ pago.estatus_etiqueta }}</span>
                         {% if pago.estatus == 'cancelado' %}<small>{{ pago.motivo_cancelacion }}</small>{% endif %}

@@ -31,7 +31,7 @@
 
         <p class="shell-nav-section">Gestión</p>
         {% if current_user.rol_clinico in ['admin', 'recepcion'] %}
-        <a href="{{ url_for('pagos.index') }}" class="{{ nav_link }}{% if pagos_activa %} is-active{% endif %}"{% if pagos_activa %} aria-current="page"{% endif %}><i class="fas fa-receipt" aria-hidden="true"></i><span>Pagos</span><small>Operación local</small></a>
+        <a href="{{ url_for('pagos.index') }}" class="{{ nav_link }}{% if pagos_activa %} is-active{% endif %}"{% if pagos_activa %} aria-current="page"{% endif %}><i class="fas fa-receipt" aria-hidden="true"></i><span>Pagos</span><small>Control de cobros</small></a>
         {% endif %}
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Facturación" aria-disabled="true"><i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Facturación</span><small>Próximamente</small></button>
         <button type="button" class="{{ nav_link }} shell-nav-planned" data-planned-module="Inventario" aria-disabled="true"><i class="fas fa-boxes" aria-hidden="true"></i><span>Inventario</span><small>Próximamente</small></button>
@@ -44,7 +44,7 @@
                 {% if current_user.rol_clinico == 'admin' %}
                 <a href="{{ url_for('auth.lista_usuarios') }}" class="{{ nav_link }} shell-nav-child{% if endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %} is-active{% endif %}"{% if endpoint_actual in ['auth.lista_usuarios', 'auth.registrar_usuario', 'auth.editar_usuario', 'auth.restablecer_contrasena'] %} aria-current="page"{% endif %}><i class="fas fa-users-cog" aria-hidden="true"></i><span>Usuarios y permisos</span></a>
                 <a href="{{ url_for('auth.auditoria') }}" class="{{ nav_link }} shell-nav-child{% if endpoint_actual == 'auth.auditoria' %} is-active{% endif %}"{% if endpoint_actual == 'auth.auditoria' %} aria-current="page"{% endif %}><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Auditoría</span></a>
-                <a href="{{ url_for('auth.respaldos') }}" class="{{ nav_link }} shell-nav-child{% if 'respaldo' in endpoint_actual %} is-active{% endif %}"{% if 'respaldo' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-database" aria-hidden="true"></i><span>Respaldos</span></a>
+                <a href="{{ url_for('auth.respaldos') }}" class="{{ nav_link }} shell-nav-child{% if 'respaldo' in endpoint_actual %} is-active{% endif %}"{% if 'respaldo' in endpoint_actual %} aria-current="page"{% endif %}><i class="fas fa-database" aria-hidden="true"></i><span>Copias de seguridad</span></a>
                 {% endif %}
                 <button type="button" class="{{ nav_link }} shell-nav-child shell-nav-planned" data-planned-module="Configuración" aria-disabled="true"><i class="fas fa-cog" aria-hidden="true"></i><span>Configuración</span><small>Próximamente</small></button>
             </div>

@@ -246,7 +246,7 @@ Disponible únicamente para Medicina general u Odontología con:
 ### Corregir o ampliar
 
 - **Receta adicional** crea otro folio para la misma consulta.
-- **Sustituir** corrige una receta vigente y marca la anterior como no válida.
+- **Sustituir**, identificado con un botón ámbar y un icono de edición, corrige una receta vigente y marca la anterior como no válida.
 
 Una receta emitida no se edita directamente. Nunca entregues un documento marcado **NO ENTREGAR NI SURTIR**.
 
@@ -288,7 +288,7 @@ Desde el detalle del paciente:
 6. Si corresponde, relaciona una cita del mismo paciente. La existencia de una cita no la enlaza automáticamente: selecciona sólo la atención que originó el cobro.
 7. Pulsa una sola vez **Registrar pago** y espera el folio de confirmación.
 
-El movimiento queda en **Historial de pagos** con fecha, folio, importe, método, responsable y estado. El bloque **Último pago vigente** omite pagos cancelados.
+El pago queda en **Historial de pagos** con fecha, folio, importe, forma de pago, responsable y estado. El bloque **Último pago vigente** no incluye pagos cancelados.
 
 ### Módulo Pagos
 
@@ -298,9 +298,9 @@ Administración y Recepción pueden abrir **Gestión → Pagos**. La pantalla in
 - elegir un rango máximo de 366 días;
 - filtrar método y estado;
 - consultar total vigente y desglose por método;
-- recorrer resultados en páginas de 25 movimientos.
+- recorrer los resultados en páginas de 25 pagos.
 
-Los movimientos cancelados y los registros legados que requieren revisión permanecen visibles, pero no se suman.
+Los pagos cancelados y los pagos anteriores con información incompleta permanecen visibles, pero no se suman.
 
 ### Reportes y CSV
 
@@ -318,9 +318,9 @@ El archivo abre en Excel y conserva folio, paciente, concepto, método, importe,
 
 Sólo Administración puede cancelar:
 
-1. Abre el menú rojo del movimiento.
+1. Abre el menú rojo del pago.
 2. Captura un motivo específico de al menos cinco caracteres.
-3. Revisa el aviso: el pago no se eliminará, quedará como **Cancelado** y la operación no se puede deshacer. Elige **Volver** si necesitas revisar los datos o **Sí, cancelar pago** para continuar.
+3. Revisa el aviso: **“Este pago seguirá apareciendo en el historial, pero se marcará como Cancelado y ya no contará en los totales. Después de confirmar no podrás volver a activarlo.”** Elige **Volver** si necesitas revisar los datos o **Sí, cancelar pago** para continuar.
 4. Comprueba que el estado cambió a **Cancelado**. La pantalla vuelve al mismo folio y resalta el renglón; si estaba activo el filtro Vigente, lo sustituye por la búsqueda del folio para conservarlo visible.
 
 Cancelar no elimina ni edita el pago original. Si el cobro correcto es diferente, registra después un pago nuevo. No utilices la cancelación para representar un reembolso; esa operación todavía no está implementada.
@@ -349,6 +349,15 @@ Disponible únicamente para administradores.
 5. Captura cédula y domicilio completo cuando emitirá recetas.
 6. Guarda y entrega la credencial por un canal seguro.
 
+### Cambiar permisos sin perder Administración
+
+- **Rol** define qué partes del sistema puede abrir la cuenta.
+- **Perfil clínico** indica el área en la que atiende: Medicina general, Odontología o Nutrición.
+- Si un administrador también atiende pacientes, debe conservar el rol **Administrador** y elegir su **Perfil clínico**. No necesita cambiarse a Médico.
+- El sistema no permite que una cuenta de Administración cambie su propio rol ni se desactive mientras la está utilizando.
+- Otra cuenta de Administración puede realizar ese cambio. Cuando lo haga, las sesiones anteriores de la cuenta modificada se cerrarán y en el siguiente ingreso sólo aparecerán las opciones de su nuevo rol.
+- Nunca retires el acceso a la última cuenta de Administración activa; la pantalla rechazará la operación.
+
 ### Restablecer una contraseña
 
 1. Abre la lista de usuarios.
@@ -374,22 +383,36 @@ SistemaPacientes.exe --reset-password NOMBRE_USUARIO
 
 Este procedimiento sólo funciona para administradores y obliga a cambiar la contraseña posteriormente.
 
-## 14. Auditoría, respaldos y registros
+Si una instalación anterior quedó sin ninguna cuenta de Administración activa, utiliza una cuenta existente:
+
+```powershell
+python run.py --recover-admin NOMBRE_USUARIO
+```
+
+Con el ejecutable:
+
+```powershell
+SistemaPacientes.exe --recover-admin NOMBRE_USUARIO
+```
+
+El sistema sólo permite esta recuperación cuando no queda ningún administrador activo. La cuenta elegida recupera Administración, se activa y deberá cambiar la contraseña al entrar.
+
+## 14. Auditoría, copias de seguridad y registros
 
 ### Auditoría
 
 **Administración → Auditoría** muestra accesos y operaciones críticas. Utilízala para investigar cambios, no como sustituto del expediente clínico.
 
-### Respaldos
+### Copias de seguridad
 
-El sistema mantiene hasta 10 respaldos verificados en `backups/`: crea uno al iniciar y después de operaciones críticas aceptadas. Administración puede abrir **Administración → Respaldos** para:
+El sistema mantiene hasta 10 copias de seguridad comprobadas en `backups/`: crea una al iniciar y después de cambios importantes guardados correctamente. Administración puede abrir **Administración → Copias de seguridad** para:
 
 1. crear una copia inmediata;
 2. comprobar su integridad;
-3. descargarla como archivo SQLite;
-4. restaurarla cuando sea necesario.
+3. descargarla como archivo;
+4. recuperar la información de esa copia cuando sea necesario.
 
-Para restaurar, selecciona una copia, captura tu contraseña y escribe exactamente `RESTAURAR`. SGPN valida el archivo, crea una copia del estado vigente, reemplaza la base y cierra la sesión. Si la contraseña, frase, integridad o esquema no son válidos, la base activa permanece sin cambios. Practica el flujo primero con datos de demostración.
+Para recuperar una copia, selecciónala, captura tu contraseña y escribe exactamente `RESTAURAR`. El sistema comprueba el archivo, guarda una copia de la información actual, recupera la versión elegida y cierra la sesión. Si la contraseña o el archivo no son correctos, tu información actual no cambia. Practica primero con los datos de demostración.
 
 ### Registros técnicos
 

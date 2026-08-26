@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import asc, desc, func, text
+from sqlalchemy import asc, desc, func, or_, text
 
 from app import db_orm as db
 from app.core.time import utcnow_naive
@@ -136,6 +136,7 @@ class Paciente(db.Model):
 
     @staticmethod
     def buscar(busqueda, status="activo", ordenar_por="id", orden="desc"):
+        from app.core.text import search_terms
         from app.models.valoracion_antropometrica import ValoracionAntropometrica
 
         latest = (
@@ -151,14 +152,16 @@ class Paciente(db.Model):
             .outerjoin(latest, Paciente.id == latest.c.paciente_id)
             .filter(Paciente.status == status)
         )
-        cleaned = str(busqueda or "").strip()[:100]
-        if cleaned:
+        searchable_fields = (
+            func.sgpn_search_key(Paciente.nombre),
+            func.sgpn_search_key(Paciente.apellido_paterno),
+            func.sgpn_search_key(Paciente.apellido_materno),
+            func.sgpn_search_key(Paciente.telefono),
+            func.sgpn_search_key(Paciente.correo),
+        )
+        for term in search_terms(str(busqueda or "")[:100]):
             query = query.filter(
-                Paciente.nombre.contains(cleaned)
-                | Paciente.apellido_paterno.contains(cleaned)
-                | Paciente.apellido_materno.contains(cleaned)
-                | Paciente.telefono.contains(cleaned)
-                | Paciente.correo.contains(cleaned)
+                or_(*(field.contains(term, autoescape=True) for field in searchable_fields))
             )
         columns = {
             "id": Paciente.id,

@@ -13,7 +13,7 @@ from app import db_orm as db
 from app.core.audit import AuditLog
 from app.core.auth import login_required
 from app.core.security import roles_required
-from app.core.text import search_key
+from app.core.text import search_terms
 from app.core.validators import (
     ALLOWED_PAYMENT_METHODS,
     ALLOWED_PAYMENT_STATUS,
@@ -71,8 +71,8 @@ def _payment_query(filters):
         query = query.filter(Pago.metodo_pago == filters["metodo"])
     if filters["estatus"]:
         query = query.filter(Pago.estatus == filters["estatus"])
-    normalized = search_key(filters["q"])
-    if normalized:
+    terms = search_terms(filters["q"])
+    if terms:
         searchable_fields = (
             func.sgpn_search_key(Pago.folio),
             func.sgpn_search_key(Pago.concepto),
@@ -82,9 +82,10 @@ def _payment_query(filters):
         )
         # Cada palabra puede coincidir en una columna distinta. Esto permite
         # buscar un nombre completo aunque sus partes vivan en campos separados.
-        for term in normalized.split():
-            pattern = f"%{term}%"
-            query = query.filter(or_(*(field.like(pattern) for field in searchable_fields)))
+        for term in terms:
+            query = query.filter(
+                or_(*(field.contains(term, autoescape=True) for field in searchable_fields))
+            )
     return query
 
 
@@ -215,7 +216,7 @@ def _payment_csv_response(payments, filename):
                     f"{amount:.2f}",
                     payment.moneda,
                     payment.estatus_etiqueta,
-                    payment.usuario_registro.nombre_completo if payment.usuario_registro else "Registro migrado",
+                    payment.usuario_registro.nombre_completo if payment.usuario_registro else "Responsable no disponible",
                     appointment,
                     payment.cancelado_at.isoformat(" ") if payment.cancelado_at else "",
                     payment.usuario_cancelacion.nombre_completo if payment.usuario_cancelacion else "",
@@ -231,7 +232,7 @@ def _payment_csv_response(payments, filename):
 
 def _export_rows(query):
     if query.count() > MAX_PAYMENT_EXPORT_ROWS:
-        raise ValidationError("La exportación excede 10,000 movimientos; reduce el rango o aplica filtros.")
+        raise ValidationError("Hay más de 10,000 pagos para descargar. Reduce las fechas o usa más filtros.")
     return (
         query.options(
             joinedload(Pago.paciente),
@@ -336,7 +337,7 @@ def cancelar(pago_id):
             metadata={"paciente_id": payment.paciente_id, "reason": "already_cancelled"},
         )
         db.session.commit()
-        flash(f"El pago {payment.folio} ya se encontraba cancelado.", "warning")
+        flash(f"El pago {payment.folio} ya estaba cancelado. No se realizó otro cambio.", "warning")
         return redirect(return_to)
     try:
         data = payment_cancellation_payload(request.form)
@@ -355,7 +356,7 @@ def cancelar(pago_id):
             },
         )
         db.session.commit()
-        flash(f"Pago {payment.folio} cancelado. El movimiento original permanece en el historial.", "success")
+        flash(f"Pago {payment.folio} cancelado. Seguirá apareciendo en el historial y ya no contará en los totales.", "success")
     except ValidationError as error:
         db.session.rollback()
         flash(str(error), "error")

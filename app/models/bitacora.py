@@ -30,6 +30,7 @@ EVENT_NAMES = {
     "usuario.password_change": "CAMBIAR_CONTRASENA",
     "usuario.password_reset": "RESTABLECER_CONTRASENA",
     "usuario.password_reset_offline": "RESTABLECER_CONTRASENA_LOCAL",
+    "usuario.admin_recovery_offline": "RECUPERAR_ADMIN_LOCAL",
     "pago.create": "REGISTRAR_PAGO",
     "pago.cancel": "CANCELAR_PAGO",
     "pago.duplicate": "RECHAZAR_PAGO_DUPLICADO",

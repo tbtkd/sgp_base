@@ -16,7 +16,6 @@ button,input,select,textarea{font:inherit}
 .before\:left-2::before{content:'';left:0.5rem}
 .before\:top-2::before{content:'';top:0.5rem}
 .before\:w-0\.5::before{content:'';width:0.125rem}
-.bg-amber-100{background-color:#fef3c7}
 .bg-amber-50{background-color:#fffbeb}
 .bg-amber-600{background-color:#d97706}
 .bg-black{background-color:#000000}

@@ -48,3 +48,27 @@ def reset_password_offline(username, recovery_password):
     )
     db.session.commit()
     return user
+
+
+def recover_admin_offline(username, recovery_password):
+    """Recupera Administración sólo cuando no queda otra cuenta admin activa."""
+    if Usuario.active_admin_count() > 0:
+        raise ValidationError(
+            "Todavía existe una cuenta de Administración activa. Usa esa cuenta para realizar el cambio."
+        )
+    user = Usuario.find_by_username(username)
+    if not user:
+        raise ValidationError("No existe una cuenta con ese nombre de usuario.")
+    password(recovery_password, user=user.username, email=user.email)
+    user.rol = Usuario.role_for_storage("admin")
+    user.status = "activo"
+    user.replace_password(recovery_password, temporary=True)
+    AuditLog.record(
+        "usuario.admin_recovery_offline",
+        entity_type="usuario",
+        entity_id=user.id,
+        user_id=user.id,
+        metadata={"metodo": "equipo_local", "sesiones_invalidadas": True},
+    )
+    db.session.commit()
+    return user

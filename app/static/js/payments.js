@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmPaymentCancellation = async (form) => {
         const folio = form.dataset.paymentFolio || '';
         const title = folio ? `¿Cancelar el pago ${folio}?` : '¿Cancelar este pago?';
-        const message = 'El pago no se eliminará. Se conservará en el historial con estado Cancelado para mantener la trazabilidad. Esta acción no se puede deshacer.';
+        const message = 'Este pago seguirá apareciendo en el historial, pero se marcará como Cancelado y ya no contará en los totales. Después de confirmar no podrás volver a activarlo.';
 
         if (typeof confirmarAccion === 'function') {
             const result = await confirmarAccion({

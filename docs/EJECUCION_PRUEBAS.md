@@ -38,7 +38,7 @@ python -m pytest -q
 Resultado esperado para la versión 1.10.1 sin navegador E2E instalado:
 
 ```text
-118 passed, 1 skipped
+122 passed, 1 skipped
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -91,6 +91,25 @@ Para validar CSP, recursos locales, respaldos por mutación, panel administrativ
 python -m pytest -q tests/test_continuity_security.py
 ```
 
+Si esta prueba encuentra `style=`, `onclick=` u otro atributo bloqueado, ahora mostrará la plantilla y la línea exactas. No borres ni suavices la prueba: protege la aplicación contra código incrustado en el HTML.
+
+El error puede aparecer si se copiaron las pruebas de 1.10.1 sobre plantillas de 1.10.0. La solución recomendada es:
+
+1. conserva una copia de `instance/` y `backups/`;
+2. descomprime la entrega completa en una carpeta nueva y vacía;
+3. crea un entorno virtual nuevo e instala las dependencias;
+4. copia únicamente `instance/` y `backups/` a la nueva carpeta;
+5. ejecuta otra vez `python -m pytest -q`.
+
+Para localizar manualmente cualquier plantilla antigua en PowerShell:
+
+```powershell
+Get-ChildItem .\app\templates -Recurse -Filter *.html |
+    Select-String -Pattern '\b(onclick|onchange|onsubmit|onmouseover|onmouseout|style)\s*='
+```
+
+En una instalación 1.10.1 limpia el comando no muestra coincidencias.
+
 Para ejecutar también el escenario de navegador real:
 
 ```powershell
@@ -98,7 +117,7 @@ python -m playwright install chromium
 python -m pytest -q -m browser
 ```
 
-Con Chromium disponible el resultado completo es `119 passed`. Si Playwright o su navegador no están instalados, el único E2E se marca `skipped`; las 118 verificaciones de servidor, plantillas y persistencia siguen siendo obligatorias.
+Con Chromium disponible el resultado completo es `123 passed`. Si Playwright o su navegador no están instalados, el único E2E se marca `skipped`; las 122 verificaciones de servidor, plantillas y persistencia siguen siendo obligatorias.
 
 Para validar que la limpieza de actualizaciones no elimina datos ni el entorno virtual:
 
@@ -144,6 +163,7 @@ python scripts\build_local_assets.py --check
 - Ejecuta los comandos desde la raíz del proyecto.
 - No uses `python run.py` al mismo tiempo que las pruebas si estás modificando archivos del proyecto.
 - Si aparece `No module named pytest`, instala `requirements-dev.txt` dentro del mismo entorno virtual.
+- No reutilices una carpeta `.venv` después de renombrar o mover el proyecto; crea un entorno virtual nuevo para que sus rutas internas correspondan a la ubicación actual.
 - Desde la versión 1.3.1, las pruebas de migración liberan explícitamente SQLAlchemy antes de borrar sus bases temporales; esto evita `WinError 32` en Windows/Python 3.13.
 - Si `WinError 32` persiste con otro archivo, cierra `python run.py`, visores de SQLite y procesos que mantengan abierta esa ruta.
 - Si una actualización se descomprimió sobre una carpeta anterior, ejecuta `python scripts\cleanup_project.py`. Windows no elimina por sí mismo archivos que ya no forman parte del ZIP, como el antiguo `app/static/img/logo.svg` o `app/static/css/components/_sidebar.css`.

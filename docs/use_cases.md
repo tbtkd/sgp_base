@@ -2,7 +2,7 @@
 
 ## UC-01 — Administrar pacientes
 
-Recepción o personal clínico registra, busca, actualiza y cambia el estado de un paciente, incluyendo su contacto de emergencia.
+Recepción o personal clínico registra, busca, actualiza y cambia el estado de un paciente, incluyendo su contacto de emergencia. La búsqueda acepta fragmentos y no distingue mayúsculas ni acentos.
 
 ## UC-02 — Gestionar el expediente
 
@@ -54,7 +54,7 @@ El profesional selecciona una receta vigente, captura un motivo y revisa la info
 
 ## UC-09 — Asignar perfil profesional
 
-El administrador conserva el rol de permisos y asigna por separado Medicina general, Odontología/Dentista o Nutrición. El perfil es obligatorio para el rol Médico / Profesional clínico.
+El administrador conserva el rol de permisos y asigna por separado Medicina general, Odontología/Dentista o Nutrición. El perfil es obligatorio para el rol Médico / Profesional clínico. Si el propio administrador atiende, mantiene Administración y selecciona su perfil; no necesita rebajar su acceso.
 
 ## UC-10 — Consultar auditoría
 
@@ -62,4 +62,4 @@ El administrador filtra hasta 500 eventos por acción, módulo y resultado.
 
 ## UC-11 — Recuperar acceso
 
-El usuario cambia su contraseña con la credencial actual. Si la olvidó, otro administrador reautenticado genera una temporal que invalida sesiones y obliga a cambiarla. Si no queda ninguna sesión administrativa, el propietario del equipo ejecuta la recuperación local para una cuenta administradora.
+El usuario cambia su contraseña con la credencial actual. Si la olvidó, otro administrador reautenticado genera una temporal que invalida sesiones y obliga a cambiarla. Si nadie puede ingresar pero la cuenta sigue siendo administradora, el responsable del equipo restablece su contraseña localmente. Si una instalación anterior no conserva ningún administrador activo, recupera una cuenta existente con `--recover-admin`; el comando sólo funciona en ese estado y obliga a definir una contraseña definitiva.

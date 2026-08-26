@@ -177,7 +177,7 @@ def receta_adicional(valoracion_id):
     if request.method == "POST":
         try:
             prescription = _create_prescription(assessment, prescription_type="adicional")
-            flash("Receta adicional emitida con folio independiente.", "success")
+            flash("Receta adicional guardada. Tiene su propio folio y no cambia las recetas anteriores.", "success")
             return redirect(url_for("recetas.imprimir_receta", receta_id=prescription.id))
         except ValidationError as error:
             current_app.logger.warning("Receta adicional rechazada; valoracion_id=%s", assessment.id)
@@ -215,7 +215,7 @@ def sustituir_receta(receta_id):
                 source=source,
                 replacement_reason=reason,
             )
-            flash("Receta sustituida. El folio anterior se conserva marcado como no vigente.", "success")
+            flash("Receta corregida. La receta anterior seguirá disponible, pero aparecerá como reemplazada.", "success")
             return redirect(url_for("recetas.imprimir_receta", receta_id=replacement.id))
         except ValidationError as error:
             current_app.logger.warning("Sustitución de receta rechazada; receta_id=%s", source.id)
@@ -223,7 +223,7 @@ def sustituir_receta(receta_id):
         except (IntegrityError, ValueError):
             db.session.rollback()
             current_app.logger.warning("Conflicto al sustituir receta; receta_id=%s", source.id)
-            flash("No fue posible sustituir la receta; pudo haber sido reemplazada desde otra sesión.", "error")
+            flash("No se pudo guardar la corrección porque la receta ya cambió. Actualiza la página y revisa la receta actual.", "error")
     return _render_form(assessment, mode="sustitucion", source=source)
 
 

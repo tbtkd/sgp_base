@@ -102,9 +102,9 @@ def login():
             session["auth_version"] = int(user.auth_version or 0)
             if user.uses_temporary_email:
                 if user.rol_clinico == "admin":
-                    flash("Tu cuenta usa un correo temporal de migración. Actualízalo desde Usuarios.", "warning")
+                    flash("El correo registrado en tu cuenta necesita actualizarse. Hazlo desde Usuarios.", "warning")
                 else:
-                    flash("Tu cuenta usa un correo temporal de migración. Solicita al administrador actualizarlo.", "warning")
+                    flash("El correo registrado en tu cuenta necesita actualizarse. Solicita el cambio a Administración.", "warning")
             destination = (
                 url_for("auth.cambiar_contrasena")
                 if user.must_change_password
@@ -243,10 +243,25 @@ def editar_usuario(id):
     if request.method == "POST":
         try:
             data = user_payload(request.form, include_password=False, include_status=True)
+            previous_role = user.rol_clinico
+            previous_status = user.status
+            if user.id == current_user.id and data["rol"] != previous_role:
+                raise ValidationError(
+                    "No puedes cambiar tu propio rol de Administración. Para evitar perder el acceso, "
+                    "el cambio debe hacerlo otra cuenta de Administración."
+                )
             if user.id == current_user.id and data["status"] != "activo":
                 raise ValidationError("No puedes desactivar tu propia cuenta.")
-            if user.rol_clinico == "admin" and data["rol"] != "admin" and Usuario.active_admin_count() <= 1:
-                raise ValidationError("Debe existir al menos un administrador activo.")
+            removes_active_admin = (
+                previous_role == "admin"
+                and previous_status == "activo"
+                and (data["rol"] != "admin" or data["status"] != "activo")
+            )
+            if removes_active_admin and Usuario.active_admin_count() <= 1:
+                raise ValidationError(
+                    "No puedes quitar la última cuenta de Administración activa. "
+                    "Crea otra cuenta de Administración antes de continuar."
+                )
             data["rol"] = Usuario.role_for_storage(data["rol"])
             for key, value in data.items():
                 setattr(
@@ -263,6 +278,9 @@ def editar_usuario(id):
                     }
                     else value,
                 )
+            access_changed = user.rol_clinico != previous_role or user.status != previous_status
+            if access_changed:
+                user.auth_version = int(user.auth_version or 0) + 1
             AuditLog.record(
                 "usuario.update",
                 entity_type="usuario",
@@ -271,6 +289,8 @@ def editar_usuario(id):
                     "rol": user.rol,
                     "status": user.status,
                     "perfil_profesional": user.perfil_profesional,
+                    "acceso_cambiado": access_changed,
+                    "sesiones_invalidadas": access_changed,
                 },
             )
             db.session.commit()
@@ -316,7 +336,7 @@ def restablecer_contrasena(id):
                 description="Restablecimiento bloqueado temporalmente en la sesión",
             )
             db.session.commit()
-            flash("Se alcanzó el límite de confirmaciones fallidas. Cierra sesión y vuelve a autenticarte.", "warning")
+            flash("Ingresaste una contraseña incorrecta varias veces. Cierra sesión, vuelve a entrar e inténtalo de nuevo.", "warning")
             return render_template("auth/restablecer_contrasena.html", usuario=user), 429
         temporary_password = reset_user_password(user)
         AuditLog.record(
@@ -341,11 +361,24 @@ def cambiar_estatus_usuario(id):
     if not user:
         return jsonify({"success": False, "error": "Usuario no encontrado"}), 404
     if user.id == current_user.id:
-        return jsonify({"success": False, "error": "No puedes desactivar tu propia cuenta"}), 400
+        return jsonify(
+            {"success": False, "error": "Tu cuenta no se puede desactivar mientras la estás utilizando."}
+        ), 400
     if user.rol_clinico == "admin" and user.status == "activo" and Usuario.active_admin_count() <= 1:
-        return jsonify({"success": False, "error": "Debe existir al menos un administrador activo"}), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Esta es la única cuenta de Administración activa. Crea otra antes de inhabilitarla.",
+            }
+        ), 400
     user.status = "inactivo" if user.status == "activo" else "activo"
-    AuditLog.record("usuario.status", entity_type="usuario", entity_id=user.id, metadata={"status": user.status})
+    user.auth_version = int(user.auth_version or 0) + 1
+    AuditLog.record(
+        "usuario.status",
+        entity_type="usuario",
+        entity_id=user.id,
+        metadata={"status": user.status, "sesiones_invalidadas": True},
+    )
     db.session.commit()
     return jsonify(
         {
@@ -405,11 +438,11 @@ def crear_respaldo():
             raise RuntimeError("La base todavía no contiene datos para respaldar.")
         AuditLog.record("backup.create", entity_type="database", metadata={"archivo": path.name})
         db.session.commit()
-        flash(f"Respaldo creado y verificado: {path.name}", "success")
+        flash(f"Copia de seguridad creada correctamente: {path.name}", "success")
     except (OSError, RuntimeError, sqlite3.DatabaseError):
         db.session.rollback()
         logger.exception("No fue posible crear el respaldo manual")
-        flash("No fue posible crear un respaldo íntegro. La base activa no fue modificada.", "error")
+        flash("No se pudo crear la copia de seguridad. Tu información actual no cambió.", "error")
     return redirect(url_for("auth.respaldos"))
 
 
@@ -418,15 +451,15 @@ def crear_respaldo():
 def verificar_respaldo(filename):
     path = _requested_backup(filename)
     try:
-        result = verify_sqlite_database(path)
+        verify_sqlite_database(path)
         AuditLog.record("backup.verify", entity_type="database", metadata={"archivo": path.name})
         db.session.commit()
-        flash(f"Respaldo íntegro: {result['tables']} tablas verificadas.", "success")
+        flash("La copia de seguridad está lista para usarse.", "success")
         return redirect(url_for("auth.respaldos"))
     except sqlite3.DatabaseError:
         AuditLog.record("backup.verify", entity_type="database", outcome="failure", metadata={"archivo": path.name})
         db.session.commit()
-        flash("El respaldo no es válido o está dañado; no puede restaurarse.", "error")
+        flash("Esta copia está dañada o incompleta y no puede usarse.", "error")
         return render_template("auth/respaldos.html", respaldos=[], restore_phrase="RESTAURAR"), 422
 
 
@@ -454,14 +487,14 @@ def restaurar_respaldo(filename):
             description="Restauración rechazada por confirmación inválida",
         )
         db.session.commit()
-        flash("No se confirmó la restauración. Verifica la contraseña y escribe RESTAURAR.", "error")
+        flash("No se pudo confirmar. Revisa tu contraseña y escribe RESTAURAR.", "error")
         return redirect(url_for("auth.respaldos")), 422
     try:
         verify_sqlite_database(path)
     except sqlite3.DatabaseError:
         AuditLog.record("backup.restore", entity_type="database", outcome="failure", metadata={"archivo": path.name})
         db.session.commit()
-        flash("El respaldo está dañado o no corresponde a SGPN. No se realizó ningún cambio.", "error")
+        flash("Esta copia está dañada, incompleta o pertenece a otro sistema. Tu información actual no cambió.", "error")
         return redirect(url_for("auth.respaldos")), 422
 
     actor_id = current_user.id
@@ -477,7 +510,7 @@ def restaurar_respaldo(filename):
         restore_sqlite_database(path, destination)
     except (OSError, sqlite3.DatabaseError):
         logger.exception("Falló la restauración del respaldo %s", path.name)
-        flash("La restauración falló; la base activa permanece sin cambios.", "error")
+        flash("No se pudo recuperar la copia. Tu información actual no cambió.", "error")
         return redirect(url_for("auth.respaldos")), 422
     finally:
         db.engine.dispose()
@@ -490,5 +523,5 @@ def restaurar_respaldo(filename):
     db.session.commit()
     session.clear()
     logout_user()
-    flash("Respaldo restaurado correctamente. Inicia sesión de nuevo para continuar.", "success")
+    flash("La información se recuperó correctamente. Inicia sesión de nuevo para continuar.", "success")
     return redirect(url_for("auth.login"))

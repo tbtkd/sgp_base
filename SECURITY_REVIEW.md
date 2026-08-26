@@ -16,11 +16,12 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 - Contraseñas con Scrypt y política de 12–128 caracteres.
 - Roles permitidos: `admin`, `medico`, `recepcion`.
 - Decoradores de autenticación/RBAC aplicados en backend.
-- Protección contra desactivar la propia cuenta o eliminar el último administrador.
+- Protección contra desactivar la propia cuenta, cambiar el propio rol administrativo o eliminar el último administrador activo.
 - Cinco fallos bloquean la cuenta y la IP durante cinco minutos.
 - Comparación con hash ficticio para usuarios inexistentes y mensajes de acceso genéricos.
-- Cambio propio con contraseña actual, restablecimiento administrativo con reautenticación y recuperación local limitada a administradores.
+- Cambio propio con contraseña actual, restablecimiento administrativo con reautenticación, recuperación local de contraseña limitada a administradores y recuperación excepcional del rol cuando no queda ninguno activo.
 - Contraseñas temporales mostradas una sola vez, cambio obligatorio e invalidación de sesiones mediante `auth_version`.
+- Un cambio de rol o estado invalida las sesiones anteriores de la cuenta afectada; conservar Administración y configurar el perfil clínico permite que un responsable también atienda sin reducir sus permisos.
 
 ### Sesión, red y navegador
 
@@ -56,6 +57,7 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 - Metadatos limitados y sin almacenar contraseñas, recetas completas o datos clínicos en el log técnico.
 - Excepciones internas y SQL no se devuelven al usuario.
 - Mensajes `success`, `error`, `warning` e `info` con iconos y cierre.
+- Los mensajes visibles no revelan excepciones ni términos internos y orientan al usuario con resultado y siguiente acción; una prueba evita que reaparezcan frases técnicas ya sustituidas.
 - El formulario de citas permanece cerrado al cargar, no depende de Alpine/CDN y cancela las consultas de disponibilidad al cerrarse.
 - Los horarios tienen etiquetas HTML reales, contraste explícito y revalidación autoritativa en el servidor.
 - La agenda rápida sólo acepta pacientes activos, limita fechas a dos años, rechaza citas previas y revalida el horario dentro de un bloqueo de escritura del proceso local.
@@ -67,7 +69,7 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 - Las pestañas de consulta y panel funcionan con JavaScript local, sin depender de Alpine/CDN.
 - El menú de cuenta inicia cerrado mediante HTML nativo y usa JavaScript local; si el script falla, el detalle permanece oculto y no expone información por defecto.
 - El sidebar móvil, selector de sede y notificaciones usan estados `hidden`/ARIA y controles locales; no existe navegación hacia módulos sin autorización o backend.
-- La búsqueda global reutiliza la consulta limitada y validada de pacientes; no introduce un endpoint universal que exponga datos clínicos.
+- La búsqueda global reutiliza la consulta limitada y validada de pacientes; no introduce un endpoint universal que exponga datos clínicos. Pacientes, Agenda, Consultas y Pagos normalizan mayúsculas/acentos y aplican términos parciales parametrizados.
 - El tema se conserva sólo como preferencia visual en `localStorage`; no almacena identidad, datos clínicos ni credenciales.
 - El dashboard no calcula ni presenta ingresos; las métricas operativas proceden de consultas acotadas a SQLite y respetan permisos clínicos.
 - Recepción no recibe el contenido de pendientes clínicos, actividad de consultas ni acciones para iniciar atención.
@@ -93,7 +95,7 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 - La simplificación de la firma no elimina identidad: nombre, perfil, cédula, domicilio y fecha permanecen impresos en el encabezado, mientras la firma autógrafa conserva una línea única claramente rotulada.
 - La supresión de metadatos del navegador se limita a CSS y al estado temporal del título; no altera el folio, la ruta autenticada, los snapshots ni el contenido clínico.
 - La idempotencia de pagos combina UUID v4 de formulario, restricción única y bloqueo visual; un reintento confirmado no crea una segunda fila.
-- La búsqueda por nombre completo se tokeniza y continúa parametrizada por SQLAlchemy; no concatena SQL proporcionado por el usuario.
+- La búsqueda por nombre completo se tokeniza, elimina diferencias de mayúsculas y acentos, acepta fragmentos y continúa parametrizada por SQLAlchemy; no concatena SQL proporcionado por el usuario ni interpreta `%` o `_` como comodines aportados por el usuario.
 - Sólo Administración cancela pagos. Recepción consulta el módulo global y Medicina mantiene el acceso contextual, sin elevar permisos de cancelación.
 - Los totales financieros usan centavos enteros y excluyen cancelados/filas `requiere_revision`; ninguna suma depende del `Float` legado.
 - Cancelar conserva el original y exige motivo; el historial financiero no se elimina en cascada al eliminar un paciente. El retorno se limita a rutas internas de Pagos/Pacientes, descarta origen externo y evita que un filtro incompatible oculte el movimiento cancelado.
@@ -135,7 +137,7 @@ La solicitud de factura, recibos no fiscales y datos fiscales deberá diseñarse
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 118 pruebas obligatorias aprobadas; un E2E adicional queda disponible con Playwright/Chromium.
+- `python -m pytest -q`: 122 pruebas obligatorias aprobadas; un E2E adicional queda disponible con Playwright/Chromium.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en las dependencias instaladas; el entorno de verificación usa `pip 26.2.1`.

@@ -127,6 +127,43 @@ def test_patient_detail_renders_only_captured_optional_fields(app, client, login
     assert ">Teléfono de emergencia<" not in page
 
 
+def test_patient_search_ignores_case_accents_and_accepts_partial_name_terms(app, client, login):
+    login()
+    with app.app_context():
+        db.session.add_all(
+            [
+                Paciente(
+                    nombre="Sofía",
+                    apellido_paterno="Núñez",
+                    apellido_materno="Ocampo",
+                    genero="mujer",
+                    fecha_nacimiento=date(1991, 6, 12),
+                    telefono="5511119999",
+                    correo="sofia.nunez@example.test",
+                    ciudad="Puebla",
+                    status="activo",
+                ),
+                Paciente(
+                    nombre="Mariana",
+                    apellido_paterno="Torres",
+                    genero="mujer",
+                    fecha_nacimiento=date(1990, 2, 2),
+                    telefono="5522229999",
+                    correo="mariana@example.test",
+                    ciudad="Puebla",
+                    status="activo",
+                ),
+            ]
+        )
+        db.session.commit()
+
+    for query in ("sofia", "SOFI", "sofi nune", "NUNEZ oca"):
+        page = client.get("/pacientes/activos", query_string={"busqueda": query}).get_data(as_text=True)
+        assert "Sofía" in page
+        assert "Núñez Ocampo" in page
+        assert "Mariana" not in page
+
+
 def test_excel_import_is_atomic(app, client, login):
     login()
     with app.app_context():

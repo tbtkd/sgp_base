@@ -124,7 +124,7 @@ def create_app(config_name=None, test_config=None):
             app.logger.warning("Sesión invalidada por cambio de credencial; usuario_id=%s", current_user.id)
             session.clear()
             logout_user()
-            flash("La credencial cambió. Inicia sesión nuevamente.", "warning")
+            flash("Tu acceso cambió. Inicia sesión de nuevo para continuar.", "warning")
             return redirect(url_for("auth.login"))
         if current_user.must_change_password and request.endpoint not in {
             "auth.cambiar_contrasena",

@@ -288,6 +288,22 @@ def test_consultation_tabs_use_local_navigation(app, client, login):
     assert "border-color: #29464d" in shell_css
 
 
+def test_dark_theme_uses_soft_surfaces_and_resets_native_controls():
+    root = Path(__file__).parents[1]
+    shell_css = (root / "app" / "static" / "css" / "shell.css").read_text(encoding="utf-8")
+
+    assert "--shell-border: rgb(148 203 204 / 0.12)" in shell_css
+    assert "[data-remove-medicine] { border: 0; background: transparent; }" in shell_css
+    assert ".shell-nav-link {" in shell_css
+    assert "background: transparent; color: #c5dadd; font: inherit" in shell_css
+    assert 'html[data-theme="dark"] .bg-teal-50\\/30' in shell_css
+    assert 'html[data-theme="dark"] .shell-main .medicine-row' in shell_css
+    assert 'html[data-theme="dark"] .shell-main .bg-white.border' in shell_css
+    assert ".prescription-replace-action" in shell_css
+    assert 'html[data-theme="dark"] .prescription-replace-action' in shell_css
+    assert ".protected-admin-field" in shell_css
+
+
 def test_print_view_is_standalone_and_contains_clinical_note(app, client, login):
     anonymous = app.test_client()
     assert anonymous.get("/valoraciones/valoraciones/1/imprimir").status_code == 302

@@ -2,7 +2,7 @@
 
 ## 1. Estado general
 
-La versión 1.10.0 conserva la base clínica y añade Pagos operativos íntegros: centavos exactos, folio, responsable, idempotencia, historial por paciente, cancelación administrativa, módulo global para Administración/Recepción y reportes CSV diarios/mensuales exclusivos de Administración. Agenda, Consultas, Recetas, perfiles, dashboard, shell, tema, contraste y detalle progresivo permanecen sin regresiones. Las migraciones transaccionales de recetas, turnos y pagos conservan y verifican datos; los totales de pagos excluyen cancelados y filas legadas que requieren revisión.
+La versión 1.10.1 conserva la base clínica y los Pagos operativos íntegros de 1.10.0: centavos exactos, folio, responsable, idempotencia, historial por paciente, cancelación administrativa, módulo global para Administración/Recepción y reportes CSV diarios/mensuales exclusivos de Administración. Agenda, Consultas, Recetas, perfiles, dashboard, shell, tema, contraste y detalle progresivo permanecen sin regresiones. Las migraciones transaccionales de recetas, turnos y pagos conservan y verifican datos; los totales de pagos excluyen cancelados y filas legadas que requieren revisión.
 
 Módulos evaluados:
 
@@ -313,8 +313,16 @@ Módulos evaluados:
 - Respaldar después de operaciones críticas o por intervalo controlado, no únicamente al arrancar.
 - Probar exportación/restauración administrativa y documentar cifrado del equipo/medios.
 - Añadir pruebas de navegador y lista de comprobación para una instalación local segura.
-- 118 pruebas obligatorias y un E2E opcional validan recursos/CSP, permisos, CSRF, corrupción, respaldos y restauración.
+- 122 pruebas obligatorias y un E2E opcional validan recursos/CSP, permisos, CSRF, corrupción, respaldos, restauración, búsqueda flexible y protección del administrador.
 - La siguiente fase recomendada es cierre/versionado inmutable de notas clínicas antes de Facturación, recibos o caja formal.
+
+### Fase 1.24: continuidad visual de recetas — completada en 1.10.1
+
+- **Sustituir** se diferencia de **Ver / imprimir** mediante una acción ámbar sólida con icono.
+- Tema claro y oscuro definen texto, fondo, puntero y foco propios con contraste suficiente.
+- La etiqueta accesible incluye el folio que será sustituido.
+- La vista previa de impresión conserva la misma jerarquía visual sin modificar el documento impreso.
+- No cambia permisos, folios, persistencia, auditoría ni reglas de inmutabilidad.
 
 ## 4. Elementos conservados, modificados y retirados
 
@@ -357,6 +365,7 @@ Para una receta, primero selecciona **Generar receta**, completa los medicamento
 | RX-PRINT-01 | Imprimir receta | Documento A4 completo, compacto, sin tarjetas repetidas y sin shell/CDN |
 | RX-HIS-01 | Adicional/sustitución | Folios y versiones conservados; documento anterior no vigente |
 | RX-ORDER-01 | Orden de receta | Alta visual superior y salida persistida/impresa `1..n` |
+| RX-UI-01 | Acción Sustituir | Contraste claro/oscuro, icono, folio accesible y diferenciación frente a Ver / imprimir |
 | CONS-DAY-01 | Turno diario | Asignación en servidor, reinicio por fecha y cliente ignorado |
 | CONS-DAY-02 | Migración diaria | Consultas legadas preservadas y unicidad por fecha verificada |
 | RX-MIG-01 | Esquema legado | Datos preservados y nueva relación 1:N verificada |
@@ -386,11 +395,23 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. La 1.10.1 amplía la aceptación principal a **118 pruebas**, más un E2E opcional con Chromium, para cubrir CSP local, respaldos por mutación, autorización, CSRF, corrupción y restauración atómica.
+Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. La 1.10.1 amplía la aceptación principal a **122 pruebas**, más un E2E opcional con Chromium, para cubrir CSP local, respaldos por mutación, autorización, CSRF, corrupción, restauración atómica, búsqueda flexible y continuidad del acceso administrativo.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
-## 7. Fase 2 recomendada — volumen y operación
+## 7. Siguiente fase recomendada — 1.11 cierre clínico inmutable
+
+- Incorporar estados **Borrador** y **Cerrada** para cada nota clínica.
+- Guardar responsable, fecha y hora del cierre profesional.
+- Impedir que una nota cerrada se sobrescriba o elimine.
+- Corregir una nota cerrada mediante una **Aclaración / Addendum** enlazada, con motivo, autor y fecha propios.
+- Diferenciar claramente borrador, nota cerrada y aclaraciones en pantalla e impresión.
+- Invalidar dobles envíos, aplicar permisos en servidor y auditar cierres e intentos rechazados sin copiar contenido clínico completo.
+- Migrar las notas existentes de forma conservadora, sin marcarlas automáticamente como firmadas o cerradas si no existe evidencia.
+
+Esta fase debe implementarse antes de ampliar Facturación o llevar el sistema a una red, porque protege la integridad histórica del documento clínico principal.
+
+## 8. Fase posterior — volumen y operación
 
 - Medir el índice de Consultas con bases anonimizadas de mayor volumen antes de modificar índices.
 - El diseño funcional y los controles implementados se detallan en [ROADMAP_AGENDA_Y_CONSULTAS.md](ROADMAP_AGENDA_Y_CONSULTAS.md).
@@ -401,14 +422,8 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - Recibos no fiscales, reembolsos como movimientos y caja formal sólo después de modelar cargos, conciliación y responsables.
 - Confirmaciones y auditoría de operaciones administrativas masivas.
 
-## 8. Fase 3 recomendada — frontend autocontenido
-
-- Compilar Tailwind localmente y retirar su CDN.
-- Empaquetar FontAwesome, Alpine y SweetAlert o reemplazar sus usos restantes con componentes locales.
-- Consolidar reglas duplicadas de tablas, formularios, pestañas y modales.
-- Sustituir los usos legados restantes de Alpine; sidebar, top bar, pestañas clínicas y menú de cuenta ya utilizan JavaScript local.
-- Pruebas de interfaz con navegador real para resoluciones de escritorio y móvil.
-- Pruebas visuales específicas de impresión en Chrome/Edge y ejecutable PyInstaller.
+- Mantener pruebas visuales con navegador real para resoluciones de escritorio/móvil e impresión en Chrome, Edge y el ejecutable PyInstaller.
+- Consolidar reglas visuales duplicadas sólo cuando existan capturas de referencia y pruebas que eviten regresiones.
 
 ## 9. Fase 4 antes de producción en red
 

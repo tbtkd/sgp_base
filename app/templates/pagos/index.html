@@ -8,7 +8,7 @@
 {% set status_labels = {'vigente': 'Vigente', 'cancelado': 'Cancelado', 'requiere_revision': 'Requiere revisión'} %}
 <div class="payments-page">
     <header class="payments-page-heading">
-        <div><p class="payment-eyebrow">Operación local</p><h1>Pagos</h1><p>Consulta movimientos íntegros por paciente, folio, fecha, método y estado.</p></div>
+        <div><p class="payment-eyebrow">Control de cobros</p><h1>Pagos</h1><p>Consulta los pagos por paciente, folio, fecha, forma de pago y estado.</p></div>
         <div class="payment-heading-actions">
             {% if current_user.rol_clinico == 'admin' %}<a href="{{ url_for('pagos.exportar_csv', q=filtros.q, desde=filtros.desde.isoformat(), hasta=filtros.hasta.isoformat(), metodo=filtros.metodo, estatus=filtros.estatus, agrupacion=filtros.agrupacion) }}" class="payment-secondary-action"><i class="fas fa-file-csv" aria-hidden="true"></i>Exportar filtro CSV</a>{% endif %}
             <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="payment-primary-action"><i class="fas fa-user-plus" aria-hidden="true"></i>Registrar desde un paciente</a>
@@ -17,9 +17,9 @@
 
     <section class="payments-kpi-grid" aria-label="Resumen del periodo filtrado">
         <article><span><i class="fas fa-money-bill-wave" aria-hidden="true"></i>Total vigente</span><strong>{{ resumen.monto_centavos|money_cents }} MXN</strong><small>Excluye cancelados y pendientes de revisión</small></article>
-        <article><span><i class="fas fa-receipt" aria-hidden="true"></i>Movimientos</span><strong>{{ resumen.movimientos }}</strong><small>Resultados del filtro actual</small></article>
-        <article><span><i class="fas fa-ban" aria-hidden="true"></i>Cancelados</span><strong>{{ resumen.cancelados }}</strong><small>Originales conservados</small></article>
-        <article class="{% if resumen.requieren_revision %}has-warning{% endif %}"><span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Requieren revisión</span><strong>{{ resumen.requieren_revision }}</strong><small>Registros legados no sumados</small></article>
+        <article><span><i class="fas fa-receipt" aria-hidden="true"></i>Pagos registrados</span><strong>{{ resumen.movimientos }}</strong><small>Resultados del filtro actual</small></article>
+        <article><span><i class="fas fa-ban" aria-hidden="true"></i>Cancelados</span><strong>{{ resumen.cancelados }}</strong><small>Se conservan en el historial</small></article>
+        <article class="{% if resumen.requieren_revision %}has-warning{% endif %}"><span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Pagos por revisar</span><strong>{{ resumen.requieren_revision }}</strong><small>Pagos anteriores con datos incompletos</small></article>
     </section>
 
     <section class="payment-filter-panel" aria-labelledby="payment-filters-title">
@@ -33,7 +33,7 @@
             {% if current_user.rol_clinico == 'admin' %}<div><label for="payment-grouping">Resumen</label><select id="payment-grouping" name="agrupacion"><option value="dia"{% if filtros.agrupacion == 'dia' %} selected{% endif %}>Por día</option><option value="mes"{% if filtros.agrupacion == 'mes' %} selected{% endif %}>Por mes</option></select></div>{% endif %}
             <button type="submit"><i class="fas fa-filter" aria-hidden="true"></i>Aplicar filtros</button>
         </form>
-        <p class="payment-filter-help">El rango máximo permitido es de 366 días. La vista inicia con los movimientos del día.</p>
+        <p class="payment-filter-help">Puedes consultar hasta 366 días a la vez. Al entrar se muestran los pagos del día.</p>
     </section>
 
     <section class="payment-breakdown" aria-labelledby="payment-breakdown-title">
@@ -44,7 +44,7 @@
     {% if current_user.rol_clinico == 'admin' %}
     <section class="payment-report-panel" aria-labelledby="payment-report-title">
         <div class="payment-panel-heading">
-            <div><p class="payment-eyebrow">Reporte administrativo</p><h2 id="payment-report-title">Resumen por {{ 'mes' if filtros.agrupacion == 'mes' else 'día' }}</h2><p>Importes vigentes y movimientos del filtro actual.</p></div>
+            <div><p class="payment-eyebrow">Reporte administrativo</p><h2 id="payment-report-title">Resumen por {{ 'mes' if filtros.agrupacion == 'mes' else 'día' }}</h2><p>Importes vigentes y pagos incluidos en la búsqueda.</p></div>
         </div>
         {% if serie_reporte %}
         <div class="payment-table-wrap"><table class="payment-table payment-report-table"><thead><tr><th>Periodo</th><th>Movimientos</th><th>Cancelados</th><th>Total vigente</th></tr></thead><tbody>{% for fila in serie_reporte %}<tr><td><strong>{{ fila.periodo }}</strong></td><td>{{ fila.movimientos }}</td><td>{{ fila.cancelados }}</td><td class="payment-amount">{{ fila.monto_centavos|money_cents }} MXN</td></tr>{% endfor %}</tbody></table></div>
@@ -53,7 +53,7 @@
     {% endif %}
 
     <section class="payment-list-panel" aria-labelledby="payment-list-title">
-        <div class="payment-panel-heading"><div><p class="payment-eyebrow">Trazabilidad</p><h2 id="payment-list-title">Movimientos</h2><p>{{ paginacion.total }} resultado{% if paginacion.total != 1 %}s{% endif %}</p></div></div>
+        <div class="payment-panel-heading"><div><p class="payment-eyebrow">Historial</p><h2 id="payment-list-title">Pagos registrados</h2><p>{{ paginacion.total }} resultado{% if paginacion.total != 1 %}s{% endif %}</p></div></div>
         {% if pagos %}
         <div class="payment-table-wrap">
             <table class="payment-table">
@@ -67,7 +67,7 @@
                         <td class="payment-concept">{{ pago.concepto }}</td>
                         <td>{{ method_labels.get(pago.metodo_pago, pago.metodo_pago|capitalize) }}</td>
                         <td class="payment-amount">{% if pago.monto_centavos > 0 %}{{ pago.monto_centavos|money_cents }} {{ pago.moneda }}{% else %}No disponible{% endif %}</td>
-                        <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Registro migrado' }}</td>
+                        <td>{{ pago.usuario_registro.nombre_completo if pago.usuario_registro else 'Responsable no disponible' }}</td>
                         <td><span class="payment-status payment-status--{{ pago.estatus|replace('_', '-') }}">{{ pago.estatus_etiqueta }}</span>{% if pago.estatus == 'cancelado' %}<small>{{ pago.motivo_cancelacion }}</small>{% endif %}</td>
                         <td>
                             {% if current_user.rol_clinico == 'admin' and pago.estatus != 'cancelado' %}
@@ -87,7 +87,7 @@
             </table>
         </div>
         {% else %}
-        <div class="payment-empty-state"><i class="fas fa-magnifying-glass-dollar" aria-hidden="true"></i><strong>No se encontraron movimientos</strong><p>Ajusta los filtros o registra un pago desde el detalle de un paciente.</p></div>
+        <div class="payment-empty-state"><i class="fas fa-magnifying-glass-dollar" aria-hidden="true"></i><strong>No se encontraron pagos</strong><p>Cambia los filtros o registra un pago desde el detalle de un paciente.</p></div>
         {% endif %}
 
         {% if paginacion.pages > 1 %}

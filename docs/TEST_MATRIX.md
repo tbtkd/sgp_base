@@ -6,14 +6,19 @@
 | --- | --- | --- | --- |
 | Recursos frontend | CSS, iconos y diálogo se sirven desde `/static` | Plantillas con URL remota o recurso generado obsoleto fallan la comprobación | `test_continuity_security.py`, `build_local_assets.py --check` |
 | CSP | nonce único y directivas sólo de mismo origen | `unsafe-inline`, CDN, `onclick` y `style` quedan prohibidos | `test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes` |
+| Mensajes para usuario | el aviso explica resultado, conservación y siguiente acción en palabras sencillas | reaparecen frases internas conocidas como trazabilidad, registro legado, base activa o relación de compresión | `test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes` |
 | Respaldo crítico | mutación confirmada crea copia íntegra | mutación rechazada no crea copia | `test_successful_critical_mutation_creates_backup_but_rejected_one_does_not` |
 | Falla del medio | el cambio confirmado permanece y se informa `X-SGPN-Backup: failed` | no se presenta una copia inexistente como exitosa | `test_backup_failure_does_not_rollback_successful_mutation` |
 | Panel de respaldos | Administración lista, crea, verifica y descarga | anónimo redirigido, Recepción 403, POST sin CSRF 400, nombre inválido 404 | pruebas `test_backup_admin_*` y `test_backup_create_*` |
 | Integridad | base SGPN válida supera `integrity_check` y esquema mínimo | archivo vacío/corrupto se rechaza sin tocar el destino | pruebas `test_database_verification_*` y `test_atomic_restore_*` |
 | Restauración | contraseña + `RESTAURAR`, copia previa, reemplazo atómico y logout | contraseña/frase erróneas o copia corrupta producen 422 | pruebas `test_*restore*` |
+| Búsqueda flexible | `sofia`, `SOFI` y fragmentos distribuidos encuentran **Sofía Núñez** | `%`/`_` no amplían resultados ni alteran SQL | pruebas de Pacientes, Agenda, Consultas y Pagos |
+| Continuidad administrativa | la cuenta propia conserva Administración; otra cuenta puede cambiar roles y revoca sesiones | auto-rebaja y retiro del último administrador son rechazados | `test_admin_cannot_change_own_role_but_another_admin_can` |
+| Recuperación de rol | `--recover-admin` recupera una cuenta cuando no queda ningún administrador | se rechaza mientras exista uno activo y nunca guarda la contraseña | `test_offline_admin_role_recovery_only_works_when_no_admin_remains` |
+| Tema oscuro amable | superficies suaves, enlaces y botones coherentes, foco visible | regresión a gris nativo, morado o contornos decorativos fuertes falla el contrato | `test_dark_theme_uses_soft_surfaces_and_resets_native_controls` |
 | Navegador real | login, recursos locales y diálogo nativo funcionan con CSP | consola CSP o solicitud a otro origen falla el caso | `tests/e2e/test_browser_security.py` |
 
-Aceptación: 118 pruebas obligatorias; 119 con Playwright/Chromium. Los casos de error no reutilizan la base real.
+Aceptación: 122 pruebas obligatorias; 123 con Playwright/Chromium. Los casos de error no reutilizan la base real.
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -83,8 +88,9 @@ python -m pytest -q
 | SEC-05 | Migración | Una cuenta con correo temporal recibe advertencia al iniciar sesión |
 | SEC-06 | Cambio de contraseña | Requiere la credencial actual, aplica política e invalida otras sesiones |
 | SEC-07 | Restablecimiento admin | Reautenticación, credencial temporal, cambio obligatorio y auditoría sin secreto |
-| SEC-08 | Recuperación local | Limitada a administradores, activa la cuenta y obliga a cambiar contraseña |
+| SEC-08 | Recuperación local | Restablece una cuenta administradora; si no queda ninguna, recupera una cuenta existente sólo en ese estado, activa y obliga a cambiar contraseña |
 | SEC-09 | Ayuda pública | No recibe ni confirma nombres de usuario |
+| SEC-10 | Rol propio protegido | Administración no puede rebajar su propia cuenta; otro administrador puede hacerlo e invalida sesiones |
 | VAL-01 | Contraseñas | Longitud, composición y datos personales |
 | VAL-02 | Consulta | IMC manipulado ignorado y TA/rangos verificados |
 | XLS-01 | Importación | Archivo inválido no deja registros parciales |
@@ -114,6 +120,8 @@ python -m pytest -q
 | UI-DASH-07 | Contraste de pendientes | Texto principal/secundario y estados hover/foco cumplen contraste AA en el panel oscuro |
 | UI-PAT-01 | Detalle progresivo vacío | Los campos opcionales vacíos se resumen en un solo estado con acceso a edición |
 | UI-PAT-02 | Detalle progresivo parcial | Sólo se renderizan los campos complementarios que sí fueron capturados |
+| UI-SEARCH-02 | Búsqueda flexible | Nombre parcial sin acentos o con mayúsculas distintas localiza al mismo paciente en los módulos compartidos |
+| UI-THEME-01 | Superficies oscuras | Bordes de baja intensidad, controles nativos normalizados, texto secundario y foco visible |
 
 ## Perfiles profesionales (`tests/test_professional_profiles.py`)
 
@@ -143,6 +151,7 @@ python -m pytest -q
 | RX-MIG-01 | Migración | Unicidad legada retirada sin perder folios y llaves foráneas verificadas |
 | RX-ORDER-01 | Captura | Agregar usa inserción superior, foco inicial y orden oculto consecutivo |
 | RX-ORDER-02 | Persistencia/impresión | Filas visuales `3,2,1` se guardan y muestran como `1,2,3` en una lista compacta sin tarjetas |
+| RX-UI-01 | Acción Sustituir | Sólo aparece en folios vigentes autorizados y conserva contraste, icono, etiqueta accesible, hover y foco en ambos temas |
 | UI-ID-01 | Identidad | Cuenta sólo en sidebar, topbar sin identidad e icono canónico PNG/ICO versionado contra caché |
 | UI-ID-02 | Estado de cuenta | Panel cerrado por `hidden`, sin saludo duplicado y control local con `aria-expanded` |
 

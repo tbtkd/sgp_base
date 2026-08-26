@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-planned-module]').forEach((button) => {
         button.addEventListener('click', () => {
             const moduleName = button.dataset.plannedModule || 'Este módulo';
-            const message = `${moduleName} está integrado como módulo planificado y aún no está habilitado.`;
+            const message = `${moduleName} todavía no está disponible.`;
             if (!liveRegion) return;
             window.clearTimeout(liveRegionTimer);
             liveRegion.textContent = message;

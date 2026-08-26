@@ -12,25 +12,25 @@
     <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
 
     <!-- Component CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_forms.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_buttons.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_cards.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tabs.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/base.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_forms.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tables.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_buttons.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_cards.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_tabs.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/_modal.css', v=config['ASSET_VERSION']) }}">
     
     <!-- Recursos locales: sin dependencia de CDN o Internet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css', v=config['ASSET_VERSION']) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/icons.css', v=config['ASSET_VERSION']) }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=config['ASSET_VERSION']) }}">
 
     <!-- Diálogos locales compatibles con la interfaz existente -->
-    <script src="{{ url_for('static', filename='js/alertas.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/alertas.js', v=config['ASSET_VERSION']) }}"></script>
     
     <!-- Custom Theme -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css', v=config['ASSET_VERSION']) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shell.css', v=config['ASSET_VERSION']) }}">
     
     {% block extra_css %}{% endblock %}
     <style nonce="{{ csp_nonce }}">
@@ -78,8 +78,8 @@
     <div class="shell-live-region" data-shell-live-region role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- App JS -->
-    <script src="{{ url_for('static', filename='js/tabs.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tabs.js', v=config['ASSET_VERSION']) }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js', v=config['ASSET_VERSION']) }}"></script>
     {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>

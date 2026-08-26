@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 {% block title %}Consulta clínica - {{ paciente.nombre_completo }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/clinical_note.css', v=config['ASSET_VERSION']) }}">{% endblock %}
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6 printable-clinical-note">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -11,9 +12,13 @@
             {% elif current_user.puede_emitir_receta_ordinaria %}
             <a href="{{ url_for('recetas.receta_adicional', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-xl"><i class="fas fa-plus mr-2"></i>Receta adicional</a>
             {% endif %}
-            <a href="{{ url_for('valoracion.editar_valoracion', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Editar</a><a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Volver</a>
+            {% if not valoracion.esta_cerrada %}<a href="{{ url_for('valoracion.editar_valoracion', valoracion_id=valoracion.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Editar</a>{% endif %}<a href="{{ url_for('pacientes.detalle_paciente', id=paciente.id) }}" class="px-4 py-2 bg-gray-100 rounded-xl">Volver</a>
         </div>
     </div>
+    <section class="clinical-note-status is-{{ valoracion.estado_nota }}">
+        <div><span class="clinical-note-status-badge"><i class="fas {{ 'fa-lock' if valoracion.esta_cerrada else 'fa-pencil-alt' }}" aria-hidden="true"></i>{{ valoracion.estado_nota_etiqueta }}</span>{% if valoracion.esta_cerrada %}<h2>Nota cerrada</h2><p>El contenido original quedó protegido. Cualquier información posterior se agrega como una aclaración visible y fechada.</p><small>Cerrada por {{ valoracion.cierre_nota.responsable_nombre }} el {{ valoracion.cierre_nota.cerrado_at.strftime('%d/%m/%Y a las %H:%M') }}.</small>{% else %}<h2>Nota en borrador</h2><p>Puedes revisarla y editarla. Ciérrala únicamente cuando la información clínica esté completa.</p>{% endif %}</div>
+        {% if not valoracion.esta_cerrada and puede_gestionar_nota %}<form method="POST" action="{{ url_for('valoracion.cerrar_nota', valoracion_id=valoracion.id) }}" data-close-clinical-note><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="operation_key" value="{{ cierre_operation_key }}"><input type="hidden" name="confirmar_cierre" value="si"><button type="submit"><i class="fas fa-lock" aria-hidden="true"></i>Cerrar nota</button></form>{% endif %}
+    </section>
     <section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-3">Motivo y síntomas</h2><p class="whitespace-pre-line"><strong>Motivo:</strong> {{ valoracion.motivo_consulta }}</p><p class="whitespace-pre-line mt-3"><strong>Síntomas:</strong> {{ valoracion.sintomas or 'No registrados' }}</p></section>
     <section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-4">Signos vitales</h2><div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         {% for label, value, unit in [('Tensión arterial',valoracion.tension_arterial,'mmHg'),('Frecuencia cardíaca',valoracion.frecuencia_cardiaca,'lpm'),('Frecuencia respiratoria',valoracion.frecuencia_respiratoria,'rpm'),('Temperatura',valoracion.temperatura,'°C'),('SpO₂',valoracion.saturacion_oxigeno,'%'),('Estatura',valoracion.estatura,'cm'),('Peso',valoracion.peso,'kg'),('IMC',valoracion.imc,'')] %}<div><p class="text-gray-500">{{ label }}</p><p class="font-semibold">{{ value if value is not none else '—' }} {{ unit if value is not none else '' }}</p></div>{% endfor %}
@@ -33,6 +38,12 @@
     </section>
     {% endif %}
     {% if valoracion.cintura is not none or valoracion.porcentaje_grasa is not none or valoracion.bicep is not none %}<section class="bg-white p-6 rounded-2xl border border-gray-100"><h2 class="text-lg font-bold mb-4">Antropometría opcional</h2>{% include 'valoraciones/partials/_medidas_corporales.html' %}</section>{% endif %}
+    <section class="clinical-note-addenda">
+        <div><h2>Aclaraciones posteriores</h2><p>Se muestran en el orden en que fueron agregadas y no cambian la nota original.</p></div>
+        {% if valoracion.aclaraciones %}<div class="clinical-note-addenda-list">{% for item in valoracion.aclaraciones %}<article><header><strong>Aclaración {{ item.numero }}</strong><span>{{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</span></header><h3>{{ item.motivo }}</h3><p>{{ item.contenido }}</p><small>{{ item.autor_nombre }}{% if item.autor_perfil %} · {{ item.autor_perfil }}{% endif %}</small></article>{% endfor %}</div>{% else %}<p class="clinical-note-addenda-empty">No se han agregado aclaraciones.</p>{% endif %}
+        {% if valoracion.esta_cerrada and puede_gestionar_nota %}<form method="POST" action="{{ url_for('valoracion.agregar_aclaracion', valoracion_id=valoracion.id) }}" class="clinical-note-addendum-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="operation_key" value="{{ aclaracion_operation_key }}"><div><label for="addendum-reason">Motivo de la aclaración</label><input id="addendum-reason" name="motivo" maxlength="500" required placeholder="Ej. Resultado recibido después de la consulta"></div><div><label for="addendum-content">Información que deseas agregar</label><textarea id="addendum-content" name="contenido" maxlength="4000" rows="4" required placeholder="Escribe la aclaración de forma completa y clara."></textarea></div><button type="submit">Agregar aclaración</button></form>{% elif not valoracion.esta_cerrada %}<p class="clinical-note-addenda-hint">Cuando cierres la nota podrás agregar aclaraciones sin modificar su contenido original.</p>{% endif %}
+    </section>
     <div class="no-print">{% include 'valoraciones/partials/_historial_valoraciones.html' %}</div>
 </div>
 {% endblock %}
+{% block extra_js %}<script src="{{ url_for('static', filename='js/clinical_notes.js', v=config['ASSET_VERSION']) }}"></script>{% endblock %}

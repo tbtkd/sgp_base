@@ -22,6 +22,8 @@
         .muted { color: #475569; }
         .note-meta { text-align: right; white-space: nowrap; }
         .professional-meta { margin-top: 8px; font-size: 11px; color: #334155; }
+        .note-state { display: inline-block; margin-top: 8px; padding: 3px 7px; border-radius: 999px; background: #fef3c7; color: #78350f; font-size: 10px; font-weight: 700; }
+        .note-state.is-closed { background: #d1fae5; color: #065f46; }
         .section { margin-top: 18px; padding-top: 14px; border-top: 1px solid #cbd5e1; break-inside: avoid; }
         .text-block { margin-top: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
         .vitals { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -68,6 +70,7 @@
                     {% if valoracion.profesional_cedula_mostrada %}<p><strong>Cédula profesional:</strong> {{ valoracion.profesional_cedula_mostrada }}</p>{% endif %}
                 </div>
                 {% endif %}
+                <span class="note-state{% if valoracion.esta_cerrada %} is-closed{% endif %}">{{ valoracion.estado_nota_etiqueta }}</span>
             </div>
             <div class="note-meta">
                 <p><strong>Turno diario:</strong> #{{ valoracion.numero_cita }}</p>
@@ -104,6 +107,14 @@
             <h2>{{ valoracion.etiqueta_prescripcion }}</h2>
             <p class="text-block">{{ valoracion.prescripcion or 'No registrada' }}</p>
         </section>
+
+        {% if valoracion.esta_cerrada %}
+        <section class="section"><h2>Cierre de la nota</h2><p>Cerrada por {{ valoracion.cierre_nota.responsable_nombre }} el {{ valoracion.cierre_nota.cerrado_at.strftime('%d/%m/%Y a las %H:%M') }}.</p></section>
+        {% else %}
+        <section class="section"><h2>Estado de la nota</h2><p><strong>Borrador:</strong> esta nota todavía puede ser revisada y modificada.</p></section>
+        {% endif %}
+
+        {% if valoracion.aclaraciones %}<section class="section"><h2>Aclaraciones posteriores</h2>{% for item in valoracion.aclaraciones %}<div class="text-block"><h3>Aclaración {{ item.numero }} · {{ item.motivo }}</h3><p>{{ item.contenido }}</p><p class="muted">{{ item.autor_nombre }} · {{ item.created_at.strftime('%d/%m/%Y %H:%M') }}</p></div>{% endfor %}</section>{% endif %}
 
         {% if valoracion.cintura is not none or valoracion.porcentaje_grasa is not none or valoracion.bicep is not none %}
         <section class="section">

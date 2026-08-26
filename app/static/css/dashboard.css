@@ -4,6 +4,29 @@
   --dashboard-ink: #0f172a;
 }
 
+/* Lectura cómoda para uso diario: superficies suaves y texto operativo más visible. */
+.dashboard-kpi-card, .dashboard-panel { border-color: transparent; box-shadow: 0 10px 28px rgb(15 23 42 / 0.055); }
+.dashboard-kpi-card { min-height: 8rem; padding: 1.2rem; }
+.dashboard-kpi-action { min-height: 2.65rem; border-color: transparent; font-size: 0.75rem; padding: 0.65rem 0.82rem; }
+.dashboard-kpi-label { font-size: 0.84rem; }
+.dashboard-kpi-content small { font-size: 0.76rem; line-height: 1.4; }
+.dashboard-kpi-value-row strong { font-size: 2rem; }
+.dashboard-kpi-value-row span { font-size: 0.76rem; }
+.dashboard-panel-header h3 { font-size: 1.08rem; }
+.dashboard-panel-header .dashboard-panel-eyebrow { font-size: 0.68rem; }
+.dashboard-panel-count, .dashboard-panel-link { font-size: 0.78rem; }
+.dashboard-agenda-row { min-height: 5rem; }
+.dashboard-agenda-row > time { font-size: 0.8rem; }
+.dashboard-agenda-patient a { font-size: 0.86rem; }
+.dashboard-agenda-patient span { font-size: 0.76rem; }
+.dashboard-status { font-size: 0.69rem; padding: 0.32rem 0.62rem; }
+.dashboard-chart { min-height: 15rem; }
+.dashboard-chart svg { height: 11.5rem; }
+.dashboard-chart-labels span { font-size: 0.69rem; }
+.dashboard-chart-labels strong { font-size: 0.76rem; }
+.dashboard-chart-tabs button, .dashboard-chart-legend { font-size: 0.68rem; }
+html[data-theme="dark"] .dashboard-kpi-card, html[data-theme="dark"] .dashboard-panel { border-color: transparent; box-shadow: 0 12px 30px rgb(0 0 0 / 0.18); }
+
 .dashboard-welcome {
   display: flex;
   align-items: flex-end;
@@ -379,3 +402,26 @@ html[data-theme="dark"] .dashboard-task-detail a:focus-visible small { color: #9
 .dashboard-progress-track::-webkit-progress-bar { background: #e2e8f0; }
 .dashboard-progress-track::-webkit-progress-value { background: #0d9488; border-radius: 999px; }
 .dashboard-progress-track::-moz-progress-bar { background: #0d9488; border-radius: 999px; }
+
+/* Ajustes finales de legibilidad 1.11. */
+.dashboard-kpi-card, .dashboard-panel { border-color: transparent; box-shadow: 0 10px 28px rgb(15 23 42 / 0.055); }
+.dashboard-kpi-card { min-height: 8rem; padding: 1.2rem; }
+.dashboard-kpi-action { min-height: 2.65rem; border-color: transparent; font-size: 0.75rem; padding: 0.65rem 0.82rem; }
+.dashboard-kpi-label { font-size: 0.84rem; }
+.dashboard-kpi-content small { font-size: 0.76rem; line-height: 1.4; }
+.dashboard-kpi-value-row strong { font-size: 2rem; }
+.dashboard-kpi-value-row span { font-size: 0.76rem; }
+.dashboard-panel-header h3 { font-size: 1.08rem; }
+.dashboard-panel-header .dashboard-panel-eyebrow { font-size: 0.68rem; }
+.dashboard-panel-count, .dashboard-panel-link { font-size: 0.78rem; }
+.dashboard-agenda-row { min-height: 5rem; }
+.dashboard-agenda-row > time { font-size: 0.8rem; }
+.dashboard-agenda-patient a { font-size: 0.86rem; }
+.dashboard-agenda-patient span { font-size: 0.76rem; }
+.dashboard-status { font-size: 0.69rem; padding: 0.32rem 0.62rem; }
+.dashboard-chart { min-height: 15rem; }
+.dashboard-chart svg { height: 11.5rem; }
+.dashboard-chart-labels span { font-size: 0.69rem; }
+.dashboard-chart-labels strong { font-size: 0.76rem; }
+.dashboard-chart-tabs button, .dashboard-chart-legend { font-size: 0.68rem; }
+html[data-theme="dark"] .dashboard-kpi-card, html[data-theme="dark"] .dashboard-panel { border-color: transparent; box-shadow: 0 12px 30px rgb(0 0 0 / 0.18); }

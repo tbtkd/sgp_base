@@ -1,6 +1,6 @@
 # Frontend y UI/UX
 
-La interfaz conserva Jinja2 y la paleta teal/esmeralda del proyecto original. Desde 1.10.1, las utilidades compatibles con las clases existentes, la iconografía y los diálogos se empaquetan localmente; no se cargan Tailwind, Alpine, SweetAlert, Font Awesome o fuentes desde CDN. El shell responsive, sus popovers, el menú de cuenta y el selector de tema se controlan con JavaScript local.
+La interfaz conserva Jinja2 y la paleta teal/esmeralda del proyecto original. Desde 1.10.1, las utilidades compatibles con las clases existentes, la iconografía y los diálogos se empaquetan localmente; no se cargan Tailwind, Alpine, SweetAlert, Font Awesome o fuentes desde CDN. En 1.11 se refuerzan legibilidad, superficies suaves, filtros y acciones operativas. El shell responsive, sus popovers, el menú de cuenta y el selector de tema se controlan con JavaScript local.
 
 ## Convenciones
 
@@ -17,6 +17,10 @@ La interfaz conserva Jinja2 y la paleta teal/esmeralda del proyecto original. De
 La captura usa tres pestañas generales: consulta, signos vitales y evolución/indicaciones. El perfil Nutrición recibe una cuarta pestaña de antropometría. Esta regla se replica en el servidor. En tema oscuro, cada pestaña tiene fondo, texto y borde explícitos; los botones secundarios y los divisores del formulario utilizan la misma paleta azul petróleo, sin heredar blancos del tema claro.
 
 La impresión genera una nota limpia que el navegador puede guardar como PDF. Muestra el profesional responsable y su perfil; la cédula sólo se presenta cuando fue registrada. Para Nutrición se usa “Indicaciones nutricionales / plan alimentario” y no “receta médica”.
+
+El detalle muestra Borrador o Cerrada. Al cerrar, `clinical_notes.js` presenta una explicación cotidiana y evita dobles envíos; desaparece Editar. Las aclaraciones posteriores forman una sección cronológica y también se imprimen. Los índices de Historiales y Consultas para recetas comparten controles legibles, búsqueda, encabezados ordenables, estados vacíos y paginación.
+
+Gestión de usuarios ya no usa un panel lateral ambiguo: presenta métricas horizontales de cuentas totales, con acceso y sin acceso; el alta aparece una sola vez y cada acción explica su finalidad. `user_management.js` incluye CSRF y actualiza los contadores sin recargar.
 
 ## Receta ordinaria
 

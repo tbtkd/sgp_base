@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.12.0 — Copias cifradas y recuperación de llave
+
+- Todas las copias nuevas usan `.sgpnbak` y cifrado autenticado AES-256-GCM con nonce distinto por archivo.
+- El respaldo se crea primero con la API nativa de SQLite, supera `integrity_check`, se cifra por flujo y vuelve a descifrarse/comprobarse antes de aceptarse.
+- La llave de 256 bits se conserva separada en `instance/.backup_key` o `SGPN_BACKUP_KEY`; no se incluye en base, copias, ZIP, logs o auditoría.
+- El panel muestra sólo un identificador no secreto de la llave y permite descargar el documento de recuperación únicamente a Administración, con CSRF, contraseña, frase `DESCARGAR` y respuesta sin caché.
+- Una copia modificada, truncada o creada con otra llave se rechaza antes de reemplazar la base; los archivos temporales se retiran incluso en los casos de error.
+- Las copias `.db` anteriores continúan disponibles y pueden protegerse con contraseña y `PROTEGER`; el original sólo se elimina después de verificar la versión cifrada.
+- Crear, comprobar, descargar, convertir y recuperar copias queda auditado sin registrar la llave ni información clínica.
+- La restauración cifrada conserva la copia previa, verificación del esquema, reemplazo atómico y cierre de sesión existentes.
+- La interfaz explica en lenguaje cotidiano qué protege la llave, dónde guardarla y qué ocurre si se pierde.
+- Se agrega `cryptography` como dependencia de ejecución y comprobación explícita en la construcción para Windows.
+- Se documenta el límite real: `instance/pacientes.db` aún no tiene cifrado transparente; la siguiente etapa 1.12.1 debe integrar un motor cifrado, migración y rotación comprobadas.
+- La suite agrega casos positivos y adversariales para texto clínico no visible, alteración de bytes, llave equivocada, CSRF, contraseña/frase, descarga sensible, conversión segura y conservación de copias corruptas.
+- Nueva guía `docs/RESPALDOS_CIFRADOS_1_12_0.md`; manual, arquitectura, SRS, contexto, roadmap, matriz y revisión de seguridad actualizados.
+
+## 1.11.0 — Cierre clínico, búsquedas e interfaz operativa
+
+- Las notas clínicas nacen como Borrador y pueden cerrarse con responsable, fecha y clave de operación única.
+- Una nota cerrada ya no puede editarse ni eliminarse; los intentos directos se rechazan y auditan.
+- Las correcciones posteriores usan aclaraciones numeradas con motivo, contenido, autor y fecha, visibles también en impresión.
+- Las notas existentes permanecen como borrador al actualizar para no inventar un cierre histórico.
+- Historiales clínicos amplía los padecimientos frecuentes y añade búsqueda, ordenamiento por columnas y paginación.
+- Consultas para recetas añade búsqueda por paciente, motivo o diagnóstico, ordenamiento por columnas y paginación.
+- Agenda deja de usar el correo como coincidencia oculta y busca únicamente por nombre, apellidos, expediente o teléfono.
+- Dashboard, agenda rápida y gestión de usuarios reciben tipografía más legible, superficies suaves y acciones claramente descritas.
+- Datos demo incorporan padecimientos ampliados y un ejemplo idempotente de nota cerrada con aclaración.
+- Seguridad cubre CSRF, permisos por autor, doble envío, entradas inválidas, inmutabilidad y auditoría del nuevo flujo.
+
 ## 1.10.1 — Endurecimiento local y continuidad operativa
 
 - Se eliminan Tailwind CDN, Font Awesome CDN, Google Fonts, Alpine CDN y SweetAlert CDN; utilidades, iconos y diálogos se sirven desde `app/static` y funcionan sin Internet.

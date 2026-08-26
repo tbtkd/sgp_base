@@ -15,6 +15,15 @@ class HistorialClinico(db.Model):
     antecedente_hipertension = db.Column(db.Boolean, nullable=True, default=False)
     antecedente_cardiopatias = db.Column(db.Boolean, nullable=True, default=False)
     antecedente_cancer = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_asma_epoc = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_enfermedad_renal = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_enfermedad_hepatica = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_tiroides = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_neurologicos = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_psiquiatricos = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_autoinmunes = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_dislipidemia = db.Column(db.Boolean, nullable=True, default=False)
+    antecedente_obesidad = db.Column(db.Boolean, nullable=True, default=False)
 
     alergias_medicamentosas = db.Column(db.Text, nullable=True)
     alergias_alimentarias = db.Column(db.Text, nullable=True)
@@ -28,6 +37,25 @@ class HistorialClinico(db.Model):
     paciente = db.relationship(
         "Paciente", backref=db.backref("historial_clinico", uselist=False, cascade="all, delete-orphan")
     )
+
+    @property
+    def antecedentes_frecuentes_etiquetas(self):
+        labels = (
+            ("antecedente_diabetes", "Diabetes"),
+            ("antecedente_hipertension", "Hipertensión"),
+            ("antecedente_cardiopatias", "Enfermedad del corazón"),
+            ("antecedente_cancer", "Cáncer"),
+            ("antecedente_asma_epoc", "Asma o enfermedad pulmonar"),
+            ("antecedente_enfermedad_renal", "Enfermedad renal"),
+            ("antecedente_enfermedad_hepatica", "Enfermedad hepática"),
+            ("antecedente_tiroides", "Trastornos de tiroides"),
+            ("antecedente_neurologicos", "Trastornos neurológicos"),
+            ("antecedente_psiquiatricos", "Salud mental"),
+            ("antecedente_autoinmunes", "Enfermedad autoinmune"),
+            ("antecedente_dislipidemia", "Colesterol o triglicéridos altos"),
+            ("antecedente_obesidad", "Obesidad"),
+        )
+        return [label for field, label in labels if getattr(self, field, False)]
 
     @staticmethod
     def obtener_por_paciente_id(paciente_id):

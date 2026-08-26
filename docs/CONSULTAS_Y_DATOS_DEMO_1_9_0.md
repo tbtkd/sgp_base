@@ -48,6 +48,8 @@ La contraseña robusta compartida por las cuentas creadas se muestra una sola ve
 
 > Actualización 1.10.0: el conjunto vigente incorpora `demo_admin`, siete citas y dieciocho pagos para cubrir estados, historial, folios, métodos, filtros, relaciones explícitas/sin cita, responsables, cancelación y CSV seguro. La idempotencia continúa aplicándose.
 
+> Actualización 1.11.0: los historiales demo marcan padecimientos frecuentes ampliados y una consulta queda cerrada con una aclaración posterior idempotente para validar el nuevo flujo.
+
 Para validar la restricción Excel:
 
 1. Inicia como `demo_medico` o `demo_dentista`: **Importar Excel** no debe aparecer.

@@ -1,6 +1,6 @@
 # Análisis de etapa y roadmap visual — versión 1.6.2
 
-> Estado 1.10.1: la Fase 1 quedó completada. Los recursos son locales, Alpine/CDN fueron retirados, la CSP no usa `unsafe-inline` y existe una prueba E2E Playwright opcional. Los hallazgos siguientes se conservan como registro histórico de la decisión.
+> Estado 1.12.0: la Fase 1 quedó completada. Los recursos son locales, Alpine/CDN fueron retirados, la CSP no usa `unsafe-inline`, las copias usan cifrado autenticado y existe una prueba E2E Playwright opcional. Los hallazgos siguientes se conservan como registro histórico de la decisión.
 
 ## 1. Alcance del ajuste
 
@@ -43,7 +43,7 @@ La base funcional está madura para pruebas y para un piloto de una sola estaci�
 | Media | Permanecen componentes Alpine legados | Comportamiento desigual ante una CDN no disponible | Migrar sidebar móvil, menús de tablas y carga XLSX a controladores locales |
 | Media | CSS y patrones visuales están repartidos entre Tailwind, estilos locales y plantillas legadas | Inconsistencias de espaciado, controles y estados | Crear tokens y componentes comunes antes del rediseño |
 | Media | SQLite está orientado a una estación y concurrencia limitada | No cubre operación remota o multi-consultorio segura | Mantener localhost; rediseñar arquitectura antes de exponer en red |
-| Alta antes de producción | Base y respaldos no tienen cifrado en reposo gestionado | Exposición de datos clínicos si se pierde el equipo o una copia | Cifrado, llaves externas, retención y restauraciones verificadas |
+| Alta antes de producción | La base activa no tiene cifrado transparente; los respaldos ya se cifran en 1.12 | Exposición de datos clínicos si se pierde el equipo con la base activa | Motor SQLite cifrado, migración y rotación de llaves verificadas |
 
 ## 3. Roadmap visual propuesto
 

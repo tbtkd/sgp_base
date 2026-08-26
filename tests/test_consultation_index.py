@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from app import db_orm as db
 from app.core.audit import AuditLog
 from app.models.cita import Cita
+from app.models.nota_clinica import AclaracionNotaClinica, NotaCierreClinico
 from app.models.paciente import Paciente
 from app.models.pago import Pago
 from app.models.usuario import Usuario
@@ -213,12 +214,16 @@ def test_demo_seed_is_idempotent_and_generates_importable_workbook(app, tmp_path
     assert first["citas"] == 7
     assert first["pagos"] == 18
     assert first["recetas"] == 1
+    assert first["notas_cerradas"] == 1
+    assert first["aclaraciones"] == 1
     assert second["usuarios"] == []
     assert second["pacientes"] == 0
     assert second["consultas"] == 0
     assert second["citas"] == 0
     assert second["pagos"] == 0
     assert second["recetas"] == 0
+    assert second["notas_cerradas"] == 0
+    assert second["aclaraciones"] == 0
     assert workbook_path.is_file()
 
     with app.app_context():
@@ -230,6 +235,8 @@ def test_demo_seed_is_idempotent_and_generates_importable_workbook(app, tmp_path
         assert Cita.query.filter(Cita.estatus == "Atendida").count() == 1
         assert Cita.query.filter(Cita.estatus == "No Asistió").count() == 1
         assert Cita.query.filter(Cita.estatus == "Cancelada").count() == 1
+        assert NotaCierreClinico.query.count() == 1
+        assert AclaracionNotaClinica.query.count() == 1
         assert Pago.query.filter(Pago.estatus == "vigente").count() == 16
         assert Pago.query.filter(Pago.estatus == "cancelado").count() == 1
         assert Pago.query.filter(Pago.estatus == "requiere_revision").count() == 1

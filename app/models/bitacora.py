@@ -23,6 +23,8 @@ EVENT_NAMES = {
     "valoracion.create": "CREAR_CONSULTA",
     "valoracion.update": "ACTUALIZAR_CONSULTA",
     "valoracion.delete": "ELIMINAR_CONSULTA",
+    "valoracion.close": "CERRAR_NOTA_CLINICA",
+    "valoracion.addendum": "AGREGAR_ACLARACION_NOTA",
     "valoracion.import": "IMPORTAR_CONSULTAS",
     "receta.create": "CREAR_RECETA",
     "receta.additional": "CREAR_RECETA_ADICIONAL",
@@ -42,13 +44,16 @@ EVENT_NAMES = {
     "backup.verify": "VERIFICAR_RESPALDO",
     "backup.export": "DESCARGAR_RESPALDO",
     "backup.restore": "RESTAURAR_RESPALDO",
+    "backup.protect_legacy": "PROTEGER_RESPALDOS_ANTERIORES",
+    "backup.export_key": "DESCARGAR_LLAVE_RECUPERACION",
 }
 
 CRITICAL_MUTATION_EVENTS = {
     "system.bootstrap_admin", "usuario.create", "usuario.update", "usuario.status",
     "usuario.password_change", "usuario.password_reset", "paciente.create", "paciente.update",
     "paciente.status", "historial.create", "historial.update", "valoracion.create",
-    "valoracion.update", "valoracion.delete", "valoracion.import", "receta.create",
+    "valoracion.update", "valoracion.delete", "valoracion.close", "valoracion.addendum",
+    "valoracion.import", "receta.create",
     "receta.additional", "receta.replace", "pago.create", "pago.cancel", "cita.create",
     "cita.update", "cita.status",
 }

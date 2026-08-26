@@ -1,9 +1,10 @@
-# Arquitectura técnica — versión 1.10.1
+# Arquitectura técnica — versión 1.12.0
 
 ## Componentes
 
 - `app/__init__.py`: fábrica Flask, extensiones, blueprints, errores, cabeceras y ciclo de arranque.
-- `app/db.py`: ruta persistente, respaldo/restauración nativos, verificación de integridad y migración aditiva de columnas.
+- `app/db.py`: ruta persistente, instantánea SQLite, respaldo/restauración cifrados, verificación de integridad y migración aditiva de columnas.
+- `app/core/backup_crypto.py`: llave de 256 bits, formato `.sgpnbak`, AES-GCM por flujo, identificador y documento de recuperación.
 - `app/config.py`: secreto, cookies, límites y configuraciones de ambiente.
 - `app/core/validators.py`: normalización y validación autoritativa del servidor.
 - `app/core/auth.py`, `app/core/security.py` y `app/core/password_recovery.py`: sesión, RBAC, limitación de intentos y recuperación local.
@@ -35,13 +36,18 @@ flowchart TD
     A["Inicio"] --> B{"¿PyInstaller?"}
     B -- No --> C["proyecto/instance/pacientes.db"]
     B -- Sí --> D["directorio del EXE/instance/pacientes.db"]
-    C --> E["Respaldo SQLite verificado"]
+    C --> E["Instantánea SQLite verificada"]
     D --> E
-    E --> F["backups/ últimos 10"]
-    F --> G["Restauración administrativa atómica"]
+    E --> F["AES-256-GCM .sgpnbak"]
+    F --> G["backups/ últimos 10"]
+    G --> H["Restauración administrativa atómica"]
 ```
 
-`_MEIPASS` se utiliza solamente para plantillas y recursos incluidos en el ejecutable. Nunca recibe la base de datos o el secreto. Las mutaciones auditadas como exitosas disparan una copia posterior al `commit`; el panel administrativo restaura sólo tras reautenticación, frase explícita, verificación y copia previa.
+`_MEIPASS` se utiliza solamente para plantillas y recursos incluidos en el ejecutable. Nunca recibe la base de datos, secretos, llave o respaldos. Las mutaciones auditadas como exitosas disparan una copia posterior al `commit`: SQLite genera una instantánea temporal consistente, se valida, se cifra por flujo con un nonce nuevo y se vuelve a comprobar mediante descifrado e `integrity_check`; el temporal se elimina. El panel administrativo restaura sólo tras reautenticación, frase explícita, autenticación GCM, verificación de esquema y copia previa.
+
+La llave vive en `instance/.backup_key` con permisos restrictivos cuando el sistema puede aplicarlos, o llega mediante `SGPN_BACKUP_KEY`. El encabezado del respaldo incluye formato, versión, nonce e identificador truncado de la llave; todos esos bytes se autentican como datos asociados. El tag GCM detecta cambios. La llave completa sólo puede descargarse mediante POST con CSRF, contraseña y frase exacta, nunca se escribe en auditoría.
+
+La base activa permanece en `instance/pacientes.db` sin cifrado transparente. Esta frontera está declarada para no confundir copias cifradas con protección completa del almacenamiento activo.
 
 ## Esquema clínico
 
@@ -51,11 +57,14 @@ flowchart TD
 - `Usuario` 1:N `Pago` como registrador y como responsable opcional de cancelación.
 - `Cita` 1:N `Pago` como referencia operativa opcional, con `ON DELETE SET NULL`.
 - `ValoracionAntropometrica` 1:N `Receta`; `Receta` 1:N `RecetaMedicamento`.
+- `ValoracionAntropometrica` 1:0..1 `NotaCierreClinico`; `NotaCierreClinico` 1:N `AclaracionNotaClinica`.
 - `Receta` 0..1:0..1 `Receta` como documento sustituido/reemplazo.
 - `Usuario` 1:N `Receta` como emisor, conservando además una instantánea profesional.
 - `Usuario` 1:N `AuditLog`.
 
 La denominación interna `valoracion_antropometrica` se conserva para compatibilidad; en la interfaz representa una consulta clínica y sus campos antropométricos son opcionales.
+
+El estado clínico se deriva sin reescribir consultas: si no existe cierre la nota es Borrador; una fila única en `nota_cierres_clinicos` la vuelve Cerrada. El cierre usa `ON DELETE RESTRICT`, snapshot del responsable y clave idempotente. Las aclaraciones se numeran por cierre y conservan autor/fecha; no existen rutas para editarlas o eliminarlas. Esto mantiene como borrador las consultas anteriores a 1.11.
 
 Cada receta ordinaria emitida es un documento independiente e inmutable. La consulta admite un original, recetas adicionales y sustituciones versionadas. Una sustitución marca el folio anterior como no vigente sin reescribirlo y enlaza ambos documentos. Los snapshots almacenan nombre, nacimiento y alergias del paciente, además de nombre, cédula, perfil, establecimiento y domicilio del profesional. La bitácora sólo conserva identificadores, tipo, versión y conteos, nunca el contenido farmacológico.
 
@@ -104,11 +113,11 @@ Si existe `instance/sgpn.db` y aún no existe `pacientes.db`, la API nativa de S
 - Credenciales temporales obligan a elegir una definitiva; `--reset-password` opera sobre administradores y `--recover-admin` sólo cuando no queda ninguno activo.
 - Bloqueo de cuenta y de IP después de cinco fallos.
 - CSP por respuesta con nonce, sin `unsafe-inline`, CDN o atributos ejecutables; anti-frame, `nosniff`, políticas de origen y no-cache.
-- Respaldo posterior a mutaciones críticas y restauración interna exclusiva de Administración, con CSRF, validación, copia previa, reemplazo atómico y logout.
+- Respaldo cifrado posterior a mutaciones críticas y restauración interna exclusiva de Administración, con CSRF, autenticación criptográfica, validación, copia previa, reemplazo atómico y logout.
 - Errores genéricos con `X-Request-ID`.
 - Auditoría con usuario, módulo, acción, entidad, IP y resultado.
 - Transacciones completas en controladores; los modelos no hacen `commit`.
 
 ## Dependencias
 
-El archivo de ejecución conserva solo paquetes utilizados directamente: Flask, Flask-Login, Flask-SQLAlchemy, Flask-WTF, `defusedxml`, `openpyxl` y Waitress. Reducirlo a Flask/OpenPyXL/PyInstaller rompería autenticación, ORM, CSRF y el servidor local; PyInstaller permanece correctamente separado en `requirements-build.txt`.
+El archivo de ejecución conserva solo paquetes utilizados directamente: Flask, Flask-Login, Flask-SQLAlchemy, Flask-WTF, `cryptography`, `defusedxml`, `openpyxl` y Waitress. `cryptography` aporta AES-GCM y es obligatoria para crear o recuperar copias 1.12. PyInstaller permanece correctamente separado en `requirements-build.txt`.

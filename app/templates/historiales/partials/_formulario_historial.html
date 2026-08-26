@@ -7,9 +7,23 @@
             <div><label class="block text-sm font-medium mb-2" for="cirugias">Cirugías y hospitalizaciones</label><textarea class="{{ field_class }}" id="cirugias" name="cirugias" rows="4" maxlength="4000">{{ request.form.get('cirugias', historial.cirugias if historial else '') }}</textarea></div>
             <div class="md:col-span-2"><label class="block text-sm font-medium mb-2" for="antecedentes_familiares">Otros antecedentes familiares</label><textarea class="{{ field_class }}" id="antecedentes_familiares" name="antecedentes_familiares" rows="3" maxlength="4000">{{ request.form.get('antecedentes_familiares', historial.antecedentes_familiares if historial else '') }}</textarea></div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {% for field, label in [('antecedente_diabetes','Diabetes'),('antecedente_hipertension','Hipertensión'),('antecedente_cardiopatias','Cardiopatías'),('antecedente_cancer','Cáncer')] %}
-            <label class="flex items-center gap-2 p-3 rounded-xl border border-gray-200 bg-gray-50"><input type="checkbox" name="{{ field }}" {% if request.form.get(field) == 'on' or (not request.form and historial and historial|attr(field)) %}checked{% endif %}>{{ label }}</label>
+        <div><h3 class="font-semibold text-gray-800">Padecimientos frecuentes</h3><p class="mt-1 text-sm text-gray-500">Marca los que correspondan al paciente o a su familia y amplía los detalles en los campos anteriores.</p></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {% set padecimientos = [
+                ('antecedente_diabetes','Diabetes'),('antecedente_hipertension','Hipertensión arterial'),
+                ('antecedente_cardiopatias','Enfermedad del corazón'),('antecedente_cancer','Cáncer'),
+                ('antecedente_asma_epoc','Asma o enfermedad pulmonar'),
+                ('antecedente_enfermedad_renal','Enfermedad renal'),
+                ('antecedente_enfermedad_hepatica','Enfermedad hepática'),
+                ('antecedente_tiroides','Trastornos de tiroides'),
+                ('antecedente_neurologicos','Trastornos neurológicos'),
+                ('antecedente_psiquiatricos','Salud mental'),
+                ('antecedente_autoinmunes','Enfermedad autoinmune'),
+                ('antecedente_dislipidemia','Colesterol o triglicéridos altos'),
+                ('antecedente_obesidad','Obesidad')
+            ] %}
+            {% for field, label in padecimientos %}
+            <label class="clinical-condition-option"><input type="checkbox" name="{{ field }}" {% if request.form.get(field) == 'on' or (not request.form and historial and historial|attr(field)) %}checked{% endif %}><span>{{ label }}</span></label>
             {% endfor %}
         </div>
     </section>

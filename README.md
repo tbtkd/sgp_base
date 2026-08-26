@@ -1,13 +1,16 @@
 # Sistema de Expediente Clínico y Gestión de Pacientes
 
-Versión **1.10.1**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos operativos, la receta ordinaria y el seguimiento por WhatsApp.
+Versión **1.12.0**. Aplicación local para consultorios médicos, dentales, nutricionales y otros servicios de salud. Generaliza el expediente, las consultas, los signos vitales, las citas, los pagos operativos, la receta ordinaria y el seguimiento por WhatsApp.
 
 ## Funcionalidad
 
 - Expediente con datos personales, ocupación, dirección y contacto de emergencia.
 - Antecedentes patológicos, heredofamiliares, alergias, medicación, hábitos y notas.
+- Catálogo ampliado de padecimientos frecuentes en el historial: metabólicos, cardiovasculares, pulmonares, renales, hepáticos, tiroideos, neurológicos, salud mental y autoinmunes.
 - Consultas con síntomas, signos vitales, diagnóstico, plan e indicaciones clínicas.
+- Cierre inmutable de notas clínicas con responsable y fecha; las correcciones posteriores se agregan como aclaraciones numeradas sin cambiar el contenido original.
 - Índice de Consultas con una sola fila por paciente, última nota determinista, búsqueda parcial sin distinguir mayúsculas ni acentos, orden por fecha y paginación de servidor.
+- Historiales clínicos y Consultas para recetas con búsqueda por varios datos, encabezados ordenables y paginación de servidor.
 - Turno diario global de consultas, asignado por el servidor en secuencia `1..n` y reiniciado para cada fecha.
 - Receta médica ordinaria independiente para Medicina/Odontología, con folios originales, adicionales y sustituciones trazables.
 - Captura de medicamentos con altas nuevas en la parte superior y orden clínico final estable `1, 2, 3…`.
@@ -25,7 +28,7 @@ Versión **1.10.1**. Aplicación local para consultorios médicos, dentales, nut
 - Auditoría administrativa de accesos y operaciones críticas.
 - Recursos visuales y diálogos completamente locales, sin CDN ni conexión a Internet.
 - CSP estricta con nonce por respuesta, sin `unsafe-inline`, scripts remotos o atributos ejecutables.
-- Respaldo verificado después de operaciones críticas y panel administrativo para crear, verificar, descargar y restaurar copias internas.
+- Respaldo cifrado y verificado después de operaciones críticas, con llave independiente, detección de alteraciones y panel administrativo para crear, comprobar, descargar y recuperar copias.
 - Enlaces directos a WhatsApp e impresión limpia de notas y recetas como PDF.
 - Shell clínico responsive con búsqueda global, sede local, notificaciones vacías explícitas, breadcrumb y tema claro/oscuro persistente.
 - Identidad y menú de cuenta concentrados al pie del sidebar; el botón `...` despliega datos profesionales, cambio de contraseña y cierre de sesión.
@@ -36,6 +39,7 @@ Versión **1.10.1**. Aplicación local para consultorios médicos, dentales, nut
 - Dashboard operativo con agenda, gráfica local, pacientes recientes, pendientes y actividad basada exclusivamente en datos persistidos; Próximas citas y Acompañamiento Intermedio comparten una fila adaptable, sin duplicar alertas ni mostrar ingresos.
 - KPI accionables: cada tarjeta conserva su resumen, enlaza al módulo relacionado y permite Nuevo paciente, Agendar cita o Nueva consulta sin una fila duplicada.
 - Agenda rápida desde el KPI o el módulo operativo: búsqueda bajo demanda de paciente activo —sin precargar el padrón—, ficha única, calendario de 21 días, consulta de fechas posteriores y selección visual de horarios disponibles.
+- La búsqueda de Agenda coincide únicamente con los datos anunciados: nombre, apellidos, expediente o teléfono; el correo no provoca resultados invisibles para el usuario.
 - Módulo **Agenda y citas** con vistas Día/Semana, navegación por periodo, resumen de estados, reagenda sobre el mismo registro, cancelación, inasistencia, cierre como atendida e inicio de consulta según rol.
 - Estados de cita validados en servidor: una cita futura no puede cerrarse como atendida/inasistente y una cita cerrada no puede reabrirse.
 - Recepción administra la agenda sin recibir motivos clínicos ni accesos a notas; los perfiles clínicos conservan el inicio de consulta.
@@ -66,7 +70,7 @@ En Linux/macOS, la activación es `source .venv/bin/activate`.
 
 La opción más segura es descomprimir cada versión en una carpeta nueva y copiar únicamente `instance/` y `backups/` después de conservar un respaldo. Al extraer un ZIP sobre una carpeta anterior, Windows reemplaza archivos incluidos pero no elimina archivos que dejaron de formar parte del proyecto.
 
-No copies las pruebas nuevas sobre una carpeta de código anterior. Si la prueba de seguridad menciona `style=`, `onclick=` u otro atributo no permitido, la salida indicará el archivo y la línea exactos. En la entrega 1.10.1 limpia no existen esos atributos; el caso normalmente indica que quedaron plantillas de una versión anterior. Descomprime el ZIP completo en una carpeta nueva y vacía, crea un entorno virtual nuevo y vuelve a ejecutar las pruebas.
+No copies las pruebas nuevas sobre una carpeta de código anterior. Si la prueba de seguridad menciona `style=`, `onclick=` u otro atributo no permitido, la salida indicará el archivo y la línea exactos. En la entrega 1.12.0 limpia no existen esos atributos; el caso normalmente indica que quedaron plantillas de una versión anterior. Descomprime el ZIP completo en una carpeta nueva y vacía, crea un entorno virtual nuevo y vuelve a ejecutar las pruebas.
 
 Si actualizas sobre la misma carpeta, ejecuta después:
 
@@ -127,7 +131,7 @@ Para validar pantallas sin capturar todo manualmente, trabaja sobre una copia o 
 python seed_demo.py --confirm
 ```
 
-El comando agrega cuentas ficticias para Administración, Medicina, Odontología, Nutrición y Recepción, además de seis pacientes, historiales, nueve consultas, siete citas, dieciocho pagos operativos y una receta de tres medicamentos. También genera `demo_data/expediente_antropometrico_demo.xlsx`. La contraseña aleatoria de las cuentas nuevas se muestra una sola vez. Nada se carga automáticamente y una segunda ejecución no duplica el conjunto. Consulta [demo_data/README.md](demo_data/README.md) y la [matriz de escenarios de Pagos](demo_data/ESCENARIOS_PAGOS_1_10.md); elimina o desactiva estas cuentas antes de utilizar información real.
+El comando agrega cuentas ficticias para Administración, Medicina, Odontología, Nutrición y Recepción, además de seis pacientes, historiales, nueve consultas, siete citas, dieciocho pagos operativos y una receta de tres medicamentos. Incluye una nota cerrada con una aclaración para validar 1.11. También genera `demo_data/expediente_antropometrico_demo.xlsx`. La contraseña aleatoria de las cuentas nuevas se muestra una sola vez. Nada se carga automáticamente y una segunda ejecución no duplica el conjunto. Consulta [demo_data/README.md](demo_data/README.md) y la [matriz de escenarios de Pagos](demo_data/ESCENARIOS_PAGOS_1_10.md); elimina o desactiva estas cuentas antes de utilizar información real.
 
 ## Persistencia y respaldos
 
@@ -135,11 +139,14 @@ El comando agrega cuentas ficticias para Administración, Medicina, Odontología
 - PyInstaller: `instance/pacientes.db` junto al ejecutable, nunca dentro de `_MEIPASS`.
 - Ruta personalizada: variable `SGPN_DATA_DIR`.
 - Secreto de sesión: `instance/.secret_key`, generado con 32 bytes criptográficos.
-- Respaldos: `backups/pacientes_backup_YYYYMMDD_HHMMSS_microsegundos.db`.
-- Retención: últimas 10 copias verificadas mediante `PRAGMA integrity_check`.
+- Llave de respaldos: `instance/.backup_key`, separada de la base y excluida de toda entrega.
+- Respaldos protegidos: `backups/pacientes_backup_YYYYMMDD_HHMMSS_microsegundos.sgpnbak`.
+- Retención: últimas 10 copias, verificadas por autenticidad AES-256-GCM y después mediante `PRAGMA integrity_check`.
 - Frecuencia: al iniciar y después de una mutación crítica confirmada; una solicitud rechazada no genera copia.
 
-Administración dispone de **Administración → Respaldos**. Restaurar exige la contraseña actual y la frase `RESTAURAR`; antes de reemplazar la base se crea otra copia, se valida el esquema y al finalizar se cierra la sesión. Una descarga contiene datos personales y clínicos: debe tratarse como la base activa. Consulta [docs/ENDURECIMIENTO_LOCAL_1_10_1.md](docs/ENDURECIMIENTO_LOCAL_1_10_1.md).
+Administración dispone de **Administración → Copias de seguridad**. Restaurar exige la contraseña actual y la frase `RESTAURAR`; antes de reemplazar la base se crea otra copia, se validan cifrado/esquema y al finalizar se cierra la sesión. El administrador debe descargar la llave una vez, resguardarla fuera del equipo y no compartirla. Las copias `.db` anteriores pueden protegerse desde la misma pantalla sin borrar el original hasta comprobar la versión cifrada. Consulta [docs/RESPALDOS_CIFRADOS_1_12_0.md](docs/RESPALDOS_CIFRADOS_1_12_0.md).
+
+La base activa `instance/pacientes.db` permanece en formato SQLite para conservar compatibilidad validada; esta versión no afirma que ese archivo esté cifrado. Su protección depende todavía del acceso al equipo y del cifrado del disco. El límite y la siguiente etapa se detallan en la revisión de seguridad.
 
 Si una base muy antigua no contiene el correo de sus usuarios, la migración conserva las cuentas y asigna valores únicos `usuario-migrado-<id>@local.invalid`. Son marcadores locales que no reciben mensajes y deben reemplazarse desde el panel **Usuarios**.
 
@@ -152,6 +159,8 @@ El directorio que contiene el ejecutable debe ser escribible. Los datos, respald
 ## Impresión de notas clínicas y recetas
 
 Desde el detalle de una consulta selecciona **Imprimir nota / PDF**. La aplicación abre una hoja A4 independiente; después pulsa **Imprimir / guardar PDF** y elige **Guardar como PDF**. La nota imprimible no depende de Tailwind, Alpine ni recursos CDN.
+
+Las notas nuevas comienzan como **Borrador**. El profesional que las registró o Administración puede cerrarlas cuando estén completas. Una nota **Cerrada** ya no se edita ni elimina; cualquier dato posterior se incorpora mediante **Agregar aclaración**, conservando motivo, autor, fecha y orden. Las notas existentes se mantienen como borrador al actualizar porque el sistema no supone que fueron firmadas o cerradas. Consulta [docs/CIERRE_NOTAS_CLINICAS_1_11_0.md](docs/CIERRE_NOTAS_CLINICAS_1_11_0.md).
 
 La nota clínica y la receta son documentos distintos. Cuando el usuario tiene perfil de Medicina general u Odontología, cédula y domicilio profesional, el detalle ofrece **Generar receta**. El formulario exige por medicamento denominación genérica, presentación, dosis, vía, frecuencia y duración. **Agregar** inserta la nueva tarjeta arriba para no obligar a regresar al inicio; un orden de captura oculto, validado por el servidor, hace que la receta emitida siempre se muestre en secuencia `1, 2, 3…`. La salida conserva una instantánea del paciente y del profesional.
 
@@ -167,10 +176,11 @@ La receta impresa agrupa cada medicamento en un bloque tipográfico breve: nombr
 | Cancelar un pago | Sí | No | No |
 | Expediente clínico | Sí | Sí | No |
 | Consultas, diagnóstico e indicaciones | Sí | Sí | No |
+| Cerrar nota propia / agregar aclaración | Sí | Sí, únicamente en notas propias | No |
 | Emitir receta ordinaria | Sólo con perfil Medicina/Odontología y datos completos | Sólo con perfil Medicina/Odontología y datos completos | No |
 | Antropometría e importación | Sólo con perfil Nutrición | Sólo con perfil Nutrición | No |
 | Usuarios y auditoría | Sí | No | No |
-| Crear, verificar, descargar o restaurar respaldos | Sí | No | No |
+| Crear, comprobar, descargar, proteger o recuperar copias y descargar la llave | Sí | No | No |
 
 ## Pruebas y calidad
 
@@ -183,7 +193,7 @@ bandit -q -r app run.py seed_admin.py seed_demo.py -x app/static,app/templates
 pip-audit -r requirements.txt
 ```
 
-La aceptación principal incluye **122 casos** (15 heredados de `unittest`). Existe un caso E2E adicional que eleva el total a 123 cuando Playwright y Chromium están instalados; de lo contrario se omite de forma explícita. El detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md).
+La aceptación principal incluye **131 casos** (15 heredados de `unittest`). Existe un caso E2E adicional cuando Playwright y Chromium están instalados; de lo contrario se omite de forma explícita. El detalle se encuentra en [docs/TEST_MATRIX.md](docs/TEST_MATRIX.md). Las instrucciones para PowerShell están en [docs/EJECUCION_PRUEBAS.md](docs/EJECUCION_PRUEBAS.md).
 
 ## Compilación para Windows
 
@@ -196,4 +206,4 @@ El ejecutable se genera sin base de datos, secretos, registros ni respaldos. `Py
 
 ## Seguridad y límites
 
-Consulta [SECURITY_REVIEW.md](SECURITY_REVIEW.md) antes de utilizar datos reales. La 1.10.1 alcanza el mínimo técnico de aplicación definido para un piloto local controlado: autenticación/roles, CSRF, validación, auditoría, CSP local y restauración verificada. No equivale a una autorización para exponerla en red; siguen pendientes cifrado en reposo, HTTPS, gobernanza de privacidad y evaluación legal/operativa.
+Consulta [SECURITY_REVIEW.md](SECURITY_REVIEW.md) antes de utilizar datos reales. La 1.12.0 mantiene el mínimo técnico de aplicación para un piloto local controlado y cifra las copias de seguridad con una llave independiente. No equivale a una autorización para exponerla en red: siguen pendientes el cifrado transparente de la base activa, HTTPS, gobernanza de privacidad y evaluación legal/operativa.

@@ -15,6 +15,10 @@ erDiagram
     PACIENTE ||--o{ BITACORA_CONTACTO : acumula
     PACIENTE ||--o{ RECETA : recibe
     CONSULTA_CLINICA ||--o{ RECETA : origina
+    CONSULTA_CLINICA ||--o| NOTA_CIERRE_CLINICO : cierra
+    USUARIO ||--o{ NOTA_CIERRE_CLINICO : confirma
+    NOTA_CIERRE_CLINICO ||--o{ ACLARACION_NOTA_CLINICA : incorpora
+    USUARIO ||--o{ ACLARACION_NOTA_CLINICA : redacta
     RECETA o|--o| RECETA : sustituye
     RECETA ||--|{ RECETA_MEDICAMENTO : contiene
 ```
@@ -26,6 +30,8 @@ erDiagram
 | `usuarios` | username, password_hash, auth_version, cambio obligatorio, rol, perfil profesional, cédula, establecimiento, domicilio, estado, fallos, bloqueo |
 | `pacientes` | identidad, género, nacimiento, contacto, dirección, ocupación, emergencia |
 | `historial_clinico` | enfermedades, cirugías, antecedentes familiares, alergias, medicación, hábitos |
+| `nota_cierres_clinicos` | consulta única, responsable, perfil, clave de operación y fecha de cierre |
+| `aclaraciones_notas_clinicas` | cierre, consecutivo, motivo, contenido, autor, clave de operación y fecha |
 | `valoracion_antropometrica` | fecha, turno diario, motivo, síntomas, diagnóstico, plan, indicaciones, signos vitales, antropometría y snapshot del profesional |
 | `citas` | fecha, hora, motivo, estado y cancelación |
 | `pagos` | fecha, monto_centavos, espejo monto, moneda, concepto, método, folio, operation_key, registrador, cita, estado y cancelación |
@@ -38,5 +44,7 @@ La tabla histórica `valoracion_antropometrica` conserva su nombre para evitar u
 `(fecha, numero_cita)` es único. `numero_cita` se asigna en servidor como turno global `1..n` para cada fecha y se reinicia al cambiar de día. Los huecos históricos no se reciclan ni se usan como conteo; las métricas diarias cuentan registros.
 
 Cada consulta admite un historial de recetas: original, adicionales y sustituciones. `(valoracion_id, version)` es único y `receta_sustituida_id` evita reemplazar dos veces el mismo folio. Las llaves foráneas usan `RESTRICT` para consulta/paciente/documento sustituido y `SET NULL` para el profesional; los medicamentos se eliminan en cascada sólo si una operación administrativa futura eliminara expresamente la receta. La interfaz actual no ofrece eliminación.
+
+El estado de una nota no se guarda como texto mutable: la ausencia de `nota_cierres_clinicos` significa Borrador y una fila única significa Cerrada. La consulta y su cierre usan `RESTRICT`; las aclaraciones tienen `(cierre_id, numero)` único y claves de operación únicas. Las notas anteriores a 1.11 permanecen como borrador.
 
 `pagos.folio` y `pagos.operation_key` son únicos. `monto_centavos` es la representación monetaria autoritativa; `monto` permanece como espejo legado. Paciente usa `ON DELETE RESTRICT`, mientras registrador, responsable de cancelación y cita usan `ON DELETE SET NULL`. Los estados permitidos son `vigente`, `cancelado` y `requiere_revision`; sólo el primero entra en agregados.

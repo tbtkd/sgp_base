@@ -1,60 +1,37 @@
 {% extends "base/base.html" %}
-
-{% block title %}Lista de Historiales Clínicos{% endblock %}
-
+{% block title %}Historiales clínicos{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/clinical_indexes.css', v=config['ASSET_VERSION']) }}">{% endblock %}
+{% macro sort_header(label, key) -%}
+{% set active = orden.startswith(key ~ '_') %}
+{% set next_order = key ~ ('_desc' if orden == key ~ '_asc' else '_asc') %}
+<a class="clinical-sort-link{% if active %} is-active{% endif %}" href="{{ url_for('historial_clinico.lista_historiales', q=busqueda, orden=next_order, page=1) }}">
+    <span>{{ label }}</span><i class="fas {{ 'fa-sort-up' if orden == key ~ '_asc' else ('fa-sort-down' if orden == key ~ '_desc' else 'fa-sort') }}" aria-hidden="true"></i>
+</a>
+{%- endmacro %}
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Historiales clínicos</h1>
-        <p class="mt-2 text-gray-500">Antecedentes, alergias, medicación y hábitos registrados por paciente.</p>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 border-b border-gray-100">
-                    <tr>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Paciente</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Antecedentes y padecimientos</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Alergias y medicación</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600">Actividad física</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 text-right">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for historial in historiales %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 text-sm">
-                            <p class="font-semibold text-gray-900">{{ historial.paciente.nombre_completo if historial.paciente else 'Paciente no disponible' }}</p>
-                            <p class="mt-1 text-xs text-gray-500">Expediente #{{ historial.paciente_id }}</p>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
-                            {{ (historial.enfermedades_previas or historial.antecedentes_familiares or 'Sin antecedentes registrados')|truncate(110, true) }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">
-                            {{ (historial.alergias_medicamentosas or historial.alergias_alimentarias or historial.medicamentos_actuales or 'Sin alergias o medicación registrada')|truncate(110, true) }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs">{{ historial.actividad_fisica or 'No registrada' }}</td>
-                        <td class="px-6 py-4 text-right">
-                            <a href="{{ url_for('historial_clinico.ver_crear_historial', paciente_id=historial.paciente_id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl text-sm font-semibold transition">
-                                <i class="fas fa-file-medical" aria-hidden="true"></i> Ver / editar
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="px-6 py-14 text-center">
-                            <i class="fas fa-file-medical text-4xl text-gray-300 mb-3" aria-hidden="true"></i>
-                            <p class="font-semibold text-gray-700">No hay historiales clínicos registrados.</p>
-                            <p class="mt-1 text-sm text-gray-500">Abre el expediente de un paciente para registrar sus antecedentes.</p>
-                            <a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="inline-flex mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold">Ver pacientes</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="max-w-7xl mx-auto clinical-index-page">
+    <header class="clinical-index-heading">
+        <div><h1>Historiales clínicos</h1><p>Consulta antecedentes, alergias, medicación y hábitos de cada paciente.</p></div>
+        <span class="clinical-result-count">{{ total }} {{ 'historial' if total == 1 else 'historiales' }}</span>
+    </header>
+    <form method="GET" action="{{ url_for('historial_clinico.lista_historiales') }}" class="clinical-filter" role="search">
+        <input type="hidden" name="orden" value="{{ orden }}"><label for="history-search">Buscar historial</label>
+        <div class="clinical-filter-row"><div class="clinical-filter-input"><i class="fas fa-search" aria-hidden="true"></i><input id="history-search" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Nombre, padecimiento, alergia, medicamento o actividad…" autocomplete="off"></div><button type="submit">Buscar</button>{% if busqueda %}<a href="{{ url_for('historial_clinico.lista_historiales', orden=orden) }}">Limpiar</a>{% endif %}</div>
+    </form>
+    <div class="clinical-table-card"><div class="overflow-x-auto"><table class="clinical-table">
+        <thead><tr>
+            <th aria-sort="{{ 'ascending' if orden == 'paciente_asc' else ('descending' if orden == 'paciente_desc' else 'none') }}">{{ sort_header('Paciente', 'paciente') }}</th>
+            <th aria-sort="{{ 'ascending' if orden == 'antecedentes_asc' else ('descending' if orden == 'antecedentes_desc' else 'none') }}">{{ sort_header('Antecedentes y padecimientos', 'antecedentes') }}</th>
+            <th aria-sort="{{ 'ascending' if orden == 'alergias_asc' else ('descending' if orden == 'alergias_desc' else 'none') }}">{{ sort_header('Alergias y medicación', 'alergias') }}</th>
+            <th aria-sort="{{ 'ascending' if orden == 'actividad_asc' else ('descending' if orden == 'actividad_desc' else 'none') }}">{{ sort_header('Actividad física', 'actividad') }}</th><th>Acción</th>
+        </tr></thead><tbody>
+        {% for historial in historiales %}<tr>
+            <td><strong>{{ historial.paciente.nombre_completo if historial.paciente else 'Paciente no disponible' }}</strong><small>EXP-{{ '%04d'|format(historial.paciente_id) }}</small></td>
+            <td>{{ (historial.enfermedades_previas or historial.antecedentes_familiares or 'Sin antecedentes registrados')|truncate(110, true) }}{% if historial.antecedentes_frecuentes_etiquetas %}<small>{{ historial.antecedentes_frecuentes_etiquetas|join(', ') }}</small>{% endif %}</td>
+            <td>{{ (historial.alergias_medicamentosas or historial.alergias_alimentarias or historial.medicamentos_actuales or 'Sin alergias o medicación registrada')|truncate(110, true) }}</td>
+            <td>{{ historial.actividad_fisica or 'No registrada' }}</td><td><a class="clinical-row-action" href="{{ url_for('historial_clinico.ver_crear_historial', paciente_id=historial.paciente_id) }}"><i class="fas fa-file-medical" aria-hidden="true"></i>Ver historial</a></td>
+        </tr>{% else %}<tr><td colspan="5" class="clinical-empty"><i class="fas fa-file-medical" aria-hidden="true"></i><strong>{{ 'No se encontraron historiales con ese dato.' if busqueda else 'No hay historiales clínicos registrados.' }}</strong><span>{{ 'Prueba con otra palabra o limpia el filtro.' if busqueda else 'Abre el expediente de un paciente para registrar sus antecedentes.' }}</span></td></tr>{% endfor %}
+        </tbody></table></div></div>
+    {% if paginas > 1 %}<nav class="clinical-pagination" aria-label="Paginación de historiales"><span>Página {{ pagina }} de {{ paginas }}</span><div>{% if pagina > 1 %}<a rel="prev" href="{{ url_for('historial_clinico.lista_historiales', q=busqueda, orden=orden, page=pagina-1) }}">Anterior</a>{% endif %}{% if pagina < paginas %}<a rel="next" href="{{ url_for('historial_clinico.lista_historiales', q=busqueda, orden=orden, page=pagina+1) }}">Siguiente</a>{% endif %}</div></nav>{% endif %}
 </div>
 {% endblock %}
-

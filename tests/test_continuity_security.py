@@ -1,12 +1,15 @@
+import os
 import re
 import sqlite3
+from base64 import urlsafe_b64encode
 from pathlib import Path
 
 import pytest
 
 from app import create_app
 from app import db_orm as db
-from app.db import restore_sqlite_database, verify_sqlite_database
+from app.core.backup_crypto import BACKUP_MAGIC, BackupSecurityError, recovery_key_document
+from app.db import restore_sqlite_database, verify_backup, verify_sqlite_database
 from app.models.usuario import Usuario
 from tests.conftest import csrf_from
 
@@ -23,6 +26,7 @@ def continuity_app(tmp_path):
             "SQLALCHEMY_DATABASE_URI": f"sqlite:///{database}",
             "BACKUP_DATABASE_PATH": database,
             "BACKUP_DIRECTORY": backups,
+            "BACKUP_KEY_PATH": tmp_path / "instance" / ".backup_key",
             "BACKUP_AFTER_CRITICAL_MUTATION": True,
             "AUTO_BACKUP_DATABASE": False,
             "WTF_CSRF_ENABLED": True,
@@ -56,7 +60,7 @@ def _login(client, username="administrator", password="StrongPass!2026"):
 
 def _backup_names(app):
     directory = Path(app.config["BACKUP_DIRECTORY"])
-    return {path.name for path in directory.glob("pacientes_backup_*.db")}
+    return {path.name for path in directory.glob("pacientes_backup_*.sgpnbak")}
 
 
 def test_csp_is_local_nonce_based_and_templates_have_no_executable_attributes(app, client, login):
@@ -230,6 +234,14 @@ def test_backup_create_verify_download_and_invalid_filename(continuity_app):
     assert downloaded.status_code == 200
     assert downloaded.headers["Content-Disposition"].startswith("attachment")
     assert downloaded.headers["Cache-Control"].startswith("no-store")
+    assert downloaded.data.startswith(BACKUP_MAGIC)
+    assert b"Admin" not in downloaded.data
+    verified_file = verify_backup(
+        Path(continuity_app.config["BACKUP_DIRECTORY"]) / filename,
+        database_path=continuity_app.config["BACKUP_DATABASE_PATH"],
+        key_path=continuity_app.config["BACKUP_KEY_PATH"],
+    )
+    assert verified_file["encrypted"] is True
     assert client.get("/administracion/respaldos/not-a-backup.db/descargar").status_code == 404
 
 
@@ -238,7 +250,7 @@ def test_corrupt_backup_and_invalid_restore_confirmations_are_rejected(continuit
     _login(client)
     directory = Path(continuity_app.config["BACKUP_DIRECTORY"])
     directory.mkdir(exist_ok=True)
-    corrupt = directory / "pacientes_backup_20260825_120000_000001.db"
+    corrupt = directory / "pacientes_backup_20260825_120000_000001.sgpnbak"
     corrupt.write_bytes(b"corrupt")
     page = client.get("/administracion/respaldos")
     token = csrf_from(page)
@@ -266,6 +278,14 @@ def test_valid_restore_reverts_data_creates_safety_copy_and_logs_out(continuity_
     token = csrf_from(client.get("/administracion/respaldos"))
     client.post("/administracion/respaldos/crear", data={"csrf_token": token})
     source = next(iter(_backup_names(continuity_app)))
+    directory = Path(continuity_app.config["BACKUP_DIRECTORY"])
+    source_path = directory / source
+    encrypted_bytes = source_path.read_bytes()
+    os.utime(source_path, (1, 1))
+    for index in range(2, 11):
+        extra = directory / f"pacientes_backup_20260824_1200{index:02d}_000001.sgpnbak"
+        extra.write_bytes(encrypted_bytes)
+        os.utime(extra, (index, index))
     with continuity_app.app_context():
         admin = Usuario.find_by_username("administrator")
         admin.nombre = "Nombre posterior"
@@ -283,7 +303,118 @@ def test_valid_restore_reverts_data_creates_safety_copy_and_logs_out(continuity_
     assert restored.status_code == 302
     assert restored.headers["Location"].endswith("/login")
     assert client.get("/").status_code == 302
+    assert len(_backup_names(continuity_app)) == continuity_app.config["BACKUP_RETENTION"]
     assert len(_backup_names(continuity_app) - before) == 1
     with continuity_app.app_context():
         db.session.expire_all()
         assert Usuario.find_by_username("administrator").nombre == "Admin"
+
+
+def test_tampered_or_wrong_key_backup_is_rejected_without_plaintext_left_behind(continuity_app, tmp_path):
+    client = continuity_app.test_client()
+    _login(client)
+    page = client.get("/administracion/respaldos")
+    client.post("/administracion/respaldos/crear", data={"csrf_token": csrf_from(page)})
+    filename = next(iter(_backup_names(continuity_app)))
+    backup = Path(continuity_app.config["BACKUP_DIRECTORY"]) / filename
+    original = backup.read_bytes()
+    tampered = bytearray(original)
+    tampered[len(tampered) // 2] ^= 1
+    backup.write_bytes(tampered)
+    database = Path(continuity_app.config["BACKUP_DATABASE_PATH"])
+    database_before = database.read_bytes()
+    with pytest.raises(BackupSecurityError):
+        verify_backup(
+            backup,
+            database_path=database,
+            key_path=continuity_app.config["BACKUP_KEY_PATH"],
+        )
+    with pytest.raises(BackupSecurityError):
+        restore_sqlite_database(backup, database, key_path=continuity_app.config["BACKUP_KEY_PATH"])
+    assert database.read_bytes() == database_before
+    assert not list(backup.parent.glob(".sgpn-verify-*.db"))
+
+    backup.write_bytes(original)
+    wrong_key = tmp_path / "wrong.key"
+    wrong_key.write_bytes(recovery_key_document(b"x" * 32))
+    with pytest.raises(BackupSecurityError):
+        verify_backup(
+            backup,
+            database_path=continuity_app.config["BACKUP_DATABASE_PATH"],
+            key_path=wrong_key,
+        )
+
+
+def test_recovery_key_export_requires_csrf_password_and_exact_phrase(continuity_app):
+    client = continuity_app.test_client()
+    _login(client)
+    endpoint = "/administracion/respaldos/llave-recuperacion"
+    assert client.post(endpoint).status_code == 400
+    for password, phrase in (("WrongPass!2026", "DESCARGAR"), ("StrongPass!2026", "descargar")):
+        page = client.get("/administracion/respaldos")
+        response = client.post(
+            endpoint,
+            data={"csrf_token": csrf_from(page), "admin_password": password, "confirmation_phrase": phrase},
+        )
+        assert response.status_code == 422
+    page = client.get("/administracion/respaldos")
+    response = client.post(
+        endpoint,
+        data={
+            "csrf_token": csrf_from(page),
+            "admin_password": "StrongPass!2026",
+            "confirmation_phrase": "DESCARGAR",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Disposition"].startswith("attachment")
+    assert response.headers["Cache-Control"].startswith("no-store")
+    assert response.data.startswith(b"SGPN_BACKUP_KEY_V1\n")
+    assert urlsafe_b64encode(b"x" * 32) not in response.data
+    key_path = Path(continuity_app.config["BACKUP_KEY_PATH"])
+    assert key_path.is_file()
+    if os.name != "nt":
+        assert key_path.stat().st_mode & 0o077 == 0
+
+
+def test_legacy_backup_protection_requires_confirmation_and_preserves_failures(continuity_app):
+    client = continuity_app.test_client()
+    _login(client)
+    database = Path(continuity_app.config["BACKUP_DATABASE_PATH"])
+    directory = Path(continuity_app.config["BACKUP_DIRECTORY"])
+    directory.mkdir(exist_ok=True)
+    legacy = directory / "pacientes_backup_20260825_130000_000001.db"
+    source = sqlite3.connect(f"file:{database.as_posix()}?mode=ro", uri=True)
+    destination = sqlite3.connect(legacy)
+    source.backup(destination)
+    destination.close()
+    source.close()
+    corrupt = directory / "pacientes_backup_20260825_130000_000002.db"
+    corrupt.write_bytes(b"corrupt")
+
+    page = client.get("/administracion/respaldos")
+    denied = client.post(
+        "/administracion/respaldos/proteger-anteriores",
+        data={
+            "csrf_token": csrf_from(page),
+            "admin_password": "StrongPass!2026",
+            "confirmation_phrase": "proteger",
+        },
+    )
+    assert denied.status_code == 422
+    assert legacy.exists()
+
+    page = client.get("/administracion/respaldos")
+    protected = client.post(
+        "/administracion/respaldos/proteger-anteriores",
+        data={
+            "csrf_token": csrf_from(page),
+            "admin_password": "StrongPass!2026",
+            "confirmation_phrase": "PROTEGER",
+        },
+    )
+    assert protected.status_code == 302
+    assert not legacy.exists()
+    assert legacy.with_suffix(".sgpnbak").exists()
+    assert corrupt.exists()
+    assert not corrupt.with_suffix(".sgpnbak").exists()

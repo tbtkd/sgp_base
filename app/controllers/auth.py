@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -23,16 +24,24 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app import db_orm as db
 from app.core.audit import AuditLog
 from app.core.auth import admin_required, login_required
+from app.core.backup_crypto import (
+    BackupSecurityError,
+    backup_key_status,
+    load_or_create_backup_key,
+    recovery_key_document,
+)
 from app.core.password_recovery import reset_user_password
 from app.core.security import login_blocked, register_login_failure, reset_login_failures
 from app.core.validators import ValidationError, password_change_payload, user_payload
 from app.db import (
     get_backup_directory,
     get_database_path,
+    protect_legacy_backups,
+    prune_backups,
     resolve_internal_backup,
     respaldar_db,
     restore_sqlite_database,
-    verify_sqlite_database,
+    verify_backup,
 )
 from app.models.usuario import Usuario
 
@@ -233,7 +242,15 @@ def registrar_usuario():
 @auth.route("/usuarios")
 @admin_required
 def lista_usuarios():
-    return render_template("auth/lista_usuarios.html", usuarios=Usuario.obtener_todos())
+    users = Usuario.obtener_todos()
+    active = sum(1 for user in users if user.status == "activo")
+    return render_template(
+        "auth/lista_usuarios.html",
+        usuarios=users,
+        total_usuarios=len(users),
+        usuarios_activos=active,
+        usuarios_inactivos=len(users) - active,
+    )
 
 
 @auth.route("/usuarios/<int:id>/editar", methods=["GET", "POST"])
@@ -415,14 +432,42 @@ def respaldos():
     directory = _backup_directory()
     directory.mkdir(parents=True, exist_ok=True)
     items = []
-    for path in sorted(directory.glob("pacientes_backup_*.db"), key=lambda item: item.stat().st_mtime, reverse=True):
+    candidates = [*directory.glob("pacientes_backup_*.sgpnbak"), *directory.glob("pacientes_backup_*.db")]
+    for path in sorted(candidates, key=lambda item: item.stat().st_mtime, reverse=True):
         try:
             resolved = resolve_internal_backup(path.name, backup_directory=directory)
         except (ValueError, FileNotFoundError):
             continue
         stat = resolved.stat()
-        items.append({"name": resolved.name, "size": stat.st_size, "modified": stat.st_mtime})
-    return render_template("auth/respaldos.html", respaldos=items, restore_phrase="RESTAURAR")
+        items.append(
+            {
+                "name": resolved.name,
+                "size": stat.st_size,
+                "modified": stat.st_mtime,
+                "encrypted": resolved.suffix == ".sgpnbak",
+            }
+        )
+    try:
+        key_status = backup_key_status(
+            database_path=_runtime_database_path(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
+        )
+    except BackupSecurityError:
+        logger.exception("No fue posible abrir la llave de respaldos")
+        key_status = {"fingerprint": "NO DISPONIBLE", "source": "error", "exportable": False}
+        flash(
+            "No se pudo abrir la llave de recuperación. Conserva las copias actuales y solicita ayuda antes de crear o recuperar información.",
+            "error",
+        )
+    return render_template(
+        "auth/respaldos.html",
+        respaldos=items,
+        legacy_count=sum(not item["encrypted"] for item in items),
+        key_status=key_status,
+        restore_phrase="RESTAURAR",
+        protect_phrase="PROTEGER",
+        export_phrase="DESCARGAR",
+    )
 
 
 @auth.route("/administracion/respaldos/crear", methods=["POST"])
@@ -433,6 +478,7 @@ def crear_respaldo():
             _runtime_database_path(),
             retention=current_app.config["BACKUP_RETENTION"],
             backup_directory=_backup_directory(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
         )
         if not path:
             raise RuntimeError("La base todavía no contiene datos para respaldar.")
@@ -451,16 +497,20 @@ def crear_respaldo():
 def verificar_respaldo(filename):
     path = _requested_backup(filename)
     try:
-        verify_sqlite_database(path)
+        verify_backup(
+            path,
+            database_path=_runtime_database_path(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
+        )
         AuditLog.record("backup.verify", entity_type="database", metadata={"archivo": path.name})
         db.session.commit()
         flash("La copia de seguridad está lista para usarse.", "success")
         return redirect(url_for("auth.respaldos"))
-    except sqlite3.DatabaseError:
+    except (sqlite3.DatabaseError, BackupSecurityError):
         AuditLog.record("backup.verify", entity_type="database", outcome="failure", metadata={"archivo": path.name})
         db.session.commit()
         flash("Esta copia está dañada o incompleta y no puede usarse.", "error")
-        return render_template("auth/respaldos.html", respaldos=[], restore_phrase="RESTAURAR"), 422
+        return redirect(url_for("auth.respaldos")), 422
 
 
 @auth.route("/administracion/respaldos/<string:filename>/descargar")
@@ -469,7 +519,8 @@ def descargar_respaldo(filename):
     path = _requested_backup(filename)
     AuditLog.record("backup.export", entity_type="database", metadata={"archivo": path.name})
     db.session.commit()
-    response = send_file(path, as_attachment=True, download_name=path.name, mimetype="application/vnd.sqlite3")
+    mimetype = "application/octet-stream" if path.suffix == ".sgpnbak" else "application/vnd.sqlite3"
+    response = send_file(path, as_attachment=True, download_name=path.name, mimetype=mimetype)
     response.headers["Cache-Control"] = "no-store, max-age=0"
     return response
 
@@ -490,8 +541,12 @@ def restaurar_respaldo(filename):
         flash("No se pudo confirmar. Revisa tu contraseña y escribe RESTAURAR.", "error")
         return redirect(url_for("auth.respaldos")), 422
     try:
-        verify_sqlite_database(path)
-    except sqlite3.DatabaseError:
+        verify_backup(
+            path,
+            database_path=_runtime_database_path(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
+        )
+    except (sqlite3.DatabaseError, BackupSecurityError):
         AuditLog.record("backup.restore", entity_type="database", outcome="failure", metadata={"archivo": path.name})
         db.session.commit()
         flash("Esta copia está dañada, incompleta o pertenece a otro sistema. Tu información actual no cambió.", "error")
@@ -501,19 +556,25 @@ def restaurar_respaldo(filename):
     destination = _runtime_database_path()
     pre_restore = respaldar_db(
         destination,
-        retention=current_app.config["BACKUP_RETENTION"],
+        retention=current_app.config["BACKUP_RETENTION"] + 1,
         backup_directory=_backup_directory(),
+        key_path=current_app.config.get("BACKUP_KEY_PATH"),
     )
     db.session.remove()
     db.engine.dispose()
     try:
-        restore_sqlite_database(path, destination)
-    except (OSError, sqlite3.DatabaseError):
+        restore_sqlite_database(path, destination, key_path=current_app.config.get("BACKUP_KEY_PATH"))
+    except (OSError, sqlite3.DatabaseError, BackupSecurityError):
         logger.exception("Falló la restauración del respaldo %s", path.name)
         flash("No se pudo recuperar la copia. Tu información actual no cambió.", "error")
         return redirect(url_for("auth.respaldos")), 422
     finally:
         db.engine.dispose()
+
+    try:
+        prune_backups(_backup_directory(), retention=current_app.config["BACKUP_RETENTION"])
+    except OSError:
+        logger.exception("No fue posible aplicar la retención después de restaurar")
 
     restored_actor = db.session.get(Usuario, actor_id)
     AuditLog.record(
@@ -525,3 +586,85 @@ def restaurar_respaldo(filename):
     logout_user()
     flash("La información se recuperó correctamente. Inicia sesión de nuevo para continuar.", "success")
     return redirect(url_for("auth.login"))
+
+
+@auth.route("/administracion/respaldos/proteger-anteriores", methods=["POST"])
+@admin_required
+def proteger_respaldos_anteriores():
+    phrase = str(request.form.get("confirmation_phrase", ""))[:20]
+    password = str(request.form.get("admin_password", ""))[:128]
+    if phrase != "PROTEGER" or not current_user.check_password(password):
+        AuditLog.record(
+            "backup.protect_legacy",
+            entity_type="database",
+            outcome="denied",
+            metadata={"frase_valida": phrase == "PROTEGER"},
+        )
+        db.session.commit()
+        flash("No se pudo confirmar. Revisa tu contraseña y escribe PROTEGER.", "error")
+        return redirect(url_for("auth.respaldos")), 422
+    result = protect_legacy_backups(
+        _runtime_database_path(),
+        backup_directory=_backup_directory(),
+        key_path=current_app.config.get("BACKUP_KEY_PATH"),
+    )
+    AuditLog.record("backup.protect_legacy", entity_type="database", metadata=result)
+    db.session.commit()
+    if result["failed"]:
+        flash(
+            "Algunas copias anteriores no pudieron protegerse. Se conservaron sin cambios para evitar perder información.",
+            "warning",
+        )
+    elif result["protected"]:
+        flash(f"Se protegieron {result['protected']} copia(s) anterior(es).", "success")
+    else:
+        flash("No hay copias anteriores pendientes de proteger.", "info")
+    return redirect(url_for("auth.respaldos"))
+
+
+@auth.route("/administracion/respaldos/llave-recuperacion", methods=["POST"])
+@admin_required
+def descargar_llave_recuperacion():
+    phrase = str(request.form.get("confirmation_phrase", ""))[:20]
+    password = str(request.form.get("admin_password", ""))[:128]
+    if phrase != "DESCARGAR" or not current_user.check_password(password):
+        AuditLog.record(
+            "backup.export_key",
+            entity_type="security_key",
+            outcome="denied",
+            metadata={"frase_valida": phrase == "DESCARGAR"},
+        )
+        db.session.commit()
+        flash("No se pudo confirmar. Revisa tu contraseña y escribe DESCARGAR.", "error")
+        return redirect(url_for("auth.respaldos")), 422
+    try:
+        key, source = load_or_create_backup_key(
+            database_path=_runtime_database_path(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
+        )
+        if source != "file":
+            raise BackupSecurityError("La llave administrada externamente no puede descargarse desde SGPN.")
+        status = backup_key_status(
+            database_path=_runtime_database_path(),
+            key_path=current_app.config.get("BACKUP_KEY_PATH"),
+        )
+        AuditLog.record(
+            "backup.export_key",
+            entity_type="security_key",
+            metadata={"fingerprint": status["fingerprint"]},
+        )
+        db.session.commit()
+        response = send_file(
+            BytesIO(recovery_key_document(key)),
+            as_attachment=True,
+            download_name=f"SGPN_llave_recuperacion_{status['fingerprint']}.txt",
+            mimetype="text/plain",
+        )
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        return response
+    except BackupSecurityError:
+        db.session.rollback()
+        logger.exception("No fue posible exportar la llave de recuperación")
+        flash("La llave se administra fuera de SGPN y no puede descargarse desde esta pantalla.", "warning")
+        return redirect(url_for("auth.respaldos")), 422

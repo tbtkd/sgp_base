@@ -13,9 +13,17 @@ from uuid import NAMESPACE_URL, uuid5
 
 from sqlalchemy import String, cast, literal
 
+from app.core.backup_crypto import (
+    BackupSecurityError,
+    decrypt_file,
+    encrypt_file,
+    load_or_create_backup_key,
+    temporary_decrypted_path,
+)
+
 DATABASE_NAME = "pacientes.db"
-BACKUP_GLOB = "pacientes_backup_*.db"
-BACKUP_NAME_RE = re.compile(r"^pacientes_backup_\d{8}_\d{6}_\d{6}\.db$")
+BACKUP_GLOBS = ("pacientes_backup_*.sgpnbak", "pacientes_backup_*.db")
+BACKUP_NAME_RE = re.compile(r"^pacientes_backup_\d{8}_\d{6}_\d{6}\.(?:sgpnbak|db)$")
 REQUIRED_RESTORE_TABLES = {"usuarios", "pacientes", "audit_logs"}
 _BACKUP_LOCK = Lock()
 
@@ -115,8 +123,54 @@ def verify_sqlite_database(path, *, require_application_tables=True) -> dict:
         connection.close()
 
 
-def respaldar_db(database_path=None, *, retention=10, backup_directory=None) -> Path | None:
-    """Crea un respaldo consistente con la API nativa de SQLite y rota copias."""
+def _backup_paths(directory: Path) -> list[Path]:
+    backups = {path.resolve() for pattern in BACKUP_GLOBS for path in directory.glob(pattern)}
+    return sorted(backups, key=lambda item: item.stat().st_mtime, reverse=True)
+
+
+def prune_backups(backup_directory, *, retention=10) -> None:
+    """Aplica la retención a copias cifradas y anteriores dentro del directorio autorizado."""
+    directory = Path(backup_directory).resolve()
+    for old_backup in _backup_paths(directory)[max(1, int(retention)) :]:
+        old_backup.unlink(missing_ok=True)
+
+
+def _decrypt_backup(source: Path, *, database_path, key_path=None) -> Path:
+    key, _ = load_or_create_backup_key(database_path=database_path, key_path=key_path)
+    temporary = temporary_decrypted_path(source.parent)
+    try:
+        decrypt_file(source, temporary, key)
+        return temporary
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
+def verify_backup(
+    path,
+    *,
+    database_path=None,
+    key_path=None,
+    require_application_tables=True,
+) -> dict:
+    """Comprueba autenticidad criptográfica e integridad SQLite de una copia."""
+    source = Path(path).resolve()
+    if source.suffix == ".db":
+        result = verify_sqlite_database(source, require_application_tables=require_application_tables)
+        return {**result, "encrypted": False}
+    if source.suffix != ".sgpnbak":
+        raise BackupSecurityError("La copia no tiene un formato compatible.")
+    target_database = Path(database_path or get_database_path()).resolve()
+    temporary = _decrypt_backup(source, database_path=target_database, key_path=key_path)
+    try:
+        result = verify_sqlite_database(temporary, require_application_tables=require_application_tables)
+        return {**result, "encrypted": True}
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def respaldar_db(database_path=None, *, retention=10, backup_directory=None, key_path=None) -> Path | None:
+    """Crea una copia SQLite consistente, la cifra y rota las copias anteriores."""
     source = Path(database_path or get_database_path()).resolve()
     if not source.exists() or source.stat().st_size == 0:
         return None
@@ -127,8 +181,8 @@ def respaldar_db(database_path=None, *, retention=10, backup_directory=None) -> 
         target_dir.chmod(0o700)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    destination = target_dir / f"pacientes_backup_{timestamp}.db"
-    temporary = destination.with_suffix(".tmp")
+    destination = target_dir / f"pacientes_backup_{timestamp}.sgpnbak"
+    temporary = target_dir / f".pacientes_backup_{timestamp}.db.tmp"
     with _BACKUP_LOCK:
         try:
             source_connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
@@ -140,40 +194,90 @@ def respaldar_db(database_path=None, *, retention=10, backup_directory=None) -> 
                 backup_connection.close()
                 source_connection.close()
             verify_sqlite_database(temporary, require_application_tables=False)
-            temporary.replace(destination)
+            key, _ = load_or_create_backup_key(database_path=source, key_path=key_path)
+            encrypt_file(temporary, destination, key)
+            verify_backup(
+                destination,
+                database_path=source,
+                key_path=key_path,
+                require_application_tables=False,
+            )
         except Exception:
+            destination.unlink(missing_ok=True)
             temporary.unlink(missing_ok=True)
             raise
+        finally:
+            temporary.unlink(missing_ok=True)
 
-    backups = sorted(target_dir.glob(BACKUP_GLOB), key=lambda item: item.stat().st_mtime, reverse=True)
-    for old_backup in backups[max(1, int(retention)) :]:
-        old_backup.unlink(missing_ok=True)
+    prune_backups(target_dir, retention=retention)
     return destination
 
 
-def restore_sqlite_database(source_backup, destination_database) -> None:
+def protect_legacy_backups(database_path=None, *, backup_directory=None, key_path=None) -> dict:
+    """Cifra copias SQLite anteriores y elimina cada original sólo tras verificarla."""
+    database = Path(database_path or get_database_path()).resolve()
+    directory = Path(backup_directory or get_backup_directory(database)).resolve()
+    directory.mkdir(parents=True, exist_ok=True)
+    key, _ = load_or_create_backup_key(database_path=database, key_path=key_path)
+    result = {"protected": 0, "failed": 0, "skipped": 0}
+    with _BACKUP_LOCK:
+        for source in sorted(directory.glob("pacientes_backup_*.db")):
+            destination = source.with_suffix(".sgpnbak")
+            if destination.exists():
+                result["skipped"] += 1
+                continue
+            try:
+                verify_sqlite_database(source, require_application_tables=False)
+                encrypt_file(source, destination, key)
+                verify_backup(
+                    destination,
+                    database_path=database,
+                    key_path=key_path,
+                    require_application_tables=False,
+                )
+                source.unlink()
+                result["protected"] += 1
+            except (OSError, sqlite3.DatabaseError, BackupSecurityError):
+                destination.unlink(missing_ok=True)
+                result["failed"] += 1
+    return result
+
+
+def restore_sqlite_database(source_backup, destination_database, *, key_path=None) -> None:
     """Restaura atómicamente una copia validada; conserva intacto el destino ante error."""
     source = Path(source_backup).resolve()
     destination = Path(destination_database).resolve()
-    verify_sqlite_database(source)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_suffix(".restore.tmp")
-    temporary.unlink(missing_ok=True)
-    with _BACKUP_LOCK:
-        try:
-            source_connection = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True)
-            restored_connection = sqlite3.connect(temporary)
+    decrypted_source = None
+    if source.suffix == ".sgpnbak":
+        decrypted_source = _decrypt_backup(source, database_path=destination, key_path=key_path)
+        source_for_restore = decrypted_source
+    elif source.suffix == ".db":
+        source_for_restore = source
+    else:
+        raise BackupSecurityError("La copia no tiene un formato compatible.")
+    try:
+        verify_sqlite_database(source_for_restore)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary = destination.with_suffix(".restore.tmp")
+        temporary.unlink(missing_ok=True)
+        with _BACKUP_LOCK:
             try:
-                source_connection.backup(restored_connection)
-                restored_connection.commit()
-            finally:
-                restored_connection.close()
-                source_connection.close()
-            verify_sqlite_database(temporary)
-            temporary.replace(destination)
-        except Exception:
-            temporary.unlink(missing_ok=True)
-            raise
+                source_connection = sqlite3.connect(f"file:{source_for_restore.as_posix()}?mode=ro", uri=True)
+                restored_connection = sqlite3.connect(temporary)
+                try:
+                    source_connection.backup(restored_connection)
+                    restored_connection.commit()
+                finally:
+                    restored_connection.close()
+                    source_connection.close()
+                verify_sqlite_database(temporary)
+                temporary.replace(destination)
+            except Exception:
+                temporary.unlink(missing_ok=True)
+                raise
+    finally:
+        if decrypted_source is not None:
+            decrypted_source.unlink(missing_ok=True)
 
 
 def _quote_identifier(value: str) -> str:

@@ -3,7 +3,7 @@
 {% block title %}{{ 'Reagendar cita' if modo_reagenda else 'Agendar cita' }} - Sistema Clínico{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/appointment_scheduler.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/appointment_scheduler.css', v=config['ASSET_VERSION']) }}">
 {% endblock %}
 
 {% block content %}

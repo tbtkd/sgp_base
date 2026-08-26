@@ -25,28 +25,28 @@
 .appointment-scheduler-layout { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; align-items: start; gap: 1rem; }
 .appointment-scheduler-flow { display: grid; gap: 1rem; }
 .appointment-step,
-.appointment-summary { border: 1px solid var(--scheduler-border); border-radius: 1rem; background: var(--scheduler-surface); box-shadow: 0 8px 24px rgb(15 23 42 / 0.035); }
+.appointment-summary { border: 1px solid transparent; border-radius: 1rem; background: var(--scheduler-surface); box-shadow: 0 10px 28px rgb(15 23 42 / 0.055); }
 .appointment-step { padding: 1.15rem; }
 .appointment-step-heading { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
 .appointment-step-heading > span { display: grid; width: 1.9rem; height: 1.9rem; flex: 0 0 auto; place-items: center; border-radius: 0.55rem; background: #ccfbf1; color: #0f766e; font-size: 0.72rem; font-weight: 800; }
-.appointment-step-heading h3 { margin: 0; color: var(--scheduler-ink); font-size: 0.88rem; font-weight: 750; }
-.appointment-step-heading p { margin: 0.18rem 0 0; color: var(--scheduler-muted); font-size: 0.68rem; }
-.appointment-label { display: block; margin-bottom: 0.4rem; color: var(--scheduler-ink); font-size: 0.68rem; font-weight: 700; }
+.appointment-step-heading h3 { margin: 0; color: var(--scheduler-ink); font-size: 1rem; font-weight: 750; }
+.appointment-step-heading p { margin: 0.18rem 0 0; color: var(--scheduler-muted); font-size: 0.78rem; line-height: 1.45; }
+.appointment-label { display: block; margin-bottom: 0.4rem; color: var(--scheduler-ink); font-size: 0.78rem; font-weight: 700; }
 
 .appointment-search-box { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.55rem; margin-bottom: 0.65rem; border: 1px solid var(--scheduler-border); border-radius: 0.72rem; background: var(--scheduler-soft); padding: 0 0.8rem; }
 .appointment-search-box i { color: #94a3b8; font-size: 0.72rem; }
-.appointment-search-box input { width: 100%; border: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--scheduler-ink) !important; font-size: 0.72rem; padding: 0.72rem 0 !important; }
+.appointment-search-box input { width: 100%; border: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--scheduler-ink) !important; font-size: 0.84rem; padding: 0.82rem 0 !important; }
 .appointment-patient-finder { position: relative; }
 .appointment-search-results { display: grid; max-height: 15rem; gap: 0.25rem; overflow-y: auto; border: 1px solid var(--scheduler-border); border-radius: 0.75rem; background: var(--scheduler-surface); box-shadow: 0 12px 28px rgb(15 23 42 / 0.1); padding: 0.3rem; }
 .appointment-search-results[hidden] { display: none; }
-.appointment-search-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.65rem; width: 100%; border: 1px solid transparent; border-radius: 0.6rem; background: transparent; color: var(--scheduler-ink); cursor: pointer; padding: 0.65rem 0.7rem; text-align: left; }
+.appointment-search-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.75rem; width: 100%; border: 0; border-radius: 0.7rem; background: transparent; color: var(--scheduler-ink); cursor: pointer; padding: 0.82rem 0.85rem; text-align: left; }
 .appointment-search-result:hover,
 .appointment-search-result.is-active { border-color: #5eead4; background: #f0fdfa; }
 .appointment-search-result-copy { display: flex; min-width: 0; flex-direction: column; }
-.appointment-search-result-copy strong { overflow: hidden; font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
-.appointment-search-result-copy small { margin-top: 0.16rem; color: var(--scheduler-muted); font-size: 0.6rem; }
-.appointment-search-result-badge { border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.54rem; font-weight: 750; padding: 0.25rem 0.45rem; white-space: nowrap; }
-.appointment-results { margin: 0.45rem 0 0; color: var(--scheduler-muted); font-size: 0.62rem; }
+.appointment-search-result-copy strong { overflow: hidden; font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; }
+.appointment-search-result-copy small { margin-top: 0.2rem; color: var(--scheduler-muted); font-size: 0.7rem; }
+.appointment-search-result-badge { border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 0.64rem; font-weight: 750; padding: 0.3rem 0.5rem; white-space: nowrap; }
+.appointment-results { margin: 0.5rem 0 0; color: var(--scheduler-muted); font-size: 0.72rem; }
 
 .appointment-selected-patient { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; margin-top: 0.75rem; border: 1px solid #5eead4; border-radius: 0.75rem; background: #f0fdfa; padding: 0.7rem; }
 .appointment-selected-patient[hidden] { display: none; }

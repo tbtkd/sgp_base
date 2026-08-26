@@ -39,8 +39,8 @@ def _load_or_create_secret(target_directory=None) -> str:
 
 
 class Config:
-    APP_VERSION = "1.10.1"
-    ASSET_VERSION = "1.10.1-visual3"
+    APP_VERSION = "1.12.0"
+    ASSET_VERSION = "1.12.0-backup1"
     SECRET_KEY = None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
@@ -61,6 +61,7 @@ class Config:
     AUTO_BACKUP_DATABASE = True
     BACKUP_RETENTION = 10
     BACKUP_AFTER_CRITICAL_MUTATION = True
+    BACKUP_KEY_PATH = None
     LOG_LEVEL = "INFO"
     LOG_TO_FILE = True
     LOG_MAX_BYTES = 1_048_576

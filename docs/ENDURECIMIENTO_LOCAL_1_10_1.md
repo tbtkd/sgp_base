@@ -1,5 +1,7 @@
 # Endurecimiento local y continuidad — 1.10.1
 
+> Actualización 1.12.0: las copias nuevas usan `.sgpnbak` con cifrado autenticado y llave independiente. Este documento conserva el diseño original 1.10.1; el procedimiento vigente se encuentra en [RESPALDOS_CIFRADOS_1_12_0.md](RESPALDOS_CIFRADOS_1_12_0.md).
+
 ## Resultado
 
 La versión 1.10.1 elimina las dependencias web del frontend, endurece la política de ejecución del navegador y permite administrar el ciclo completo de respaldos SQLite. El alcance es la aplicación; los requisitos físicos o del sistema operativo del equipo no forman parte de esta fase.
@@ -33,7 +35,7 @@ Una solicitud rechazada, duplicada o sin permiso no dispara una copia. Si el des
 | Descargar | Administración + nombre interno estricto | adjunto `no-store`, evento auditado |
 | Restaurar | Administración + CSRF + contraseña actual + `RESTAURAR` | copia previa, validación doble, reemplazo atómico, auditoría y cierre de sesión |
 
-No existe carga arbitraria de archivos. Sólo pueden restaurarse copias ya ubicadas en `backups/` cuyo nombre cumpla `pacientes_backup_YYYYMMDD_HHMMSS_microsegundos.db`. Las rutas, nombres con traversal, bases corruptas y archivos SQLite ajenos al esquema se rechazan.
+No existe carga arbitraria de archivos. Sólo pueden restaurarse copias ya ubicadas en `backups/` cuyo nombre cumpla `pacientes_backup_YYYYMMDD_HHMMSS_microsegundos.sgpnbak` o el formato anterior `.db`. Las rutas, nombres con traversal, copias alteradas/corruptas y archivos SQLite ajenos al esquema se rechazan.
 
 ## Lista de comprobación de instalación de la aplicación
 
@@ -55,4 +57,4 @@ Si la prueba CSP informa un atributo como `style=` en una plantilla, conserva la
 
 ## Estatus mínimo de seguridad
 
-En el alcance de una aplicación local controlada, 1.10.1 cumple el mínimo técnico definido: autenticación individual, roles de servidor, CSRF, validación autoritativa, bloqueo de acceso, sesiones revocables, auditoría, recursos autocontenidos, CSP estricta, copias consistentes y restauración probada. Este resultado no sustituye una prueba de penetración, evaluación de privacidad, cifrado en reposo ni controles necesarios para una publicación en red.
+En el alcance de una aplicación local controlada, 1.10.1 cumplió el mínimo técnico definido: autenticación individual, roles de servidor, CSRF, validación autoritativa, bloqueo de acceso, sesiones revocables, auditoría, recursos autocontenidos, CSP estricta, copias consistentes y restauración probada. Desde 1.12 las copias están cifradas; la base activa continúa pendiente de cifrado transparente. Este resultado no sustituye una prueba de penetración, evaluación de privacidad ni controles necesarios para una publicación en red.

@@ -12,7 +12,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-python -c "import PyInstaller, defusedxml, flask, flask_login, flask_sqlalchemy, flask_wtf, openpyxl, waitress" >nul 2>nul
+python -c "import PyInstaller, cryptography, defusedxml, flask, flask_login, flask_sqlalchemy, flask_wtf, openpyxl, waitress" >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Faltan dependencias. Ejecuta: pip install -r requirements-build.txt
     exit /b 1

@@ -35,10 +35,10 @@ Comando recomendado:
 python -m pytest -q
 ```
 
-Resultado esperado para la versión 1.10.1 sin navegador E2E instalado:
+Resultado esperado para la versión 1.12.0 sin navegador E2E instalado:
 
 ```text
-122 passed, 1 skipped
+131 passed, 1 skipped
 ```
 
 `pytest` también descubre los 15 casos escritos con `unittest`; por ello no es necesario ejecutar ambos comandos en cada validación.
@@ -85,7 +85,7 @@ Para validar login, cambio/restablecimiento de contraseña, invalidación de ses
 python -m pytest -q tests/test_security.py
 ```
 
-Para validar CSP, recursos locales, respaldos por mutación, panel administrativo y restauraciones válidas/incorrectas:
+Para validar CSP, recursos locales, respaldos cifrados, llave incorrecta, alteraciones, panel administrativo y restauraciones válidas/incorrectas:
 
 ```powershell
 python -m pytest -q tests/test_continuity_security.py
@@ -93,7 +93,7 @@ python -m pytest -q tests/test_continuity_security.py
 
 Si esta prueba encuentra `style=`, `onclick=` u otro atributo bloqueado, ahora mostrará la plantilla y la línea exactas. No borres ni suavices la prueba: protege la aplicación contra código incrustado en el HTML.
 
-El error puede aparecer si se copiaron las pruebas de 1.10.1 sobre plantillas de 1.10.0. La solución recomendada es:
+El error puede aparecer si se copiaron las pruebas de 1.12.0 sobre plantillas de una versión anterior. La solución recomendada es:
 
 1. conserva una copia de `instance/` y `backups/`;
 2. descomprime la entrega completa en una carpeta nueva y vacía;
@@ -108,7 +108,7 @@ Get-ChildItem .\app\templates -Recurse -Filter *.html |
     Select-String -Pattern '\b(onclick|onchange|onsubmit|onmouseover|onmouseout|style)\s*='
 ```
 
-En una instalación 1.10.1 limpia el comando no muestra coincidencias.
+En una instalación 1.12.0 limpia el comando no muestra coincidencias.
 
 Para ejecutar también el escenario de navegador real:
 
@@ -117,7 +117,7 @@ python -m playwright install chromium
 python -m pytest -q -m browser
 ```
 
-Con Chromium disponible el resultado completo es `123 passed`. Si Playwright o su navegador no están instalados, el único E2E se marca `skipped`; las 122 verificaciones de servidor, plantillas y persistencia siguen siendo obligatorias.
+Con Chromium disponible el resultado completo es `132 passed`. Si Playwright o su navegador no están instalados, el único E2E se marca `skipped`; las 131 verificaciones de servidor, plantillas y persistencia siguen siendo obligatorias.
 
 Para validar que la limpieza de actualizaciones no elimina datos ni el entorno virtual:
 

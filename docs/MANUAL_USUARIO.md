@@ -1,4 +1,4 @@
-# Manual de usuario — Sistema Clínico 1.10.1
+# Manual de usuario — Sistema Clínico 1.12.0
 
 ## 1. Propósito
 
@@ -197,7 +197,7 @@ Las alergias deben revisarse antes de emitir cualquier receta. Evita utilizar ab
 4. Pulsa **Fecha más reciente** para alternar entre orden descendente y ascendente.
 5. Selecciona **Ver nota** para abrir la consulta más reciente de ese paciente.
 
-El acceso **Recetas** conserva todas las consultas, incluidas las anteriores, porque un folio puede pertenecer a una nota histórica. No confundas ambos listados.
+El acceso **Recetas** conserva todas las consultas, incluidas las anteriores, porque un folio puede pertenecer a una nota histórica. Puedes buscar por paciente, motivo o diagnóstico y ordenar al pulsar Paciente, Fecha, Motivo o Diagnóstico. No confundas ambos listados.
 
 ### Capturar una consulta
 
@@ -216,6 +216,16 @@ El **Turno diario** es informativo y lo asigna el servidor. Se reinicia cada fec
 Si un campo es inválido, el sistema abre la pestaña que contiene el problema. Corrige el dato antes de intentar guardar nuevamente.
 
 La opción **Importar Excel** sólo se muestra al personal con perfil Nutrición. Medicina general, Odontología y Recepción no pueden utilizarla aunque intenten enviar directamente la solicitud.
+
+### Cerrar una nota y agregar información posterior
+
+1. Mientras la nota indique **Borrador**, revisa y edita lo necesario.
+2. Cuando esté completa, pulsa **Cerrar nota** y confirma.
+3. Una nota cerrada ya no puede editarse ni eliminarse.
+4. Si después recibes un resultado o necesitas precisar algo, escribe el motivo y la información en **Aclaraciones posteriores**.
+5. Pulsa **Agregar aclaración**. La nota original no cambia y la aclaración queda numerada, fechada y firmada con tu usuario.
+
+Sólo el profesional que registró la consulta o una cuenta de Administración puede cerrar o aclarar la nota. El cierre interno protege la información, pero no sustituye una firma electrónica regulada.
 
 ## 10. Generar una receta ordinaria
 
@@ -363,6 +373,8 @@ Disponible únicamente para administradores.
 5. Captura cédula y domicilio completo cuando emitirá recetas.
 6. Guarda y entrega la credencial por un canal seguro.
 
+La pantalla resume **Total de usuarios**, **Con acceso** y **Sin acceso**. **Inhabilitar** impide que la persona vuelva a entrar; **Habilitar** restaura el acceso con su contraseña actual. **Restablecer acceso** genera una contraseña temporal y es diferente de habilitar la cuenta.
+
 ### Cambiar permisos sin perder Administración
 
 - **Rol** define qué partes del sistema puede abrir la cuenta.
@@ -419,14 +431,18 @@ El sistema sólo permite esta recuperación cuando no queda ningún administrado
 
 ### Copias de seguridad
 
-El sistema mantiene hasta 10 copias de seguridad comprobadas en `backups/`: crea una al iniciar y después de cambios importantes guardados correctamente. Administración puede abrir **Administración → Copias de seguridad** para:
+El sistema mantiene hasta 10 copias protegidas en `backups/`: crea una al iniciar y después de cambios importantes guardados correctamente. Administración puede abrir **Administración → Copias de seguridad** para:
 
 1. crear una copia inmediata;
-2. comprobar su integridad;
+2. comprobar que no fue modificada y que puede abrirse;
 3. descargarla como archivo;
 4. recuperar la información de esa copia cuando sea necesario.
 
 Para recuperar una copia, selecciónala, captura tu contraseña y escribe exactamente `RESTAURAR`. El sistema comprueba el archivo, guarda una copia de la información actual, recupera la versión elegida y cierra la sesión. Si la contraseña o el archivo no son correctos, tu información actual no cambia. Practica primero con los datos de demostración.
+
+La primera vez, descarga también la **Llave de recuperación** con tu contraseña y la palabra `DESCARGAR`. Guárdala fuera de esta computadora. Sin esa llave no será posible abrir una copia protegida en otro equipo; quien tenga la llave y una copia podrá leer toda la información.
+
+Si aparecen archivos **Anteriores sin cifrar**, usa **Proteger copias anteriores**, tu contraseña y la palabra `PROTEGER`. El archivo anterior sólo se retira cuando la nueva copia protegida ya fue comprobada. Consulta [RESPALDOS_CIFRADOS_1_12_0.md](RESPALDOS_CIFRADOS_1_12_0.md).
 
 ### Registros técnicos
 
@@ -446,6 +462,7 @@ No edites la base con herramientas externas mientras la aplicación está abiert
 - Activa BitLocker o Cifrado de dispositivo y resguarda la clave de recuperación fuera del equipo.
 - Mantén Windows, navegador y protección antimalware actualizados.
 - No envíes bases, respaldos o recetas por canales públicos.
+- No guardes la llave de recuperación junto al equipo como única copia ni la envíes por mensajería.
 - No guardes contraseñas en notas pegadas al monitor o archivos sin protección.
 - Verifica siempre al paciente antes de modificar datos o iniciar una consulta.
 - Revisa folio y vigencia antes de imprimir una receta.

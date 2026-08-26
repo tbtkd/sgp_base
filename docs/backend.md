@@ -6,6 +6,7 @@
 - Flask-Login para sesiones.
 - Flask-WTF para CSRF.
 - Flask-SQLAlchemy sobre SQLite.
+- Cryptography para AES-256-GCM de respaldos.
 - OpenPyXL y DefusedXML para XLSX.
 - Waitress ligado a `127.0.0.1`.
 
@@ -29,12 +30,12 @@
 4. `validators.py` normaliza y valida.
 5. La operación y su evento de auditoría se confirman en una sola transacción.
 6. Errores internos se registran, pero no se exponen.
-7. Si una auditoría exitosa marcó una mutación crítica, se crea una copia SQLite verificada.
+7. Si una auditoría exitosa marcó una mutación crítica, se crea una copia SQLite verificada y cifrada.
 8. Se añaden cabeceras de seguridad, CSP con nonce y no-cache.
 
 ## Agenda rápida y operativa
 
-`GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET no consulta ni renderiza el padrón completo; únicamente resuelve un paciente activo cuando llega un identificador ya seleccionado y construye el resumen de 21 días. `GET /pacientes/buscar_para_cita` exige autenticación, normaliza una búsqueda de 2–100 caracteres, consulta nombre/apellidos/expediente/teléfono/correo sin distinguir mayúsculas o acentos, acepta fragmentos por término y devuelve hasta ocho coincidencias activas sin datos clínicos. La cita programada, cuando existe, se limita a fecha y hora. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes. Ambas respuestas JSON se marcan como `no-store`.
+`GET/POST /pacientes/agendar-cita` implementa la acción del KPI Citas de hoy. El GET no consulta ni renderiza el padrón completo; únicamente resuelve un paciente activo cuando llega un identificador ya seleccionado y construye el resumen de 21 días. `GET /pacientes/buscar_para_cita` exige autenticación, normaliza una búsqueda de 2–100 caracteres, consulta nombre/apellidos/expediente/teléfono sin distinguir mayúsculas o acentos, acepta fragmentos por término y devuelve hasta ocho coincidencias activas sin datos clínicos. La cita programada, cuando existe, se limita a fecha y hora. `GET /pacientes/disponibilidad_citas` devuelve 21 horarios diarios con estado explícito y sin información de pacientes. Ambas respuestas JSON se marcan como `no-store`.
 
 El POST no confía en el calendario del navegador: valida el identificador, confirma que el paciente siga activo, aplica los validadores comunes de fecha/hora/motivo, limita la anticipación a dos años, impide sobrescribir una cita programada y consulta nuevamente el conflicto del bloque. En el despliegue local actual, la validación final y el `commit` se serializan con el mismo bloqueo de escritura usado por las rutas previas de agendamiento. La auditoría registra `CREAR_CITA` y el origen `kpi_dashboard` o `agenda`, sin guardar el motivo.
 
@@ -54,9 +55,11 @@ Cada cambio o restablecimiento de contraseña y cada modificación de rol/estado
 
 ## Datos
 
-`app/db.py` resuelve la ruta persistente, crea respaldos consistentes, valida bases en modo lectura y restaura mediante archivo temporal y reemplazo atómico. Para retirar la antigua unicidad de una receta por consulta, normalizar turnos y reconstruir pagos 1.10.0 existen migraciones específicas, transaccionales y verificadas que preservan filas e índices. El respaldo rota a 10 copias y desde 1.10.1 se ejecuta al arrancar, después de mutaciones críticas y a solicitud administrativa.
+`app/db.py` resuelve la ruta persistente, crea instantáneas SQLite consistentes, valida bases en modo lectura y restaura mediante archivo temporal y reemplazo atómico. `app/core/backup_crypto.py` cifra la instantánea por flujo con AES-256-GCM, un nonce nuevo y encabezado autenticado; después se descifra temporalmente y se ejecuta `integrity_check` antes de aceptar el archivo `.sgpnbak`. Para retirar la antigua unicidad de una receta por consulta, normalizar turnos y reconstruir pagos 1.10.0 existen migraciones específicas, transaccionales y verificadas que preservan filas e índices. El respaldo rota a 10 copias y desde 1.10.1 se ejecuta al arrancar, después de mutaciones críticas y a solicitud administrativa.
 
-Las rutas `/administracion/respaldos` exigen Administración. El nombre se valida con una expresión cerrada y debe resolver dentro de `backups/`; no hay carga arbitraria. La restauración exige CSRF, contraseña actual y `RESTAURAR`, verifica `integrity_check` y tablas mínimas, crea una copia previa, libera conexiones SQLAlchemy, reemplaza la base y cierra la sesión.
+Las rutas `/administracion/respaldos` exigen Administración. El nombre se valida con una expresión cerrada y debe resolver dentro de `backups/`; no hay carga arbitraria. La restauración exige CSRF, contraseña actual y `RESTAURAR`, verifica tag GCM, `integrity_check` y tablas mínimas, crea una copia previa, libera conexiones SQLAlchemy, reemplaza la base y cierra la sesión. La llave local vive en `instance/.backup_key` o se aporta mediante `SGPN_BACKUP_KEY`; la descarga exige contraseña y `DESCARGAR`, responde sin caché y audita únicamente su identificador. Las copias `.db` anteriores pueden cifrarse tras contraseña y `PROTEGER`; el original sólo se retira después de verificar el resultado.
+
+La base activa `instance/pacientes.db` no está cifrada de forma transparente en 1.12.0. Las copias cifradas no deben presentarse como protección completa del almacenamiento activo.
 
 ## Pagos operativos
 
@@ -79,5 +82,9 @@ La migración `consultation_daily_sequence` reasigna filas legadas por `fecha`, 
 Las recetas reciben `orden_medicamento[]`. `prescription_payload()` exige una secuencia única y consecutiva, reordena las columnas paralelas antes de construir cada medicamento y mantiene compatibilidad con clientes 1.7.1 que no envían el nuevo campo.
 
 El índice `GET /valoraciones/` selecciona una sola nota reciente por paciente mediante una ventana SQL ordenada por fecha, turno e ID. Acepta `q`, `orden=fecha_desc|fecha_asc` y `page`; filtra y pagina en servidor. `?origen=recetas` conserva el listado completo de consultas para mantener accesibles folios históricos.
+
+Desde 1.11, el contexto `?origen=recetas` acepta búsqueda normalizada por paciente, motivo o diagnóstico, orden por paciente/fecha/motivo/diagnóstico y paginación de 25 filas. Historiales clínicos ofrece el mismo patrón de filtro, encabezados ordenables y paginación. La búsqueda para cita excluye correo porque la interfaz sólo anuncia nombre, apellidos, expediente y teléfono.
+
+`NotaCierreClinico` representa el cierre inmutable mediante una relación única con `ValoracionAntropometrica`. `POST /valoraciones/valoraciones/<id>/cerrar` valida autor o Administración, CSRF, confirmación y UUID v4. `AclaracionNotaClinica` agrega datos posteriores con número único por cierre; el servidor bloquea editar/eliminar una nota cerrada, registra los rechazos y conserva el texto clínico fuera de Auditoría. Las tablas nuevas se crean antes de la migración aditiva y las consultas existentes quedan como borrador.
 
 `POST /pacientes/<id>/cargar-excel` exige además el perfil profesional `nutricion`. La interfaz no renderiza sus controles para otros perfiles y un intento directo se deniega y audita antes de resolver el identificador del paciente.

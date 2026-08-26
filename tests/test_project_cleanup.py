@@ -9,6 +9,7 @@ def test_cleanup_project_removes_only_known_obsolete_artifacts(tmp_path):
     root_bytecode = tmp_path / "__pycache__" / "run.pyc"
     pytest_cache = tmp_path / ".pytest_cache" / "README.md"
     database = tmp_path / "instance" / "pacientes.db"
+    backup_key = tmp_path / "instance" / ".backup_key"
     virtualenv_file = tmp_path / ".venv" / "Lib" / "keep.pyc"
 
     for path in (
@@ -19,6 +20,7 @@ def test_cleanup_project_removes_only_known_obsolete_artifacts(tmp_path):
         root_bytecode,
         pytest_cache,
         database,
+        backup_key,
         virtualenv_file,
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -35,4 +37,5 @@ def test_cleanup_project_removes_only_known_obsolete_artifacts(tmp_path):
     assert not pytest_cache.exists()
     assert current_logo.is_file()
     assert database.is_file()
+    assert backup_key.is_file()
     assert virtualenv_file.is_file()

@@ -156,6 +156,7 @@ def create_app(config_name=None, test_config=None):
                     target,
                     retention=app.config["BACKUP_RETENTION"],
                     backup_directory=app.config.get("BACKUP_DIRECTORY"),
+                    key_path=app.config.get("BACKUP_KEY_PATH"),
                 )
                 if respaldo:
                     response.headers["X-SGPN-Backup"] = "created"
@@ -167,7 +168,12 @@ def create_app(config_name=None, test_config=None):
     with app.app_context():
         if app.config.get("AUTO_BACKUP_DATABASE") and not app.config["SQLALCHEMY_DATABASE_URI"].endswith(":memory:"):
             try:
-                respaldar_db(db_path, retention=app.config["BACKUP_RETENTION"])
+                respaldar_db(
+                    db_path,
+                    retention=app.config["BACKUP_RETENTION"],
+                    backup_directory=app.config.get("BACKUP_DIRECTORY"),
+                    key_path=app.config.get("BACKUP_KEY_PATH"),
+                )
             except (OSError, RuntimeError):
                 app.logger.exception("No fue posible crear el respaldo de base de datos")
         if app.config.get("AUTO_CREATE_SCHEMA"):

@@ -1,4 +1,26 @@
-# Matriz de pruebas — versión 1.10.1
+# Matriz de pruebas — versión 1.12.0
+
+## Copias cifradas y recuperación 1.12
+
+| Escenario | Correcto | Incorrecto / adversarial | Evidencia |
+| --- | --- | --- | --- |
+| Creación cifrada | genera `.sgpnbak`, conserva rotación y puede comprobarse | no contiene cabecera SQLite ni texto clínico visible | `test_backup_create_verify_download_and_invalid_filename`, `SYS-09` |
+| Autenticidad | llave vigente descifra y supera `integrity_check` | un byte alterado, copia truncada o llave distinta se rechazan y no dejan temporal | `test_tampered_or_wrong_key_backup_is_rejected_without_plaintext_left_behind` |
+| Llave de recuperación | Administración confirma contraseña y `DESCARGAR`; archivo usa `no-store` | sin CSRF, contraseña incorrecta o frase distinta se rechaza | `test_recovery_key_export_requires_csrf_password_and_exact_phrase` |
+| Copias anteriores | `.db` válida se cifra y sólo entonces se retira | confirmación incorrecta o copia corrupta conserva el original | `test_legacy_backup_protection_requires_confirmation_and_preserves_failures` |
+| Restauración | copia cifrada válida crea copia previa, reemplaza atómicamente y cierra sesión | archivo modificado, llave incorrecta o confirmación inválida no cambia el destino | pruebas `test_*restore*` y `test_tampered_*` |
+
+## Cierre clínico y operación 1.11
+
+| Escenario | Correcto | Incorrecto / adversarial | Evidencia |
+| --- | --- | --- | --- |
+| Cierre de nota | Autor o Administración cierra una sola vez y conserva responsable/fecha | otro profesional 403, sin CSRF 400, UUID inválido y doble POST no duplican | `test_v111_clinical_workflow.py` |
+| Inmutabilidad | nota cerrada permanece visible e imprimible | edición y eliminación directa se rechazan, conservan contenido y se auditan | `test_clinical_note_close_is_immutable_audited_and_idempotent` |
+| Aclaraciones | nota cerrada acepta texto válido, consecutivo y autor | borrador, campos inválidos y doble envío se rechazan o vuelven idempotentes | `test_addendum_requires_closed_note_valid_data_and_is_idempotent` |
+| Búsqueda de cita | `sofi` encuentra Sofía sin distinguir acento o mayúscula | `em` no coincide sólo por el correo oculto | `test_appointment_search_does_not_match_hidden_email` |
+| Historiales | filtro clínico, condiciones ampliadas y orden por encabezado | términos ausentes no muestran filas ajenas; orden inválido vuelve al seguro | `test_histories_and_recipe_consultations_filter_sort_and_show_new_conditions` |
+| Consultas para recetas | busca por paciente, motivo o diagnóstico y ordena columnas | parámetros quedan en catálogo y comodines se tratan como texto | `test_histories_and_recipe_consultations_filter_sort_and_show_new_conditions` |
+| Gestión de usuarios | métricas y acciones explican acceso | cambio de estado sin CSRF se rechaza | `test_user_management_is_clear_and_status_change_still_requires_csrf` |
 
 ## Endurecimiento y continuidad 1.10.1
 
@@ -18,7 +40,7 @@
 | Tema oscuro amable | superficies suaves, enlaces y botones coherentes, foco visible | regresión a gris nativo, morado o contornos decorativos fuertes falla el contrato | `test_dark_theme_uses_soft_surfaces_and_resets_native_controls` |
 | Navegador real | login, recursos locales y diálogo nativo funcionan con CSP | consola CSP o solicitud a otro origen falla el caso | `tests/e2e/test_browser_security.py` |
 
-Aceptación: 122 pruebas obligatorias; 123 con Playwright/Chromium. Los casos de error no reutilizan la base real.
+Aceptación: 131 pruebas obligatorias; un E2E adicional con Playwright/Chromium. Los casos de error no reutilizan la base real.
 
 ## Suite de aceptación (`tests/test_sistema.py`)
 
@@ -32,7 +54,7 @@ Aceptación: 122 pruebas obligatorias; 123 con Playwright/Chromium. Los casos de
 | SYS-06 | Consulta | Signos vitales, indicaciones e IMC calculado por servidor |
 | SYS-07 | Citas/pagos | Cita y pago exacto con folio, responsable, concepto y método persistidos |
 | SYS-08 | Auditoría | Acción normalizada, módulo, usuario e IP |
-| SYS-09 | Respaldos | Copia legible y rotación exacta a 10 archivos |
+| SYS-09 | Respaldos | Copia cifrada recuperable y rotación exacta a 10 archivos |
 | SYS-10 | Acceso | Rutas clínicas redirigen a login |
 | SYS-11 | Migración | Columnas nuevas se agregan y los datos previos se conservan |
 | SYS-12 | Compatibilidad | `sgpn.db` y `.session_secret` se copian al formato actual |
@@ -203,7 +225,7 @@ python -m pytest -q
 Resultados esperados:
 
 ```text
-pytest: 109/109 (incluye 15 casos unittest)
+pytest: 131/131 (incluye 15 casos unittest)
 ruff: 0 hallazgos
 bandit: 0 hallazgos
 pip-audit: 0 vulnerabilidades conocidas

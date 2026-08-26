@@ -1,89 +1,27 @@
 {% extends "base/base.html" %}
 {% block title %}{{ 'Recetas' if modo_recetas else 'Consultas clínicas' }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/clinical_indexes.css', v=config['ASSET_VERSION']) }}">{% endblock %}
+{% macro sort_header(label, key) -%}
+{% set active = orden.startswith(key ~ '_') %}{% set next_order = key ~ ('_desc' if orden == key ~ '_asc' else '_asc') %}
+<a class="clinical-sort-link{% if active %} is-active{% endif %}" href="{{ url_for('valoracion.todas_valoraciones', origen='recetas' if modo_recetas else None, q=busqueda, orden=next_order, page=1) }}"><span>{{ label }}</span><i class="fas {{ 'fa-sort-up' if orden == key ~ '_asc' else ('fa-sort-down' if orden == key ~ '_desc' else 'fa-sort') }}" aria-hidden="true"></i></a>
+{%- endmacro %}
 {% block content %}
-<div class="max-w-7xl mx-auto space-y-6">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ 'Consultas para recetas' if modo_recetas else 'Consultas clínicas' }}</h1>
-        <p class="mt-2 text-gray-500">
-            {% if modo_recetas %}Selecciona la consulta específica donde se emitió o se emitirá la receta.{% else %}Última nota registrada de cada paciente, sin repetir expedientes.{% endif %}
-        </p>
-    </div>
-
-    {% if not modo_recetas %}
-    <form method="GET" action="{{ url_for('valoracion.todas_valoraciones') }}" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" role="search">
-        <input type="hidden" name="orden" value="{{ orden }}">
-        <div class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <label for="consulta-search" class="sr-only">Buscar paciente por nombre o apellidos</label>
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
-                <input id="consulta-search" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="Buscar por nombre o apellidos…" class="w-full rounded-xl border-gray-200 pl-11" autocomplete="off">
-            </div>
-            <button type="submit" class="px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold">Buscar</button>
-            {% if busqueda %}<a href="{{ url_for('valoracion.todas_valoraciones', orden=orden) }}" class="px-5 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-center">Limpiar</a>{% endif %}
-        </div>
-        <p class="mt-3 text-sm text-gray-500" aria-live="polite">{{ total }} {{ 'paciente encontrado' if total == 1 else 'pacientes encontrados' }}</p>
+<div class="max-w-7xl mx-auto clinical-index-page">
+    <header class="clinical-index-heading"><div><h1>{{ 'Consultas para recetas' if modo_recetas else 'Consultas clínicas' }}</h1><p>{% if modo_recetas %}Selecciona la consulta específica donde se emitió o se emitirá la receta.{% else %}Última nota registrada de cada paciente, sin repetir expedientes.{% endif %}</p></div><span class="clinical-result-count">{{ total }} {{ 'consulta' if total == 1 else 'consultas' }}</span></header>
+    <form method="GET" action="{{ url_for('valoracion.todas_valoraciones') }}" class="clinical-filter" role="search">
+        {% if modo_recetas %}<input type="hidden" name="origen" value="recetas">{% endif %}<input type="hidden" name="orden" value="{{ orden }}">
+        <label for="consulta-search">{{ 'Buscar una consulta para receta' if modo_recetas else 'Buscar paciente' }}</label>
+        <div class="clinical-filter-row"><div class="clinical-filter-input"><i class="fas fa-search" aria-hidden="true"></i><input id="consulta-search" name="q" type="search" maxlength="100" value="{{ busqueda }}" placeholder="{{ 'Nombre, motivo o diagnóstico…' if modo_recetas else 'Nombre o apellidos…' }}" autocomplete="off"></div><button type="submit">Buscar</button>{% if busqueda %}<a href="{{ url_for('valoracion.todas_valoraciones', origen='recetas' if modo_recetas else None, orden=orden) }}">Limpiar</a>{% endif %}</div>
+        <p>{{ total }} {{ ('consulta encontrada' if total == 1 else 'consultas encontradas') if modo_recetas else ('paciente encontrado' if total == 1 else 'pacientes encontrados') }}</p>
     </form>
-    {% endif %}
-
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 border-b border-gray-100">
-                    <tr class="text-gray-500">
-                        <th class="px-6 py-4 font-semibold">Paciente</th>
-                        {% if modo_recetas %}
-                        <th class="px-6 py-4 font-semibold">Fecha</th>
-                        <th class="px-6 py-4 font-semibold">Motivo</th>
-                        <th class="px-6 py-4 font-semibold">Diagnóstico</th>
-                        {% else %}
-                        <th class="px-6 py-4 font-semibold" aria-sort="{{ 'descending' if orden == 'fecha_desc' else 'ascending' }}">
-                            <a href="{{ url_for('valoracion.todas_valoraciones', q=busqueda, orden='fecha_asc' if orden == 'fecha_desc' else 'fecha_desc', page=1) }}" class="inline-flex items-center gap-2 text-current hover:text-teal-600">
-                                Fecha más reciente
-                                <i class="fas {{ 'fa-sort-down' if orden == 'fecha_desc' else 'fa-sort-up' }}" aria-hidden="true"></i>
-                                <span class="sr-only">Ordenar {{ 'de la más antigua a la más reciente' if orden == 'fecha_desc' else 'de la más reciente a la más antigua' }}</span>
-                            </a>
-                        </th>
-                        {% endif %}
-                        <th class="px-6 py-4 font-semibold text-right">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for item in valoraciones %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ item.paciente.nombre_completo }}
-                            {% if not modo_recetas %}<small class="block mt-1 text-gray-500 font-normal">EXP-{{ '%04d'|format(item.paciente_id) }}</small>{% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-gray-700">{{ item.fecha|format_date }}</td>
-                        {% if modo_recetas %}
-                        <td class="px-6 py-4 text-gray-700 max-w-xs">{{ item.motivo_consulta|truncate(100, true) }}</td>
-                        <td class="px-6 py-4 text-gray-700 max-w-xs">{{ (item.impresion_diagnostica or 'No registrada')|truncate(100, true) }}</td>
-                        {% endif %}
-                        <td class="px-6 py-4 text-right"><a class="inline-flex px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-xl font-semibold" href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=item.id) }}">Ver nota</a></td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="{{ 5 if modo_recetas else 3 }}" class="px-6 py-14 text-center">
-                            <i class="fas fa-stethoscope text-4xl text-gray-300 mb-3" aria-hidden="true"></i>
-                            <p class="font-semibold text-gray-700">{{ 'No hay consultas clínicas registradas.' if not busqueda|default('') else 'No se encontraron pacientes con ese nombre.' }}</p>
-                            <p class="mt-1 text-sm text-gray-500">{{ 'Selecciona un paciente para registrar su primera consulta.' if not busqueda|default('') else 'Prueba con otro nombre o limpia el filtro.' }}</p>
-                            {% if not busqueda|default('') %}<a href="{{ url_for('pacientes.lista_pacientes_activos') }}" class="inline-flex mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-semibold">Ver pacientes</a>{% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    {% if not modo_recetas and paginas > 1 %}
-    <nav class="flex items-center justify-between gap-4" aria-label="Paginación de consultas">
-        <p class="text-sm text-gray-500">Página {{ pagina }} de {{ paginas }}</p>
-        <div class="flex gap-2">
-            {% if pagina > 1 %}<a class="px-4 py-2 rounded-xl border border-gray-200 font-semibold" rel="prev" href="{{ url_for('valoracion.todas_valoraciones', q=busqueda, orden=orden, page=pagina - 1) }}">Anterior</a>{% endif %}
-            {% if pagina < paginas %}<a class="px-4 py-2 rounded-xl border border-gray-200 font-semibold" rel="next" href="{{ url_for('valoracion.todas_valoraciones', q=busqueda, orden=orden, page=pagina + 1) }}">Siguiente</a>{% endif %}
-        </div>
-    </nav>
-    {% endif %}
+    <div class="clinical-table-card"><div class="overflow-x-auto"><table class="clinical-table"><thead><tr>
+        <th aria-sort="{{ 'ascending' if orden == 'paciente_asc' else ('descending' if orden == 'paciente_desc' else 'none') }}">{% if modo_recetas %}{{ sort_header('Paciente', 'paciente') }}{% else %}Paciente{% endif %}</th>
+        <th aria-sort="{{ 'ascending' if orden == 'fecha_asc' else ('descending' if orden == 'fecha_desc' else 'none') }}">{{ sort_header('Fecha' if modo_recetas else 'Fecha más reciente', 'fecha') }}</th>
+        {% if modo_recetas %}<th aria-sort="{{ 'ascending' if orden == 'motivo_asc' else ('descending' if orden == 'motivo_desc' else 'none') }}">{{ sort_header('Motivo', 'motivo') }}</th><th aria-sort="{{ 'ascending' if orden == 'diagnostico_asc' else ('descending' if orden == 'diagnostico_desc' else 'none') }}">{{ sort_header('Diagnóstico', 'diagnostico') }}</th>{% endif %}<th>Acción</th>
+    </tr></thead><tbody>
+    {% for item in valoraciones %}<tr><td><strong>{{ item.paciente.nombre_completo }}</strong><small>EXP-{{ '%04d'|format(item.paciente_id) }}</small></td><td>{{ item.fecha|format_date }}</td>{% if modo_recetas %}<td>{{ (item.motivo_consulta or 'No registrado')|truncate(100, true) }}</td><td>{{ (item.impresion_diagnostica or 'No registrada')|truncate(100, true) }}</td>{% endif %}<td><a class="clinical-row-action" href="{{ url_for('valoracion.detalle_valoracion', valoracion_id=item.id) }}">Ver nota</a></td></tr>
+    {% else %}<tr><td colspan="{{ 5 if modo_recetas else 3 }}" class="clinical-empty"><i class="fas fa-stethoscope" aria-hidden="true"></i><strong>{{ 'No se encontraron consultas con ese dato.' if busqueda else 'No hay consultas clínicas registradas.' }}</strong><span>{{ 'Prueba con otra palabra o limpia el filtro.' if busqueda else 'Selecciona un paciente para registrar su primera consulta.' }}</span></td></tr>{% endfor %}
+    </tbody></table></div></div>
+    {% if paginas > 1 %}<nav class="clinical-pagination" aria-label="Paginación de consultas"><span>Página {{ pagina }} de {{ paginas }}</span><div>{% if pagina > 1 %}<a rel="prev" href="{{ url_for('valoracion.todas_valoraciones', origen='recetas' if modo_recetas else None, q=busqueda, orden=orden, page=pagina-1) }}">Anterior</a>{% endif %}{% if pagina < paginas %}<a rel="next" href="{{ url_for('valoracion.todas_valoraciones', origen='recetas' if modo_recetas else None, q=busqueda, orden=orden, page=pagina+1) }}">Siguiente</a>{% endif %}</div></nav>{% endif %}
 </div>
 {% endblock %}

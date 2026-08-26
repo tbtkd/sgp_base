@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-La versión 1.10.1 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. Conserva Agenda, Consultas, Recetas y Pagos 1.10.0, y añade frontend autocontenido, CSP estricta, respaldo posterior a mutaciones críticas y restauración administrativa verificada.
+La versión 1.12.0 es un expediente clínico general para servicios médicos, dentales, nutricionales u otras áreas de salud. Conserva Agenda, Recetas, Pagos, cierre inmutable de notas e interfaz operativa; añade copias cifradas autenticadas, llave independiente, descarga de recuperación y protección comprobada de copias anteriores.
 
 ## Reglas que deben preservarse
 
@@ -12,7 +12,7 @@ La versión 1.10.1 es un expediente clínico general para servicios médicos, de
 4. Recepción no accede a expediente, diagnóstico, tratamiento o receta.
 5. Todo dato mutable se valida en `app/core/validators.py`.
 6. Operación y auditoría se confirman en la misma transacción.
-7. La base, secreto, logs y respaldos nunca se empaquetan.
+7. La base, secretos, llave de recuperación, logs y respaldos nunca se empaquetan.
 8. `_MEIPASS` solo contiene recursos de lectura.
 9. Las migraciones automáticas solo pueden añadir columnas nullable/default; nunca eliminan datos.
 10. Los campos antropométricos son opcionales.
@@ -81,7 +81,7 @@ La versión 1.10.1 es un expediente clínico general para servicios médicos, de
 73. La CSP no admite `unsafe-inline`, CDN ni atributos ejecutables/de estilo. Todo bloque interno legítimo usa el nonce de la respuesta.
 74. `scripts/build_local_assets.py --check` debe pasar después de cambiar clases o iconos; los archivos generados sí forman parte de la entrega.
 75. Una auditoría exitosa de mutación crítica dispara un respaldo; una operación rechazada no debe hacerlo. Una falla del medio se registra sin falsear el resultado de la transacción ya confirmada.
-76. Sólo Administración gestiona respaldos. Restaurar exige copia interna válida, CSRF, contraseña, `RESTAURAR`, copia previa, reemplazo atómico y cierre de sesión.
+76. Sólo Administración gestiona respaldos. Restaurar exige copia interna válida, cifrado y esquema comprobados, CSRF, contraseña, `RESTAURAR`, copia previa, reemplazo atómico y cierre de sesión.
 77. Los mensajes visibles deben explicar en lenguaje cotidiano qué ocurrió, qué información se conserva y qué debe hacer el usuario. Los detalles internos se reservan para logs y documentación técnica; no muestres términos como trazabilidad, registro legado, base activa, autenticación, servidor o relación de compresión.
 78. Pacientes, búsqueda global, Agenda, Consultas y Pagos comparten normalización sin mayúsculas ni acentos y coincidencia por fragmentos. Aplica cada término de forma parametrizada y escapa `%`/`_`; un nombre puede coincidir entre columnas distintas.
 79. Una cuenta administrativa no cambia su propio rol ni estado. Si también atiende, conserva `admin` y configura `perfil_profesional`; otro administrador puede cambiarle el acceso y ese cambio incrementa `auth_version`.
@@ -89,12 +89,21 @@ La versión 1.10.1 es un expediente clínico general para servicios médicos, de
 81. En tema oscuro, los bordes decorativos deben ser transparentes o de baja opacidad y las superficies deben evitar grises claros agresivos. Conserva un foco de teclado claramente visible y no permitas estilos nativos inesperados en botones o enlaces.
 82. **Sustituir receta** es una acción correctiva disponible sólo para folios vigentes autorizados. Debe usar estilo ámbar sólido, texto de alto contraste, icono, etiqueta con folio y estados claros de hover/foco en ambos temas; nunca la confundas visualmente con **Ver / imprimir**.
 83. `requiere_revision` no es un destino para pagos nuevos. Sólo conserva datos anteriores incompletos o el caso demostrativo. Administración compara cada folio con evidencia externa; no edita ni inventa datos, cancela el original y registra otro pago únicamente cuando el cobro pueda comprobarse.
+84. Toda consulta inicia como Borrador. Una nota sólo se considera cerrada si existe una fila única en `nota_cierres_clinicos`; nunca cierres automáticamente notas anteriores.
+85. Una nota cerrada no se edita ni elimina. Sólo Administración o el profesional que la registró puede cerrarla y agregar aclaraciones; los intentos rechazados se auditan.
+86. Las aclaraciones conservan motivo, contenido, autor, fecha, número y clave de operación únicos; no reescriben la consulta y aparecen en impresión.
+87. La búsqueda de Agenda coincide únicamente con nombre, apellidos, expediente o teléfono. No agregues campos invisibles al criterio anunciado.
+88. Historiales clínicos y Consultas para recetas filtran y ordenan en servidor, escapan comodines y paginan 25 filas.
+89. Todo respaldo nuevo usa `.sgpnbak` con AES-256-GCM; una alteración, truncamiento o llave equivocada debe rechazarse antes de tocar la base activa.
+90. `.backup_key` y `SGPN_BACKUP_KEY` nunca se copian a respaldos, ZIP, logs o auditoría. La interfaz sólo muestra el identificador no secreto.
+91. Descargar la llave exige Administración, CSRF, contraseña y `DESCARGAR`; la respuesta no se almacena en caché. Quien la obtiene debe resguardarla fuera del equipo.
+92. Una copia `.db` anterior sólo se elimina después de comprobar su versión cifrada. Los fallos conservan el original.
+93. `instance/pacientes.db` sigue siendo SQLite sin cifrado transparente. No se debe afirmar lo contrario ni habilitar red hasta integrar y probar el motor cifrado.
 
 ## Próximas fases
 
-- Prioridad siguiente 1.11: cierre y versionado inmutable de notas clínicas, con addenda para correcciones.
-- Cifrado en reposo y administración de llaves.
-- Firma electrónica jurídicamente evaluada y cierre/versionado de notas clínicas.
+- Prioridad siguiente 1.12.1: cifrado transparente de la base activa, migración y rotación comprobada de llaves.
+- Firma electrónica jurídicamente evaluada, sin confundirla con el cierre interno implementado.
 - Flujos regulatorios separados para medicamentos controlados, sólo tras revisión jurídica y operativa.
 - Reportes y métricas configurables por especialidad.
 - Recibos no fiscales, exportación XLSX, reembolsos como movimientos separados y caja formal después de definir cargos, conciliación y responsables.

@@ -2,11 +2,11 @@
 
 ## 1. Alcance de esta revisión
 
-La versión 1.10.0 conserva sin cambios funcionales la Agenda operativa 1.8.0 y el índice simplificado de Consultas 1.9.0. La columna **% Grasa** del grid **Historial de consultas** permanece exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones. El nuevo módulo de Pagos no altera estos contratos.
+La versión 1.12.0 conserva la Agenda operativa y el índice simplificado de Consultas. La columna **% Grasa** del grid **Historial de consultas** permanece exclusivamente para usuarios cuyo perfil profesional efectivo sea `nutricion`. Medicina general y Odontología conservan Fecha, Peso, IMC, Tensión arterial, Frecuencia cardíaca y Acciones. Consultas para recetas mantiene búsqueda por paciente/motivo/diagnóstico, columnas ordenables y paginación sin alterar el listado resumido de Consultas.
 
 La regla se basa en el perfil autenticado, no en el autor de la consulta, y se aplica tanto al encabezado como a todas las celdas para no dejar una columna vacía. No se modifican los datos almacenados, la impresión de notas ni la captura antropométrica existente.
 
-La Agenda y la simplificación de Consultas clínicas descritas a continuación están **implementadas**. El siguiente trabajo se concentra en pruebas de navegador real, medición con bases de mayor volumen y filtros futuros por profesional.
+La Agenda y la simplificación de Consultas clínicas descritas a continuación están **implementadas**. En 1.11 también se eliminó la coincidencia invisible por correo en la búsqueda de Agenda. El siguiente trabajo se concentra en pruebas de navegador real, medición con bases de mayor volumen y filtros futuros por profesional.
 
 ## 2. Diagnóstico de Agenda y citas
 

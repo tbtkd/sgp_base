@@ -4,19 +4,20 @@
 
 ## 1. Estado general
 
-La versión 1.10.1 conserva la base clínica y los Pagos operativos íntegros de 1.10.0: centavos exactos, folio, responsable, idempotencia, historial por paciente, cancelación administrativa, módulo global para Administración/Recepción y reportes CSV diarios/mensuales exclusivos de Administración. Agenda, Consultas, Recetas, perfiles, dashboard, shell, tema, contraste y detalle progresivo permanecen sin regresiones. Las migraciones transaccionales de recetas, turnos y pagos conservan y verifican datos; los totales de pagos excluyen cancelados y filas legadas que requieren revisión.
+La versión 1.12.0 conserva la base clínica, Agenda, Recetas, Pagos y cierre inmutable de notas. Completa la protección de copias con cifrado autenticado, llave independiente, recuperación documentada y conversión segura de copias anteriores.
 
 ### Resumen ejecutivo
 
 | Área | Estado actual | Observación |
 | --- | --- | --- |
-| Expediente, pacientes y consultas | Completado | Flujo local funcional con roles y perfiles profesionales. |
+| Expediente, pacientes y consultas | Completado 1.11 | Borrador/cierre, aclaraciones, filtros y ordenamiento clínico. |
 | Agenda | Completado | Operación diaria/semanal, alta, reagenda y cierre controlado. |
 | Receta ordinaria | Completado | Folios inmutables, adicionales, sustituciones e impresión. |
 | Pagos operativos | Completado | Registro exacto, historial, cancelación, filtros, resumen y CSV. |
 | Pagos anteriores incompletos | Atención administrativa disponible | Sólo proceden de una actualización desde datos antiguos o de la carga demostrativa; no bloquean los totales y no son generados por el formulario actual. |
+| Copias de seguridad | Completado 1.12 | `.sgpnbak` cifrado, detección de cambios, llave descargable y restauración probada. |
 | Seguridad para uso local controlado | Mínimo técnico alcanzado | Adecuado para piloto en una estación protegida; no autoriza publicación en Internet o red sin controles adicionales. |
-| Siguiente desarrollo | Pendiente — 1.11 | Cierre inmutable y aclaraciones de notas clínicas. |
+| Siguiente desarrollo | Pendiente — 1.12.1 | Cifrado transparente de la base activa, migración y rotación de llaves. |
 
 ### Alcance de “Pagos por revisar”
 
@@ -24,7 +25,7 @@ No es una bandeja a la que entren cobros nuevos. El sistema utiliza **Requiere r
 
 La revisión actual corresponde a Administración: filtrar por **Requiere revisión**, comparar el folio con comprobantes o registros externos y no completar datos por suposición. Si el movimiento se confirma, se cancela el registro incompleto con un motivo claro y se registra un pago nuevo con la información comprobada; si se demuestra que no fue un cobro válido, sólo se cancela. Mientras falte evidencia puede permanecer en revisión, siempre fuera de los totales.
 
-No se recomienda detener la fase 1.11 para crear una pantalla adicional de conciliación: el flujo actual resuelve de forma segura los pocos datos anteriores esperados. Se reconsiderará un flujo masivo únicamente si una instalación real presenta un volumen que no pueda atenderse caso por caso.
+No se recomienda crear una pantalla adicional de conciliación para este estado: el flujo actual resuelve de forma segura los pocos datos anteriores esperados. Se reconsiderará un flujo masivo únicamente si una instalación real presenta un volumen que no pueda atenderse caso por caso.
 
 Módulos evaluados:
 
@@ -346,6 +347,18 @@ Módulos evaluados:
 - La vista previa de impresión conserva la misma jerarquía visual sin modificar el documento impreso.
 - No cambia permisos, folios, persistencia, auditoría ni reglas de inmutabilidad.
 
+### Fase 1.25: cierre clínico y operación — completada en 1.11.0
+
+- Estados Borrador/Cerrada sin marcar automáticamente notas anteriores.
+- Cierre único con autor, momento, idempotencia, permisos y respaldo crítico.
+- Edición/eliminación bloqueadas después del cierre; aclaraciones numeradas como único mecanismo posterior.
+- Estado, cierre y aclaraciones visibles en detalle e impresión.
+- Historiales y Consultas para recetas con búsqueda, columnas ordenables y paginación.
+- Agenda sin coincidencias ocultas por correo; antecedentes clínicos frecuentes ampliados.
+- Dashboard, agenda rápida y Usuarios con texto legible, superficies suaves y acciones claras.
+- 128 pruebas obligatorias más E2E opcional.
+- Documentación: [CIERRE_NOTAS_CLINICAS_1_11_0.md](CIERRE_NOTAS_CLINICAS_1_11_0.md).
+
 ## 4. Elementos conservados, modificados y retirados
 
 | Área | Conservado | Modificado | Retirado/reemplazado |
@@ -417,11 +430,11 @@ Suite oficial:
 python -m pytest -q
 ```
 
-Resultado de aceptación de 1.10.0: **109 pruebas aprobadas**, incluyendo 15 casos `unittest`. La 1.10.1 amplía la aceptación principal a **122 pruebas**, más un E2E opcional con Chromium, para cubrir CSP local, respaldos por mutación, autorización, CSRF, corrupción, restauración atómica, búsqueda flexible y continuidad del acceso administrativo.
+Resultado de aceptación vigente: **131 pruebas aprobadas**, incluyendo 15 casos `unittest`, más un E2E opcional con Chromium. La cobertura 1.12 incorpora cifrado, alteración de contenido, llave incorrecta, exportación protegida, conversión de copias anteriores y restauración atómica.
 
 Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
-## 7. Siguiente fase recomendada — 1.11 cierre clínico inmutable
+## 7. Fase completada — 1.11 cierre clínico inmutable
 
 - Incorporar estados **Borrador** y **Cerrada** para cada nota clínica.
 - Guardar responsable, fecha y hora del cierre profesional.
@@ -431,15 +444,34 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 - Invalidar dobles envíos, aplicar permisos en servidor y auditar cierres e intentos rechazados sin copiar contenido clínico completo.
 - Migrar las notas existentes de forma conservadora, sin marcarlas automáticamente como firmadas o cerradas si no existe evidencia.
 
-Esta fase debe implementarse antes de ampliar Facturación o llevar el sistema a una red, porque protege la integridad histórica del documento clínico principal.
+Esta fase está implementada y protege la integridad histórica del documento clínico principal.
 
 Los pagos marcados **Requiere revisión** no forman parte de esta fase: su atención es administrativa y puede realizarse en paralelo sin modificar información histórica.
 
-## 8. Fase posterior — volumen y operación
+## 8. Fase completada — 1.12 copias protegidas y recuperación
+
+- Cifrar cada respaldo con AES-256-GCM y un nonce nuevo.
+- Mantener la llave fuera de la base, los respaldos, el paquete y los registros.
+- Permitir que Administración descargue la llave tras CSRF, contraseña y frase exacta.
+- Detectar contenido modificado, copia truncada o llave equivocada antes de reemplazar datos.
+- Proteger copias `.db` anteriores sin eliminar el original hasta verificar el resultado.
+- Verificar respaldo y restauración cifrados mediante pruebas automáticas y procedimiento de emergencia.
+- Mantener la aplicación limitada a localhost; HTTPS, aislamiento por consultorio y revisión legal siguen siendo requisitos separados para red.
+
+La base activa continúa como SQLite sin cifrado transparente. El alcance y el procedimiento se documentan en [RESPALDOS_CIFRADOS_1_12_0.md](RESPALDOS_CIFRADOS_1_12_0.md).
+
+### Siguiente etapa — 1.12.1 base activa cifrada
+
+- Integrar un motor SQLite cifrado compatible con Flask-SQLAlchemy y PyInstaller para Windows.
+- Migrar la base existente de forma reversible y comprobada, sin mantener una copia activa en texto claro.
+- Implementar rotación de llave con recuperación ante interrupciones.
+- Validar inicio, cierre inesperado, actualización y recuperación en otra estación.
+
+Después puede abordarse volumen y operación:
 
 - Medir el índice de Consultas con bases anonimizadas de mayor volumen antes de modificar índices.
 - El diseño funcional y los controles implementados se detallan en [ROADMAP_AGENDA_Y_CONSULTAS.md](ROADMAP_AGENDA_Y_CONSULTAS.md).
-- Paginación real pendiente en Pacientes, Historial y Auditoría; Consultas ya pagina en servidor.
+- Paginación real pendiente en Pacientes y Auditoría; Consultas e Historial ya paginan en servidor.
 - Índices y medición de consultas para bases con mayor volumen.
 - Horarios, bloqueos, duración y filtros por profesional desde la Agenda dedicada.
 - Exportación XLSX nativa sólo si se requiere además del CSV seguro ya disponible.
@@ -451,7 +483,7 @@ Los pagos marcados **Requiere revisión** no forman parte de esta fase: su atenc
 
 ## 9. Fase 4 antes de producción en red
 
-- Cifrado en reposo para base de datos y respaldos.
+- Cifrado transparente pendiente para la base activa; respaldos cifrados completados en 1.12.0.
 - HTTPS y terminación TLS confiable.
 - Gestión formal de consentimiento, retención, eliminación y acceso a datos clínicos.
 - Versionado inmutable y firma/cierre profesional de notas clínicas.
@@ -476,4 +508,5 @@ Los pagos marcados **Requiere revisión** no forman parte de esta fase: su atenc
 - Las columnas nuevas se aplican de forma aditiva; las reconstrucciones controladas de recetas y pagos conservan filas y superan las comprobaciones de integridad.
 - `python -m pytest -q` y el comando heredado de `unittest` finalizan correctamente.
 - El paquete final no contiene base, secretos, logs, respaldos, cachés ni entorno virtual.
+- Las copias nuevas no exponen la cabecera SQLite ni texto clínico y rechazan cualquier alteración.
 - Una actualización sobre carpeta existente dispone de limpieza explícita que conserva datos y entorno virtual.

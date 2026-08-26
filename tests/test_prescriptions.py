@@ -228,7 +228,7 @@ def test_create_print_and_audit_ordinary_prescription_with_immutable_snapshot(ap
     assert "data-prescriber-signature" in printable
     assert 'class="toolbar-replace"' in printable
     assert f'aria-label="Sustituir receta {prescription_folio}"' in printable
-    assert "/static/img/logo.png?v=1.10.1" in printable
+    assert "/static/img/logo.png?v=1.12.0-backup1" in printable
     assert 'margin: 14mm 12mm 12mm' in printable
     assert '@top-left { content: ""; }' in printable
     assert '@top-center { content: ""; }' in printable
@@ -401,7 +401,7 @@ def test_account_identity_is_in_sidebar_and_icon_is_canonical(app, client, login
     assert favicon.status_code == 200
     assert favicon.mimetype == "image/vnd.microsoft.icon"
     assert favicon.headers["Cache-Control"] == "no-cache, max-age=0, must-revalidate"
-    assert "/static/img/logo.png?v=1.10.1" in page
+    assert "/static/img/logo.png?v=1.12.0-backup1" in page
 
 
 def test_additional_and_replacement_prescriptions_preserve_every_folio(app):

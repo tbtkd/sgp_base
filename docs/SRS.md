@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.10.1 no implementa multi-tenancy ni operación directa por Internet.
+Aplicación local para gestionar pacientes y expedientes en consultorios médicos, dentales, nutricionales u otros servicios de salud. La versión 1.12.0 no implementa multi-tenancy ni operación directa por Internet.
 
 ## Requisitos funcionales
 
@@ -102,6 +102,15 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 94. El tema oscuro debe utilizar superficies suaves, texto secundario legible y bordes decorativos discretos, sin eliminar el foco visible requerido para operar con teclado.
 95. La acción **Sustituir** de una receta vigente debe distinguirse de **Ver / imprimir**, conservar contraste suficiente en tema claro y oscuro e incluir una etiqueta accesible que identifique el folio.
 96. `requiere_revision` sólo debe originarse al conservar pagos anteriores no confiables o datos de demostración; las altas actuales incompletas deben rechazarse. Administración debe resolver cada caso sin editarlo: cancelar el original y registrar un movimiento nuevo sólo cuando exista evidencia suficiente.
+97. Toda consulta debe iniciar como Borrador y sólo un cierre explícito debe volverla Cerrada, sin marcar automáticamente registros anteriores.
+98. Una nota cerrada no debe editarse ni eliminarse; las aclaraciones posteriores deben conservar número, motivo, contenido, autor, fecha e idempotencia.
+99. Historiales clínicos y Consultas para recetas deben buscar, ordenar columnas y paginar en servidor.
+100. La búsqueda de pacientes para cita debe usar nombre, apellidos, expediente o teléfono, sin coincidencias provocadas por datos no anunciados.
+101. Todo respaldo nuevo debe cifrarse con AES-256-GCM, un nonce nuevo y una llave de 256 bits separada de la base y el archivo protegido.
+102. El formato del respaldo debe autenticar versión, identificador de llave y nonce; cualquier modificación, truncamiento o llave equivocada debe rechazarse antes de sustituir la base.
+103. Sólo Administración puede descargar la llave local; debe exigirse CSRF, contraseña actual, frase `DESCARGAR` y respuesta `no-store`, sin registrar el secreto.
+104. Una copia `.db` anterior sólo puede eliminarse después de cifrar y comprobar correctamente su reemplazo; ante falla debe conservarse intacta.
+105. El sistema debe declarar que `instance/pacientes.db` permanece sin cifrado transparente hasta integrar un motor cifrado compatible y probado.
 
 ## Requisitos de seguridad
 

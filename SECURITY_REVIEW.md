@@ -2,11 +2,11 @@
 
 ## Dictamen
 
-La versión 1.10.1 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. En el alcance de la aplicación cumple el nivel técnico mínimo definido: autenticación, roles, CSRF, validación, sesiones revocables, auditoría, frontend autocontenido, CSP estricta y restauración verificada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red.
+La versión 1.12.0 es adecuada para pruebas funcionales y para un piloto en una estación local controlada. En el alcance de la aplicación cumple el nivel técnico mínimo definido: autenticación, roles, CSRF, validación, sesiones revocables, auditoría, frontend autocontenido, CSP estricta, integridad de notas cerradas y copias cifradas con restauración verificada. No debe exponerse directamente a Internet ni considerarse una plataforma clínica multiusuario de red.
 
 ### Nivel mínimo para utilizar información real en una estación local
 
-La evaluación de esta entrega deja fuera los requisitos físicos y del sistema operativo del equipo. El dictamen es **mínimo técnico de aplicación cumplido para piloto local controlado**. No incluye una prueba de penetración, una certificación, cifrado en reposo ni la evaluación legal/organizacional necesaria para decidir el uso de información clínica real.
+La evaluación de esta entrega deja fuera los requisitos físicos y del sistema operativo del equipo. El dictamen es **mínimo técnico de aplicación cumplido para piloto local controlado**. No incluye una prueba de penetración, una certificación, cifrado transparente de la base activa ni la evaluación legal/organizacional necesaria para decidir el uso de información clínica real.
 
 ## Controles implementados
 
@@ -104,7 +104,11 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 ### Persistencia y entrega
 
 - Base `pacientes.db` fuera de `_MEIPASS`.
-- Respaldos consistentes mediante `sqlite3.Connection.backup()` y verificación de integridad.
+- Respaldos consistentes mediante `sqlite3.Connection.backup()`, cifrado autenticado AES-256-GCM y comprobación posterior de integridad SQLite.
+- Llave de 256 bits separada en `.backup_key` o `SGPN_BACKUP_KEY`; nunca se incluye en base, copia, ZIP, logs o auditoría.
+- Identificador no secreto de llave visible para confirmar correspondencia; descarga exige Administración, CSRF, contraseña y frase exacta, y se entrega con `no-store`.
+- Cualquier cambio de bytes, truncamiento o llave equivocada invalida la copia antes de tocar la base activa.
+- Las copias `.db` anteriores se mantienen compatibles y pueden cifrarse; el original sólo se elimina después de validar la versión protegida.
 - Retención automática de 10 respaldos.
 - Respaldo consistente al arrancar y después de mutaciones críticas aceptadas; los rechazos no generan copia.
 - Panel administrativo para crear, verificar y descargar; restauración con reautenticación, frase explícita, copia previa, reemplazo atómico y cierre de sesión.
@@ -112,32 +116,40 @@ La evaluación de esta entrega deja fuera los requisitos físicos y del sistema 
 - ZIP y compilación excluyen bases, secretos, logs, cachés, entorno virtual y respaldos.
 - La limpieza de actualizaciones sólo elimina el SVG, la hoja de sidebar legada no referenciada y cachés conocidas dentro del código; no recorre el entorno virtual ni los directorios de datos.
 
+### Integridad de notas clínicas 1.11
+
+- Toda nota conserva estado Borrador hasta que exista un cierre explícito; la actualización no inventa cierres anteriores.
+- El cierre usa autorización por autor o Administración, CSRF, UUID v4 único, restricción única por consulta y auditoría.
+- Una nota cerrada no admite edición o eliminación, incluso mediante solicitudes directas; los rechazos se auditan.
+- Las aclaraciones requieren nota cerrada, campos limitados, autor, fecha, consecutivo y clave idempotente. No existe ruta de edición o borrado.
+- La auditoría registra identificadores y resultado, no copia motivo, diagnóstico o contenido de la aclaración.
+- Pruebas correctas e incorrectas cubren cierre, doble envío, impresión, permisos cruzados, CSRF, entrada inválida, aclaración anticipada y mutaciones bloqueadas.
+
 ## Decisiones que no se aplicaron literalmente
 
 No se redujo `requirements.txt` a únicamente Flask y OpenPyXL porque el proyecto utiliza autenticación, ORM y CSRF; hacerlo eliminaría controles de seguridad esenciales. PyInstaller está separado como dependencia de construcción. Tampoco se relajaron las cabeceras `DENY/no-referrer`, ya que ya satisfacen de forma más estricta las cabeceras solicitadas.
 
 ## Pendientes antes de producción en red
 
-1. Cifrado en reposo para base y respaldos, con llaves fuera del equipo.
+1. Cifrado transparente de `instance/pacientes.db`, con migración y recuperación probadas; los respaldos ya están cifrados en 1.12.0.
 2. HTTPS y terminación TLS confiable si deja de ser exclusivamente localhost.
 3. Política formal de consentimiento, acceso, retención, anonimización y eliminación.
 4. Aislamiento por consultorio/tenant si varias organizaciones comparten una instalación.
-5. Versionado inmutable de notas clínicas y firma/cierre profesional.
-6. Revisión legal y clínica según jurisdicción y especialidad.
-7. Firma electrónica regulada, si se desea sustituir la firma autógrafa en papel.
-8. Flujo independiente para medicamentos controlados o recetas especiales; no reutilizar la receta ordinaria.
-9. Definición formal de cargos, adeudos, reembolsos, recibos, conciliación y corte de caja antes de presentar el módulo de pagos como sistema contable.
+5. Revisión legal y clínica según jurisdicción y especialidad.
+6. Firma electrónica regulada, si se desea sustituir la firma autógrafa en papel.
+7. Flujo independiente para medicamentos controlados o recetas especiales; no reutilizar la receta ordinaria.
+8. Definición formal de cargos, adeudos, reembolsos, recibos, conciliación y corte de caja antes de presentar el módulo de pagos como sistema contable.
 
 ## Siguiente fase recomendada
 
-El siguiente paso recomendado es **1.11 — cierre y versionado inmutable de notas clínicas**: estados borrador/cerrada, autor y momento de cierre, correcciones mediante addendum trazable y prohibición de sobrescribir una nota firmada. Es el riesgo de integridad clínica más importante que permanece y debe resolverse antes de ampliar Facturación o exponer el sistema en red.
+El siguiente paso recomendado es **1.12.1 — cifrado transparente de la base activa y rotación de llaves**. Debe integrar un motor SQLite cifrado compatible con Flask-SQLAlchemy y el ejecutable Windows, migrar `pacientes.db` sin pérdida, probar apagados inesperados, rotar llaves sin dejar copias inaccesibles y validar recuperación en otra estación. Hasta completar esa fase, debe mantenerse la operación en una estación local y proteger el archivo activo con los controles del equipo.
 
 La solicitud de factura, recibos no fiscales y datos fiscales deberá diseñarse después como flujo separado; nunca se inferirá a partir del método de pago.
 
 ## Evidencia de verificación
 
 - `python -m unittest tests/test_sistema.py`: 15 pruebas.
-- `python -m pytest -q`: 122 pruebas obligatorias aprobadas; un E2E adicional queda disponible con Playwright/Chromium.
+- `python -m pytest -q`: 131 pruebas obligatorias aprobadas; un E2E adicional queda disponible con Playwright/Chromium.
 - Ruff: sin hallazgos.
 - Bandit: sin hallazgos.
 - `pip-audit`: sin vulnerabilidades conocidas en las dependencias instaladas; el entorno de verificación usa `pip 26.2.1`.

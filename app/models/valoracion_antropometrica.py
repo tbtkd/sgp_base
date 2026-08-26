@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from threading import Lock
 
-from sqlalchemy import asc, desc, func, text
+from sqlalchemy import asc, desc, func, or_, text
 from sqlalchemy.orm import joinedload
 
 from app import db_orm as db
@@ -61,6 +61,25 @@ class ValoracionAntropometrica(db.Model):
         "Paciente", backref=db.backref("valoraciones_lista", cascade="all, delete-orphan", lazy=True)
     )
     profesional = db.relationship("Usuario", foreign_keys=[profesional_id])
+    cierre_nota = db.relationship(
+        "NotaCierreClinico", back_populates="valoracion", uselist=False, passive_deletes=True
+    )
+
+    @property
+    def esta_cerrada(self):
+        return self.cierre_nota is not None
+
+    @property
+    def estado_nota(self):
+        return "cerrada" if self.esta_cerrada else "borrador"
+
+    @property
+    def estado_nota_etiqueta(self):
+        return "Cerrada" if self.esta_cerrada else "Borrador"
+
+    @property
+    def aclaraciones(self):
+        return self.cierre_nota.aclaraciones if self.cierre_nota else []
 
     @staticmethod
     def crear(paciente_id, datos, profesional=None):
@@ -145,6 +164,48 @@ class ValoracionAntropometrica(db.Model):
             .limit(1000)
             .all()
         )
+
+    @staticmethod
+    def buscar_todas(busqueda="", orden="fecha_desc", pagina=1, por_pagina=25):
+        from app.core.text import search_terms
+        from app.models.paciente import Paciente
+
+        query = (
+            ValoracionAntropometrica.query.options(joinedload(ValoracionAntropometrica.paciente))
+            .join(ValoracionAntropometrica.paciente)
+        )
+        full_name = func.sgpn_search_key(
+            func.trim(
+                Paciente.nombre
+                + " "
+                + Paciente.apellido_paterno
+                + " "
+                + func.coalesce(Paciente.apellido_materno, "")
+            )
+        )
+        searchable = (
+            full_name,
+            func.sgpn_search_key(ValoracionAntropometrica.motivo_consulta),
+            func.sgpn_search_key(ValoracionAntropometrica.impresion_diagnostica),
+        )
+        for term in search_terms(busqueda):
+            query = query.filter(or_(*(field.contains(term, autoescape=True) for field in searchable)))
+
+        orders = {
+            "paciente_asc": (asc(full_name), desc(ValoracionAntropometrica.fecha)),
+            "paciente_desc": (desc(full_name), desc(ValoracionAntropometrica.fecha)),
+            "fecha_asc": (asc(ValoracionAntropometrica.fecha), asc(ValoracionAntropometrica.numero_cita)),
+            "fecha_desc": (desc(ValoracionAntropometrica.fecha), desc(ValoracionAntropometrica.numero_cita)),
+            "motivo_asc": (asc(func.sgpn_search_key(ValoracionAntropometrica.motivo_consulta)),),
+            "motivo_desc": (desc(func.sgpn_search_key(ValoracionAntropometrica.motivo_consulta)),),
+            "diagnostico_asc": (asc(func.sgpn_search_key(ValoracionAntropometrica.impresion_diagnostica)),),
+            "diagnostico_desc": (desc(func.sgpn_search_key(ValoracionAntropometrica.impresion_diagnostica)),),
+        }
+        query = query.order_by(*orders.get(orden, orders["fecha_desc"]), ValoracionAntropometrica.id.desc())
+        total = query.count()
+        safe_page = max(int(pagina), 1)
+        safe_size = min(max(int(por_pagina), 1), 100)
+        return query.offset((safe_page - 1) * safe_size).limit(safe_size).all(), total
 
     @staticmethod
     def buscar_ultimas_por_paciente(busqueda="", orden="fecha_desc", pagina=1, por_pagina=25):

@@ -18,6 +18,7 @@ from app import create_app
 from app import db_orm as db
 from app.models.cita import Cita
 from app.models.historial_clinico import HistorialClinico
+from app.models.nota_clinica import AclaracionNotaClinica, NotaCierreClinico
 from app.models.paciente import Paciente
 from app.models.pago import Pago
 from app.models.receta import Receta
@@ -139,12 +140,12 @@ def _get_or_create_patients():
 
 def _create_histories(patients):
     histories = (
-        ("Migraña episódica", "Apendicectomía en 2012", "Madre con hipertensión", "Penicilina", None, "Ibuprofeno ocasional", "Caminata 3 veces por semana"),
-        ("Hipertensión controlada", None, "Padre con diabetes", None, None, "Losartán 50 mg", "Actividad ligera"),
-        ("Sin enfermedades crónicas", None, None, None, "Nuez", None, "Entrenamiento funcional 4 veces por semana"),
-        ("Gastritis", "Colecistectomía en 2018", None, None, None, "Omeprazol ocasional", "Bicicleta de fin de semana"),
-        ("Asma leve", None, "Abuela con cardiopatía", "Sulfas", None, "Salbutamol de rescate", "Natación 2 veces por semana"),
-        ("Diabetes tipo 2", None, "Antecedentes de diabetes e hipertensión", None, None, "Metformina 850 mg", "Caminata diaria"),
+        ("Migraña episódica", "Apendicectomía en 2012", "Madre con hipertensión", "Penicilina", None, "Ibuprofeno ocasional", "Caminata 3 veces por semana", {"antecedente_neurologicos": True}),
+        ("Hipertensión controlada", None, "Padre con diabetes", None, None, "Losartán 50 mg", "Actividad ligera", {"antecedente_hipertension": True, "antecedente_diabetes": True}),
+        ("Sin enfermedades crónicas", None, None, None, "Nuez", None, "Entrenamiento funcional 4 veces por semana", {}),
+        ("Gastritis", "Colecistectomía en 2018", None, None, None, "Omeprazol ocasional", "Bicicleta de fin de semana", {"antecedente_enfermedad_hepatica": True}),
+        ("Asma leve", None, "Abuela con cardiopatía", "Sulfas", None, "Salbutamol de rescate", "Natación 2 veces por semana", {"antecedente_asma_epoc": True, "antecedente_cardiopatias": True}),
+        ("Diabetes tipo 2", None, "Antecedentes de diabetes e hipertensión", None, None, "Metformina 850 mg", "Caminata diaria", {"antecedente_diabetes": True, "antecedente_hipertension": True, "antecedente_dislipidemia": True}),
     )
     created = 0
     for patient, values in zip(patients, histories, strict=True):
@@ -161,6 +162,7 @@ def _create_histories(patients):
                     actividad_fisica=values[6],
                     motivo_consulta_habitual="Seguimiento clínico demostrativo",
                     notas_generales="Registro ficticio creado exclusivamente para validación local.",
+                    **values[7],
                 )
             )
             created += 1
@@ -237,6 +239,41 @@ def _create_consultations(patients, users):
         assessments.append(assessment)
         created += int(was_created)
     return assessments, created
+
+
+def _create_clinical_note_examples(assessments, users):
+    assessment = assessments[3]
+    closure = NotaCierreClinico.query.filter_by(valoracion_id=assessment.id).first()
+    created_closures = 0
+    created_addenda = 0
+    if closure is None:
+        professional = users["demo_medico"]
+        closure = NotaCierreClinico(
+            valoracion_id=assessment.id,
+            cerrado_por_id=professional.id,
+            responsable_nombre=professional.nombre_completo,
+            responsable_perfil=professional.perfil_profesional_etiqueta,
+            operation_key=str(uuid5(NAMESPACE_URL, f"sgpn-demo-close-{assessment.id}")),
+        )
+        db.session.add(closure)
+        db.session.flush()
+        created_closures = 1
+    if not closure.aclaraciones:
+        professional = users["demo_medico"]
+        db.session.add(
+            AclaracionNotaClinica(
+                cierre_id=closure.id,
+                numero=1,
+                autor_id=professional.id,
+                autor_nombre=professional.nombre_completo,
+                autor_perfil=professional.perfil_profesional_etiqueta,
+                motivo="Resultado recibido después de la consulta",
+                contenido="Ejemplo de aclaración posterior; no corresponde a información clínica real.",
+                operation_key=str(uuid5(NAMESPACE_URL, f"sgpn-demo-addendum-{assessment.id}")),
+            )
+        )
+        created_addenda = 1
+    return created_closures, created_addenda
 
 
 def _next_free_appointment_slot(day):
@@ -417,6 +454,7 @@ def seed_demo_data(application, password=None):
         patients, created_patients = _get_or_create_patients()
         created_histories = _create_histories(patients)
         assessments, created_assessments = _create_consultations(patients, users)
+        created_closures, created_addenda = _create_clinical_note_examples(assessments, users)
         created_appointments = _create_appointments(patients)
         created_payments = _create_payments(patients, users)
         created_prescriptions = int(
@@ -431,6 +469,8 @@ def seed_demo_data(application, password=None):
             "citas": created_appointments,
             "pagos": created_payments,
             "recetas": created_prescriptions,
+            "notas_cerradas": created_closures,
+            "aclaraciones": created_addenda,
             "password": demo_password if created_users else None,
         }
 

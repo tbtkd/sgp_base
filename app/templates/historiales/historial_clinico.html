@@ -2,6 +2,8 @@
 
 {% block title %}Historial Clínico - {{ paciente['nombre'] }} {{ paciente['apellido_paterno'] }}{% endblock %}
 
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/clinical_indexes.css', v=config['ASSET_VERSION']) }}">{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto">
     <!-- Encabezado -->

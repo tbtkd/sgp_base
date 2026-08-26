@@ -167,13 +167,13 @@ def money_centavos(value, field="Monto", *, maximum=10_000_000):
 def operation_key(value):
     text = unicodedata.normalize("NFKC", str(value or "")).strip()
     if not text or len(text) > 36:
-        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.")
+        raise ValidationError("La página dejó de ser válida. Actualízala e inténtalo de nuevo.")
     try:
         parsed = UUID(text)
     except (ValueError, AttributeError):
-        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.") from None
+        raise ValidationError("La página dejó de ser válida. Actualízala e inténtalo de nuevo.") from None
     if parsed.version != 4:
-        raise ValidationError("La página dejó de ser válida. Actualízala y vuelve a registrar el pago.")
+        raise ValidationError("La página dejó de ser válida. Actualízala e inténtalo de nuevo.")
     return str(parsed)
 
 
@@ -501,6 +501,15 @@ def history_payload(form):
         "antecedente_hipertension": form.get("antecedente_hipertension") == "on",
         "antecedente_cardiopatias": form.get("antecedente_cardiopatias") == "on",
         "antecedente_cancer": form.get("antecedente_cancer") == "on",
+        "antecedente_asma_epoc": form.get("antecedente_asma_epoc") == "on",
+        "antecedente_enfermedad_renal": form.get("antecedente_enfermedad_renal") == "on",
+        "antecedente_enfermedad_hepatica": form.get("antecedente_enfermedad_hepatica") == "on",
+        "antecedente_tiroides": form.get("antecedente_tiroides") == "on",
+        "antecedente_neurologicos": form.get("antecedente_neurologicos") == "on",
+        "antecedente_psiquiatricos": form.get("antecedente_psiquiatricos") == "on",
+        "antecedente_autoinmunes": form.get("antecedente_autoinmunes") == "on",
+        "antecedente_dislipidemia": form.get("antecedente_dislipidemia") == "on",
+        "antecedente_obesidad": form.get("antecedente_obesidad") == "on",
         "alergias_medicamentosas": multiline_text(
             form.get("alergias_medicamentosas"), "Alergias medicamentosas", maximum=4000
         ),
@@ -518,6 +527,22 @@ def history_payload(form):
             form.get("motivo_consulta_habitual"), "Motivo habitual de consulta", maximum=2000
         ),
         "notas_generales": multiline_text(form.get("notas_generales"), "Notas generales", maximum=4000),
+    }
+
+
+def clinical_note_close_payload(form):
+    if form.get("confirmar_cierre") != "si":
+        raise ValidationError("Confirma que la nota está completa antes de cerrarla.")
+    return {"operation_key": operation_key(form.get("operation_key"))}
+
+
+def clinical_note_addendum_payload(form):
+    return {
+        "motivo": clean_text(form.get("motivo"), "Motivo de la aclaración", minimum=5, maximum=500, required=True),
+        "contenido": multiline_text(
+            form.get("contenido"), "Aclaración", minimum=5, maximum=4000, required=True
+        ),
+        "operation_key": operation_key(form.get("operation_key")),
     }
 
 

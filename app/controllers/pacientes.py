@@ -770,7 +770,6 @@ def buscar_para_cita():
         func.sgpn_search_key(Paciente.apellido_paterno),
         func.sgpn_search_key(Paciente.apellido_materno),
         func.sgpn_search_key(Paciente.telefono),
-        func.sgpn_search_key(Paciente.correo),
     )
     terms = search_terms(search)
     filters = [

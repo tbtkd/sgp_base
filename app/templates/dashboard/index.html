@@ -3,7 +3,7 @@
 {% block title %}Panel clínico - {{ current_user.nombre_completo if current_user.is_authenticated else '' }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css', v=config['ASSET_VERSION']) }}">
 {% endblock %}
 
 {% block content %}

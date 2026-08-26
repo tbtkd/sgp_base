@@ -22,7 +22,7 @@ from app.core.validators import (
     phone,
     prescription_payload,
 )
-from app.db import get_database_path, respaldar_db
+from app.db import get_database_path, respaldar_db, restore_sqlite_database
 from app.models.cita import Cita
 from app.models.historial_clinico import HistorialClinico
 from app.models.paciente import Paciente
@@ -222,15 +222,20 @@ class SistemaClinicoTest(unittest.TestCase):
             source = Path(directory) / "pacientes.db"
             backups = Path(directory) / "backups"
             connection = sqlite3.connect(source)
+            connection.execute("CREATE TABLE usuarios (id INTEGER PRIMARY KEY)")
+            connection.execute("CREATE TABLE pacientes (id INTEGER PRIMARY KEY)")
+            connection.execute("CREATE TABLE audit_logs (id INTEGER PRIMARY KEY)")
             connection.execute("CREATE TABLE prueba (id INTEGER PRIMARY KEY, valor TEXT)")
             connection.execute("INSERT INTO prueba(valor) VALUES ('dato')")
             connection.commit()
             connection.close()
             for _ in range(12):
                 respaldar_db(source, retention=10, backup_directory=backups)
-            saved = list(backups.glob("pacientes_backup_*.db"))
+            saved = list(backups.glob("pacientes_backup_*.sgpnbak"))
             self.assertEqual(len(saved), 10)
-            check = sqlite3.connect(saved[0])
+            restored = Path(directory) / "restored.db"
+            restore_sqlite_database(saved[0], restored)
+            check = sqlite3.connect(restored)
             self.assertEqual(check.execute("SELECT valor FROM prueba").fetchone()[0], "dato")
             check.close()
 

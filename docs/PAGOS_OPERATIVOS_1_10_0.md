@@ -24,6 +24,27 @@ El **método de pago** describe cómo ingresó el dinero —efectivo, tarjeta, t
 | `cancelado` | Movimiento invalidado por Administración, conservando el original | No |
 | `requiere_revision` | Registro legado incompleto o monetariamente no confiable | No |
 
+### Cómo entra un pago a “Requiere revisión”
+
+Este estado no se asigna a un pago nuevo. El formulario actual rechaza importes vacíos, en cero, negativos, excesivos o con más de dos decimales, así como conceptos vacíos y métodos no permitidos.
+
+Sólo aparece en dos situaciones:
+
+1. Durante la actualización desde una base anterior, cuando un pago guardado previamente no tiene importe válido, concepto, método reconocido o moneda MXN confiable.
+2. En los datos de demostración, donde se crea deliberadamente un caso incompleto para validar la pantalla.
+
+### Cómo se revisa actualmente
+
+La aplicación no puede reconstruir un importe o concepto que nunca quedó guardado. Por eso la revisión es administrativa y debe basarse en un comprobante, terminal bancaria, transferencia, recibo interno u otra evidencia disponible:
+
+1. Administración amplía el rango de fechas y filtra el estado **Requiere revisión**.
+2. Identifica paciente y folio, y compara el movimiento con la evidencia disponible.
+3. Si se confirma el cobro y se conocen sus datos correctos, cancela el registro incompleto con un motivo claro y registra un pago nuevo completo.
+4. Si se confirma que el movimiento no representa un cobro válido, lo cancela y documenta el motivo.
+5. Si todavía no existe evidencia suficiente, lo deja en **Requiere revisión**. No se inventan importes ni se incluye el movimiento en los totales.
+
+No existe una acción de “aprobar” o editar el registro anterior: cambiarlo directamente eliminaría la evidencia de qué información recibió realmente la actualización. La cancelación conserva el original y el nuevo pago, cuando corresponde, recibe su propio folio y responsable.
+
 Los pagos no se editan ni eliminan. Si una captura es incorrecta, Administración debe cancelarla con un motivo mínimo de cinco caracteres y registrar un movimiento nuevo. La cancelación conserva importe, concepto, método, folio, fecha, autor original, responsable y momento de cancelación. La confirmación explica que el pago no se borrará, ofrece **Volver** como salida segura y rotula la acción definitiva como **Sí, cancelar pago**. Al confirmar, la interfaz vuelve al renglón por su folio y lo resalta; si el filtro anterior lo ocultaría, se retira ese filtro para no perder de vista el movimiento.
 
 No se implementa todavía el estado **Reembolsado**. Un reembolso futuro deberá representarse como un movimiento separado enlazado con el pago original, después de definir reglas de caja y responsabilidades.
@@ -133,3 +154,5 @@ La siguiente fase financiera debe diseñar, por separado:
 - comparativos entre periodos y tableros configurables, sin confundirlos con contabilidad.
 
 Hasta contar con cargos y aplicaciones, el historial de pagos no debe llamarse **estado de cuenta**. Hasta definir apertura y conciliación, el resumen diario no debe llamarse **corte de caja**.
+
+Un asistente masivo para pagos anteriores incompletos sólo debe considerarse si una instalación real presenta un volumen significativo. Para los casos aislados, el filtro, la cancelación motivada y el alta de un nuevo pago ya proporcionan un tratamiento seguro.

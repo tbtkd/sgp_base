@@ -302,6 +302,20 @@ Administración y Recepción pueden abrir **Gestión → Pagos**. La pantalla in
 
 Los pagos cancelados y los pagos anteriores con información incompleta permanecen visibles, pero no se suman.
 
+### Pagos anteriores que requieren aclaración
+
+Un pago nuevo no entra en **Requiere revisión**: si falta el importe, el concepto o la forma de pago, el sistema no permite guardarlo. Este estado sólo puede aparecer después de actualizar información capturada con una versión antigua. Los datos de demostración también incluyen un caso intencional para que puedas validar la pantalla.
+
+Sólo Administración debe atenderlos:
+
+1. Amplía el rango de fechas si es necesario y elige **Requiere revisión** en el filtro Estado.
+2. Localiza el folio y compáralo con un comprobante, transferencia, terminal o registro disponible.
+3. Si confirmas el cobro y conoces todos sus datos, cancela el movimiento incompleto indicando el motivo y registra un pago nuevo con la información correcta.
+4. Si confirmas que no fue un cobro válido, cancélalo e indica por qué.
+5. Si todavía no tienes evidencia suficiente, déjalo pendiente. No afectará los totales y nunca debes adivinar el importe.
+
+El pago anterior no se corrige directamente porque debe conservarse exactamente como fue encontrado. El pago nuevo tendrá otro folio y mostrará quién lo registró.
+
 ### Reportes y CSV
 
 Sólo Administración puede usar estas acciones:

@@ -88,6 +88,7 @@ La versión 1.10.1 es un expediente clínico general para servicios médicos, de
 80. Nunca permitas cero administradores activos. `--recover-admin` es una contingencia local exclusiva del estado `active_admin_count() == 0`, opera sobre una cuenta existente, obliga a cambiar la contraseña y se audita sin guardar el secreto.
 81. En tema oscuro, los bordes decorativos deben ser transparentes o de baja opacidad y las superficies deben evitar grises claros agresivos. Conserva un foco de teclado claramente visible y no permitas estilos nativos inesperados en botones o enlaces.
 82. **Sustituir receta** es una acción correctiva disponible sólo para folios vigentes autorizados. Debe usar estilo ámbar sólido, texto de alto contraste, icono, etiqueta con folio y estados claros de hover/foco en ambos temas; nunca la confundas visualmente con **Ver / imprimir**.
+83. `requiere_revision` no es un destino para pagos nuevos. Sólo conserva datos anteriores incompletos o el caso demostrativo. Administración compara cada folio con evidencia externa; no edita ni inventa datos, cancela el original y registra otro pago únicamente cuando el cobro pueda comprobarse.
 
 ## Próximas fases
 

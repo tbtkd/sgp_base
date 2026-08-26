@@ -20,6 +20,7 @@
 - La prueba CSP conserva el bloqueo estricto de atributos ejecutables y ahora informa cada plantilla y línea afectadas; la guía explica cómo corregir una instalación donde se mezclaron archivos de versiones distintas.
 - Se agregan pruebas positivas y negativas para CSP, recursos locales, respaldo por mutación, corrupción, autorización, CSRF, confirmaciones, restauración, búsqueda flexible, protección del administrador y recuperación del rol; se incluye una especificación E2E opcional con Playwright/Chromium.
 - Nueva guía `docs/ENDURECIMIENTO_LOCAL_1_10_1.md` y actualización de manual, arquitectura, matriz, seguridad y contexto.
+- Se aclara el alcance de **Requiere revisión**: sólo conserva pagos anteriores incompletos o el caso demo; las altas actuales inválidas se rechazan y la resolución administrativa nunca modifica ni inventa el dato original.
 
 ## 1.10.0 — Integridad e historial operativo de pagos
 

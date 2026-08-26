@@ -21,7 +21,7 @@ La carga crea cinco cuentas (`demo_admin`, `demo_medico`, `demo_dentista`, `demo
 | Cita cancelada relacionada | Pago cancelado demostrativo | El pago y la cita conservan estados independientes |
 | Cita existente sin relación | Cobro sin cita aunque existe una programada | Se muestra **Sin cita relacionada** porque no se seleccionó una cita al cobrar |
 | Cancelación trazable | Pago cancelado demostrativo | Estado Cancelado, motivo y movimiento original visibles; no suma en totales |
-| Registro legado | Pago legado incompleto para revisión | Estado Requiere revisión, importe no disponible y exclusión de totales |
+| Pago anterior incompleto | Pago legado incompleto para revisión | Caso demostrativo intencional: estado Requiere revisión, importe no disponible y exclusión de totales |
 | Seguridad CSV | `=PRUEBA_CSV_NEUTRALIZADA` | La exportación antepone un apóstrofo al contenido interpretable como fórmula |
 | Reporte mensual | Pago de otro periodo para reporte mensual | Aparece al ampliar el rango y agrupar por mes |
 | Responsables distintos | Pagos de recepción, admin y perfiles clínicos | La columna Registró conserva al usuario real de la captura |
@@ -40,5 +40,6 @@ Conteos de referencia tras una carga nueva:
 3. Inicia como `demo_admin`, filtra por **Vigente** y cancela un pago. La pantalla debe volver al folio cancelado, mantenerlo visible y resaltar su renglón.
 4. Confirma que Recepción no vea el control de cancelación y que Medicina no pueda abrir el módulo global.
 5. Exporta el rango que contiene el concepto de prueba CSV y verifica que Excel lo trate como texto, no como fórmula.
+6. Amplía el rango para incluir los últimos 90 días, filtra **Requiere revisión** y localiza `PAG-LEGADO-DEMO-0001`. Comprueba que no suma. En una operación real se contrastaría con un comprobante: no se modifica ni se inventa el importe; se cancela y se registra otro pago sólo si el cobro puede demostrarse.
 
 Al terminar, desactiva las cuentas demo o descarta por completo la base de validación.

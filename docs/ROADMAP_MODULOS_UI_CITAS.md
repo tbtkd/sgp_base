@@ -1,8 +1,30 @@
 # Roadmap integral de módulos e interfaz clínica
 
+**Corte de estado: 26 de agosto de 2026.** Este documento distingue lo terminado, lo que sólo requiere operación administrativa y el siguiente desarrollo recomendado.
+
 ## 1. Estado general
 
 La versión 1.10.1 conserva la base clínica y los Pagos operativos íntegros de 1.10.0: centavos exactos, folio, responsable, idempotencia, historial por paciente, cancelación administrativa, módulo global para Administración/Recepción y reportes CSV diarios/mensuales exclusivos de Administración. Agenda, Consultas, Recetas, perfiles, dashboard, shell, tema, contraste y detalle progresivo permanecen sin regresiones. Las migraciones transaccionales de recetas, turnos y pagos conservan y verifican datos; los totales de pagos excluyen cancelados y filas legadas que requieren revisión.
+
+### Resumen ejecutivo
+
+| Área | Estado actual | Observación |
+| --- | --- | --- |
+| Expediente, pacientes y consultas | Completado | Flujo local funcional con roles y perfiles profesionales. |
+| Agenda | Completado | Operación diaria/semanal, alta, reagenda y cierre controlado. |
+| Receta ordinaria | Completado | Folios inmutables, adicionales, sustituciones e impresión. |
+| Pagos operativos | Completado | Registro exacto, historial, cancelación, filtros, resumen y CSV. |
+| Pagos anteriores incompletos | Atención administrativa disponible | Sólo proceden de una actualización desde datos antiguos o de la carga demostrativa; no bloquean los totales y no son generados por el formulario actual. |
+| Seguridad para uso local controlado | Mínimo técnico alcanzado | Adecuado para piloto en una estación protegida; no autoriza publicación en Internet o red sin controles adicionales. |
+| Siguiente desarrollo | Pendiente — 1.11 | Cierre inmutable y aclaraciones de notas clínicas. |
+
+### Alcance de “Pagos por revisar”
+
+No es una bandeja a la que entren cobros nuevos. El sistema utiliza **Requiere revisión** únicamente al actualizar pagos anteriores cuando no puede demostrar con seguridad su importe, concepto, método o moneda. La carga demostrativa incluye un caso intencional para comprobar la pantalla. Los pagos capturados desde la versión 1.10 se validan antes de guardarse y, si están incompletos, se rechazan en lugar de entrar a este estado.
+
+La revisión actual corresponde a Administración: filtrar por **Requiere revisión**, comparar el folio con comprobantes o registros externos y no completar datos por suposición. Si el movimiento se confirma, se cancela el registro incompleto con un motivo claro y se registra un pago nuevo con la información comprobada; si se demuestra que no fue un cobro válido, sólo se cancela. Mientras falte evidencia puede permanecer en revisión, siempre fuera de los totales.
+
+No se recomienda detener la fase 1.11 para crear una pantalla adicional de conciliación: el flujo actual resuelve de forma segura los pocos datos anteriores esperados. Se reconsiderará un flujo masivo únicamente si una instalación real presenta un volumen que no pueda atenderse caso por caso.
 
 Módulos evaluados:
 
@@ -411,6 +433,8 @@ Instrucciones completas: [EJECUCION_PRUEBAS.md](EJECUCION_PRUEBAS.md).
 
 Esta fase debe implementarse antes de ampliar Facturación o llevar el sistema a una red, porque protege la integridad histórica del documento clínico principal.
 
+Los pagos marcados **Requiere revisión** no forman parte de esta fase: su atención es administrativa y puede realizarse en paralelo sin modificar información histórica.
+
 ## 8. Fase posterior — volumen y operación
 
 - Medir el índice de Consultas con bases anonimizadas de mayor volumen antes de modificar índices.
@@ -418,7 +442,7 @@ Esta fase debe implementarse antes de ampliar Facturación o llevar el sistema a
 - Paginación real pendiente en Pacientes, Historial y Auditoría; Consultas ya pagina en servidor.
 - Índices y medición de consultas para bases con mayor volumen.
 - Horarios, bloqueos, duración y filtros por profesional desde la Agenda dedicada.
-- Exportación controlada de pagos neutralizando fórmulas, sólo después de definir alcance y permisos administrativos.
+- Exportación XLSX nativa sólo si se requiere además del CSV seguro ya disponible.
 - Recibos no fiscales, reembolsos como movimientos y caja formal sólo después de modelar cargos, conciliación y responsables.
 - Confirmaciones y auditoría de operaciones administrativas masivas.
 
@@ -449,7 +473,7 @@ Esta fase debe implementarse antes de ampliar Facturación o llevar el sistema a
 - La identidad compacta no inventa abreviaturas: usa el usuario y separa claramente datos personales, permisos y área profesional.
 - Los módulos sin datos explican el estado y ofrecen una acción.
 - Los KPIs coinciden con los registros persistidos.
-- Las columnas nuevas se aplican de forma aditiva y la única reconstrucción controlada (`recetas`) conserva filas y supera las comprobaciones de integridad.
+- Las columnas nuevas se aplican de forma aditiva; las reconstrucciones controladas de recetas y pagos conservan filas y superan las comprobaciones de integridad.
 - `python -m pytest -q` y el comando heredado de `unittest` finalizan correctamente.
 - El paquete final no contiene base, secretos, logs, respaldos, cachés ni entorno virtual.
 - Una actualización sobre carpeta existente dispone de limpieza explícita que conserva datos y entorno virtual.

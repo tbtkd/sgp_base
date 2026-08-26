@@ -101,6 +101,7 @@ Aplicación local para gestionar pacientes y expedientes en consultorios médico
 93. La recuperación local de un rol administrativo sólo debe habilitarse cuando no quede ninguna cuenta de Administración activa; debe operar sobre una cuenta existente, exigir contraseña segura, invalidar sesiones y quedar auditada sin guardar la credencial.
 94. El tema oscuro debe utilizar superficies suaves, texto secundario legible y bordes decorativos discretos, sin eliminar el foco visible requerido para operar con teclado.
 95. La acción **Sustituir** de una receta vigente debe distinguirse de **Ver / imprimir**, conservar contraste suficiente en tema claro y oscuro e incluir una etiqueta accesible que identifique el folio.
+96. `requiere_revision` sólo debe originarse al conservar pagos anteriores no confiables o datos de demostración; las altas actuales incompletas deben rechazarse. Administración debe resolver cada caso sin editarlo: cancelar el original y registrar un movimiento nuevo sólo cuando exista evidencia suficiente.
 
 ## Requisitos de seguridad
 

@@ -197,6 +197,7 @@ python -m pytest -q
 | PAY-CAN-01 | Cancelación | Motivo obligatorio, segundo intento denegado, responsable, auditoría y retorno visible por folio/ancla |
 | PAY-RANGE-01 | Fechas | Rangos invertidos o mayores de 366 días rechazados |
 | PAY-MIG-01 | Migración | Conversión a centavos, cuarentena de incompletos, unicidad, `RESTRICT` e integridad |
+| PAY-REV-01 | Revisión de anteriores | Sólo migración/demo produce `requiere_revision`; altas inválidas se rechazan, el importe no se inventa y el original puede cancelarse sin entrar en totales |
 | PAY-UI-01 | Interfaz | Historial, cita opcional explícita, método no fiscal, confirmación amigable con salida segura/respaldo, cancelación dentro del flujo, resaltado, idempotencia visual y tema oscuro |
 
 Resultados esperados:

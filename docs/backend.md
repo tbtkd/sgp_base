@@ -68,7 +68,7 @@ La relación `cita_id` es opcional y nunca se infiere por la sola existencia de 
 
 Administración recibe además agrupación `dia|mes`. `GET /pagos/exportar.csv` reaplica los filtros y `GET /pagos/paciente/<id>/historial.csv` genera el historial individual. `_export_rows()` limita ambas salidas a 10,000 filas; `_csv_safe()` neutraliza `=`, `+`, `-`, `@`, tabulador y retorno de carro al inicio de una celda. La respuesta usa BOM UTF-8, `Cache-Control: no-store` y genera `EXPORTAR_PAGOS`.
 
-`payments_v110` reconstruye `pagos` antes de la migración aditiva general. Las filas válidas se convierten mediante `Decimal`; las incompletas pasan a `requiere_revision`. La migración cambia Paciente a `ON DELETE RESTRICT`, usa `SET NULL` para usuarios/cita, recrea unicidad e índices y ejecuta `foreign_key_check`/`integrity_check`.
+`payments_v110` reconstruye `pagos` antes de la migración aditiva general. Las filas válidas se convierten mediante `Decimal`; las incompletas pasan a `requiere_revision`. Ese estado sólo puede originarse en esta conservación de datos anteriores o en la carga demo; `payment_payload()` rechaza altas actuales incompletas. No existe una mutación de aprobación: Administración cancela el registro preservado y crea otro movimiento si la evidencia permite reconstruir el cobro. La migración cambia Paciente a `ON DELETE RESTRICT`, usa `SET NULL` para usuarios/cita, recrea unicidad e índices y ejecuta `foreign_key_check`/`integrity_check`.
 
 ## Turno diario y orden de receta
 
